@@ -1,13 +1,17 @@
 import HeroContent from "./HeroContent/HeroContent";
 import HeroImage from "./HeroImage/HeroImage";
+import Container from "../../layouts/Container/Container"; 
+
 
 export default function Hero() {
   return (
     <section className="bg-white">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-12 py-16">
-        <HeroContent />
-        <HeroImage />
-      </div>
+      <Container>
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 py-10 lg:py-16">
+          <HeroContent />
+          <HeroImage />
+        </div>
+      </Container>
     </section>
   );
 }

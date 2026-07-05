@@ -1,27 +1,27 @@
-export const navigationLinks = [
+export const navigation = [
   {
     id: 1,
-    title: "Home",
-    path: "/",
+    label: "Home",
+    href: "/",
   },
   {
     id: 2,
-    title: "Salons",
-    path: "/salons",
+    label: "Salons",
+    href: "/salons",
   },
   {
     id: 3,
-    title: "Services",
-    path: "/services",
+    label: "Services",
+    href: "/services",
   },
   {
     id: 4,
-    title: "Become Partner",
-    path: "/partner",
+    label: "Become Partner",
+    href: "/partner",
   },
   {
     id: 5,
-    title: "Offers",
-    path: "/offers",
-  }
+    label: "Offers",
+    href: "/offers",
+  },
 ];
