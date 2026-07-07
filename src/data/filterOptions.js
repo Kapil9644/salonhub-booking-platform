@@ -1,27 +1,20 @@
 export const filterOptions = {
-  locations: [
-    "Bhopal",
-    "Indore",
-    "Jabalpur",
-    "Gwalior",
-  ],
-
-  ratings: [
-    "4★ & Above",
-    "3★ & Above",
-  ],
-
   services: [
     "Haircut",
-    "Facial",
     "Hair Spa",
-    "Makeup",
+    "Facial",
     "Beard Trim",
+    "Hair Color",
+    "Makeup",
+    "Massage",
   ],
 
-  prices: [
-    "₹",
-    "₹₹",
-    "₹₹₹",
+  ratings: [4, 4.5, 4.8],
+
+  priceRanges: [
+    "Any Price",
+    "₹0 - ₹500",
+    "₹500 - ₹1000",
+    "₹1000+",
   ],
 };

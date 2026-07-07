@@ -1,5 +1,6 @@
 import { salons } from "../../../data/salons";
-import SalonCard from "../SalonCard/SalonCard";
+import SalonCard from "../../common/SalonCard/SalonCard";
+
 
 export default function SalonGrid() {
   return (
@@ -7,11 +8,7 @@ export default function SalonGrid() {
       {salons.map((salon) => (
         <SalonCard
           key={salon.id}
-          image={salon.image}
-          name={salon.name}
-          rating={salon.rating}
-          location={salon.location}
-          price={salon.price}
+          {...salon}
         />
       ))}
     </div>

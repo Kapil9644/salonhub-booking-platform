@@ -1,4 +1,4 @@
-import SalonCard from "../SalonCard/SalonCard";
+import SalonCard from "../../common/SalonCard/SalonCard";
 import { salons } from "../../../data/salons";
 
 export default function SalonGrid() {
