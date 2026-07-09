@@ -10,7 +10,7 @@ export const salons = [
     services: ["Haircut", "Facial", "Spa"],
     location: "MP Nagar, Bhopal",
     distance: "2.3 km",
-    price: "₹499 onwards",
+    price: 499,
     isOpen: true,
   },
   {
@@ -22,7 +22,7 @@ export const salons = [
     services: ["Hair Spa", "Makeup", "Hair Color"],
     location: "Arera Colony, Bhopal",
     distance: "3.8 km",
-    price: "₹699 onwards",
+    price: 699,
     isOpen: true,
   },
   {
@@ -34,7 +34,7 @@ export const salons = [
     services: ["Haircut", "Beard", "Spa"],
     location: "New Market, Bhopal",
     distance: "1.5 km",
-    price: "₹399 onwards",
+    price: 399,
     isOpen: false,
   },
 ];

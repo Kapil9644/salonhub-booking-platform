@@ -7,6 +7,7 @@ export default function Filters({
   setMinimumRating,
   priceRange,
   setPriceRange,
+  setSortBy,
 }) {
   return (
     <aside className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -56,9 +57,13 @@ export default function Filters({
 
         <select
           value={minimumRating}
-          onChange={(e) => setMinimumRating(e.target.value)}
+          onChange={(e) =>
+            setMinimumRating(Number(e.target.value))
+          }
           className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600"
         >
+          <option value={0}>All Ratings</option>
+
           {filterOptions.ratings.map((rating) => (
             <option
               key={rating}
@@ -87,6 +92,21 @@ export default function Filters({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Reset Button */}
+      <div className="mt-8">
+        <button
+          onClick={() => {
+            setSelectedServices([]);
+            setMinimumRating(0);
+            setPriceRange("Any Price");
+            setSortBy("Recommended");
+          }}
+          className="w-full rounded-xl border border-purple-600 py-3 font-semibold text-purple-600 transition hover:bg-purple-600 hover:text-white"
+        >
+          Reset Filters
+        </button>
       </div>
     </aside>
   );

@@ -1,4 +1,9 @@
-export default function SortDropdown() {
+export default function SortDropdown({
+  sortBy,
+  setSortBy,
+  }) 
+  
+  {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -16,7 +21,11 @@ export default function SortDropdown() {
           Sort By
         </span>
 
-        <select className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-700 shadow-sm outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-200">
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-700 shadow-sm outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-200"
+        >
           <option>Recommended</option>
           <option>Highest Rated</option>
           <option>Lowest Price</option>

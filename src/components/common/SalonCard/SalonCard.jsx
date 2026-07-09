@@ -85,7 +85,7 @@ export default function SalonCard({
         {/* Bottom */}
         <div className="mt-6 flex items-center justify-between">
           <span className="text-2xl font-bold text-purple-600">
-            {price}
+            ₹{price} onwards
           </span>
 
           <button className="rounded-xl bg-purple-600 px-6 py-3 rounded-full font-semibold text-white transition hover:bg-purple-700">

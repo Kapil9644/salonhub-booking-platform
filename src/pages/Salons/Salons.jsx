@@ -1,3 +1,4 @@
+import { salons } from "../../data/salons";
 import { useState } from "react";
 import Container from "../../layouts/Container/Container";
 import PageHeader from "../../components/Salons/PageHeader/PageHeader";
@@ -29,6 +30,7 @@ export default function Salons() {
               setMinimumRating={setMinimumRating}
               priceRange={priceRange}
               setPriceRange={setPriceRange}
+              setSortBy={setSortBy}
             />
           </div>
 
@@ -39,9 +41,6 @@ export default function Salons() {
             />
 
             <div className="mt-6">
-              <p className="mb-4 text-sm text-purple-600">
-                Selected: {selectedServices.join(", ")}
-              </p>
               <SalonGrid
                 selectedServices={selectedServices}
                 minimumRating={minimumRating}
