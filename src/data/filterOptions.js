@@ -3,7 +3,7 @@ export const filterOptions = {
     "Haircut",
     "Hair Spa",
     "Facial",
-    "Beard Trim",
+    "Beard",
     "Hair Color",
     "Makeup",
     "Massage",

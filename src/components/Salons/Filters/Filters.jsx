@@ -27,16 +27,17 @@ export default function Filters({
               className="flex cursor-pointer items-center gap-3"
             >
               <input
-                type="checkbox"
-                className="h-4 w-4 accent-purple-600"
-                checked={selectedServices.includes(service)}
-                onChange={() => {
-                  if (selectedServices.includes(service)) {
-                    setSelectedServices(selectedServices.filter((s) => s !== service));
-                  } else {
-                    setSelectedServices([...selectedServices, service]);
-                  }
-                }}
+                  type="checkbox"
+                  checked={selectedServices.includes(service)}
+                  onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedServices([...selectedServices, service]);
+                            } 
+                            else {
+                              setSelectedServices(selectedServices.filter((item) => item !== service));                                                      
+                            }
+                          }}
+                  className="h-4 w-4 accent-purple-600"
               />
 
               <span className="text-gray-700">

@@ -39,6 +39,9 @@ export default function Salons() {
             />
 
             <div className="mt-6">
+              <p className="mb-4 text-sm text-purple-600">
+                Selected: {selectedServices.join(", ")}
+              </p>
               <SalonGrid
                 selectedServices={selectedServices}
                 minimumRating={minimumRating}
