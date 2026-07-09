@@ -10,7 +10,7 @@ export default function SalonGrid({
 
   let filteredSalons = [...salons];
 
-  // Service Filter
+  // Filter by Services
   if (selectedServices.length > 0) {
     filteredSalons = filteredSalons.filter((salon) =>
       selectedServices.some((service) =>
@@ -29,22 +29,21 @@ export default function SalonGrid({
   // Price Filter
   if (priceRange !== "Any Price") {
     filteredSalons = filteredSalons.filter((salon) => {
-    switch (priceRange) {
-      case "₹0 - ₹500":
-        return salon.price <= 500;
+      switch (priceRange) {
+        case "₹0 - ₹500":
+          return salon.price <= 500;
 
-      case "₹500 - ₹1000":
-        return salon.price > 500 && salon.price <= 1000;
+        case "₹500 - ₹1000":
+          return salon.price > 500 && salon.price <= 1000;
 
-      case "₹1000+":
-        return salon.price > 1000;
+        case "₹1000+":
+          return salon.price > 1000;
 
-      default:
-        return true;
+        default:
+          return true;
       }
     });
   }
-
 
   // Sorting
   switch (sortBy) {
@@ -65,7 +64,24 @@ export default function SalonGrid({
       break;
 
     default:
-      break; // Recommended keeps the original order
+      break;
+  }
+  
+console.log("Filtered Salons:", filteredSalons);
+console.log("Count:", filteredSalons.length);
+
+  if (filteredSalons.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 py-20 text-center">
+          <h2 className="text-2xl font-bold text-gray-700">
+            No salons found 😔
+          </h2>
+
+          <p className="mt-3 text-gray-500">
+            Try changing your filters or reset them.
+          </p>
+        </div>
+      );
   }
 
   return (
@@ -78,4 +94,4 @@ export default function SalonGrid({
       ))}
     </div>
   );
-}
+  }
