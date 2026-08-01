@@ -1,4 +1,3 @@
-import { salons } from "../../data/salons";
 import { useState } from "react";
 import Container from "../../layouts/Container/Container";
 import PageHeader from "../../components/Salons/PageHeader/PageHeader";
@@ -7,7 +6,6 @@ import SortDropdown from "../../components/Salons/SortDropdown/SortDropdown";
 import SalonGrid from "../../components/Salons/SalonGrid/SalonGrid";
 
 export default function Salons() {
-
   const [selectedServices, setSelectedServices] = useState([]);
 
   const [minimumRating, setMinimumRating] = useState(0);
@@ -35,10 +33,7 @@ export default function Salons() {
           </div>
 
           <div className="lg:col-span-9">
-            <SortDropdown
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-            />
+            <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
 
             <div className="mt-6">
               <SalonGrid

@@ -1,25 +1,16 @@
-export default function SortDropdown({
-  sortBy,
-  setSortBy,
-  }) 
-  
-  {
+export default function SortDropdown({ sortBy, setSortBy, totalSalons = 0 }) {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="text-3xl font-bold text-slate-900">
-          Available Salons
-        </h2>
+        <h2 className="text-3xl font-bold text-slate-900">Available Salons</h2>
 
         <p className="mt-1 text-gray-500">
-          Showing 3 salons
+          Showing {totalSalons} {totalSalons === 1 ? "salon" : "salons"}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="font-medium text-gray-600">
-          Sort By
-        </span>
+        <span className="font-medium text-gray-600">Sort By</span>
 
         <select
           value={sortBy}

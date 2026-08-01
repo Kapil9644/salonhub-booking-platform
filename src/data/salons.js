@@ -11,6 +11,7 @@ export const salons = [
     location: "MP Nagar, Bhopal",
     distance: "2.3 km",
     price: 499,
+    priceLabel: "₹499 onwards",
     isOpen: true,
   },
   {
@@ -23,6 +24,7 @@ export const salons = [
     location: "Arera Colony, Bhopal",
     distance: "3.8 km",
     price: 699,
+    priceLabel: "₹699 onwards",
     isOpen: true,
   },
   {
@@ -35,6 +37,7 @@ export const salons = [
     location: "New Market, Bhopal",
     distance: "1.5 km",
     price: 399,
+    priceLabel: "₹399 onwards",
     isOpen: false,
   },
 ];

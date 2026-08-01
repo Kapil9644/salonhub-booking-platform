@@ -11,7 +11,6 @@ import Footer from "../../components/Footer/Footer";
 export default function Home() {
   return (
     <>
-      
       <Hero />
       <Services />
       <FeaturedSalons />
@@ -19,7 +18,6 @@ export default function Home() {
       <Testimonials />
       <HowItWorks />
       <PartnerSection />
-      
     </>
   );
 }

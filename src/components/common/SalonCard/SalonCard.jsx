@@ -9,11 +9,11 @@ export default function SalonCard({
   location,
   distance,
   price,
+  priceLabel,
   isOpen,
 }) {
   return (
     <div className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
-
       {/* Image */}
       <div className="relative overflow-hidden">
         <img
@@ -39,26 +39,16 @@ export default function SalonCard({
 
       {/* Content */}
       <div className="p-5">
-
         {/* Rating */}
         <div className="mb-3 flex items-center gap-2">
-          <Star
-            size={18}
-            className="fill-yellow-400 text-yellow-400"
-          />
+          <Star size={18} className="fill-yellow-400 text-yellow-400" />
 
-          <span className="font-semibold">
-            {rating}
-          </span>
+          <span className="font-semibold">{rating}</span>
 
-          <span className="text-sm text-gray-500">
-            ({reviews} reviews)
-          </span>
+          <span className="text-sm text-gray-500">({reviews} reviews)</span>
         </div>
 
-        <h3 className="text-xl font-bold text-slate-900">
-          {name}
-        </h3>
+        <h3 className="text-xl font-bold text-slate-900">{name}</h3>
 
         {/* Service Chips */}
         <div className="mt-4 flex flex-wrap gap-2">
@@ -85,14 +75,13 @@ export default function SalonCard({
         {/* Bottom */}
         <div className="mt-6 flex items-center justify-between">
           <span className="text-2xl font-bold text-purple-600">
-            ₹{price} onwards
+            {priceLabel}
           </span>
 
           <button className="rounded-xl bg-purple-600 px-6 py-3 rounded-full font-semibold text-white transition hover:bg-purple-700">
             Book Now
           </button>
         </div>
-
       </div>
     </div>
   );
