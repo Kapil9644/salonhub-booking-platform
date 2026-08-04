@@ -1,10 +1,8 @@
 import { navigation } from "../../../data/navigation";
 import { Link } from "react-router-dom";
+import ActionButtons from "../ActionButtons/ActionButtons";
 
-export default function MobileMenu({
-  isMenuOpen,
-  setIsMenuOpen,
-}) {
+export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
   if (!isMenuOpen) return null;
 
   return (
@@ -20,6 +18,10 @@ export default function MobileMenu({
             {item.label}
           </Link>
         ))}
+        {/* Login & Signup */}
+        <div className="mt-6 flex flex-col gap-3">
+          <ActionButtons mobile={true} onClick={() => setIsMenuOpen(false)} />
+        </div>
       </nav>
     </div>
   );
