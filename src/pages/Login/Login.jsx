@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { loginUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -8,6 +10,8 @@ const Login = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -24,11 +28,11 @@ const Login = () => {
 
       const data = await loginUser(formData);
 
-      localStorage.setItem("token", data.token);
+      login(data.user, data.token);
 
       alert("Login Successful 🎉");
 
-      console.log(data);
+      navigate("/");
     } catch (error) {
       alert(error.response?.data?.message || "Login Failed");
     } finally {

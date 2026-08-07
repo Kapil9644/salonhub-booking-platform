@@ -1,13 +1,24 @@
 import { navigation } from "../../../data/navigation";
 import { Link } from "react-router-dom";
 import ActionButtons from "../ActionButtons/ActionButtons";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
+  const { user } = useAuth();
+
   if (!isMenuOpen) return null;
 
   return (
     <div className="absolute left-0 top-full w-full bg-white shadow-lg lg:hidden">
       <nav className="flex flex-col p-6">
+        {/* User Name */}
+        {user && (
+          <div className="border-b border-gray-100 py-4 font-medium text-gray-700">
+            👤 {user.fullName}
+          </div>
+        )}
+
+        {/* Navigation Links */}
         {navigation.map((item) => (
           <Link
             key={item.id}
@@ -18,9 +29,14 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
             {item.label}
           </Link>
         ))}
-        {/* Login & Signup */}
+
+        {/* Login / Signup / Logout */}
         <div className="mt-6 flex flex-col gap-3">
-          <ActionButtons mobile={true} onClick={() => setIsMenuOpen(false)} />
+          <ActionButtons
+            mobile={true}
+            showUser={false}
+            onClick={() => setIsMenuOpen(false)}
+          />
         </div>
       </nav>
     </div>
