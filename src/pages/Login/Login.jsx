@@ -54,6 +54,13 @@ const Login = () => {
             value={formData.phone}
             onChange={handleChange}
             required
+            style={{
+              width: "100%",
+              padding: "10px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              marginTop: "5px",
+            }}
           />
         </div>
 
@@ -68,12 +75,30 @@ const Login = () => {
             value={formData.password}
             onChange={handleChange}
             required
+            style={{
+              width: "100%",
+              padding: "10px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              marginTop: "5px",
+            }}
           />
         </div>
 
         <br />
 
-        <button type="submit" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            backgroundColor: "#007bff",
+            color: "#fff",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+          }}
+        >
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
