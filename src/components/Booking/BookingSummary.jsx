@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
 export default function BookingSummary({
   salon,
   selectedService,
@@ -6,9 +8,11 @@ export default function BookingSummary({
   selectedTime,
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const handleConfirmBooking = () => {
     const booking = {
       id: Date.now(),
+      userId: user.id,
       salon,
       service: selectedService,
       date: selectedDate,

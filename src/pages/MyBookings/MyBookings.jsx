@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import Container from "../../layouts/Container/Container";
+import { useAuth } from "../../context/AuthContext";
 
 export default function MyBookings() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
+    if (!user) return;
+
     const storedBookings = JSON.parse(localStorage.getItem("bookings")) || [];
 
-    setBookings(storedBookings);
-  }, []);
+    const userBookings = storedBookings.filter(
+      (booking) => booking.userId === user.id,
+    );
+
+    setBookings(userBookings);
+  }, [user]);
 
   return (
     <Container>
