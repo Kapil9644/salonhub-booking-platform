@@ -1,3 +1,4 @@
+const bookingRoutes = require("./routes/bookingRoutes");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -15,6 +16,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

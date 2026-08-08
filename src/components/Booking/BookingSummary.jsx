@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { createBooking } from "../../services/bookingService";
 
 export default function BookingSummary({
   salon,
@@ -9,25 +10,39 @@ export default function BookingSummary({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const handleConfirmBooking = () => {
-    const booking = {
-      id: Date.now(),
-      userId: user.id,
-      salon,
-      service: selectedService,
-      date: selectedDate,
-      time: selectedTime,
-      status: "Upcoming",
-    };
 
-    const existingBookings = JSON.parse(localStorage.getItem("bookings")) || [];
+  const handleConfirmBooking = async () => {
+    try {
+      const bookingData = {
+        salon: {
+          id: salon.id,
+          name: salon.name,
+        },
+        service: {
+          id: selectedService.id,
+          name: selectedService.name,
+          price: selectedService.price,
+          duration: selectedService.duration,
+        },
+        date: selectedDate,
+        time: selectedTime,
+      };
 
-    existingBookings.push(booking);
+      await createBooking(bookingData);
 
-    localStorage.setItem("bookings", JSON.stringify(existingBookings));
+      alert("Booking Confirmed 🎉");
 
-    navigate("/");
+      navigate("/");
+    } catch (error) {
+      console.error("Booking error:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to create booking. Please try again.",
+      );
+    }
   };
+
   return (
     <div className="sticky top-28 rounded-3xl border border-gray-200 bg-white p-6 shadow-lg">
       <h2 className="text-2xl font-bold text-slate-900">Booking Summary</h2>
