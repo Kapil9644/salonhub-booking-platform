@@ -1,5 +1,6 @@
+import ProtectedRoute from "../components/common/ProtectedRoute/ProtectedRoute";
 import { Routes, Route } from "react-router-dom";
-
+import Profile from "../pages/Profile/Profile";
 import MainLayout from "../layouts/MainLayout/MainLayout";
 import Booking from "../pages/Booking/Booking";
 import Home from "../pages/Home/Home";
@@ -20,7 +21,22 @@ export default function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/salons" element={<Salons />} />
         <Route path="/salons/:id" element={<SalonDetails />} />
-        <Route path="/booking/:id" element={<Booking />} />
+        <Route
+          path="/booking/:id"
+          element={
+            <ProtectedRoute>
+              <Booking />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );

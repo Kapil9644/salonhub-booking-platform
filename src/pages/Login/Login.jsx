@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { loginUser } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setFormData({
@@ -32,7 +33,7 @@ const Login = () => {
 
       alert("Login Successful 🎉");
 
-      navigate("/");
+      navigate(location.state?.from?.pathname || "/");
     } catch (error) {
       alert(error.response?.data?.message || "Login Failed");
     } finally {
