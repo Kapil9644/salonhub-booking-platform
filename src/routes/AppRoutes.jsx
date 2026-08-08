@@ -1,5 +1,6 @@
 import ProtectedRoute from "../components/common/ProtectedRoute/ProtectedRoute";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Profile from "../pages/Profile/Profile";
 import MainLayout from "../layouts/MainLayout/MainLayout";
 import Booking from "../pages/Booking/Booking";
@@ -9,12 +10,41 @@ import SalonDetails from "../pages/SalonDetails/SalonDetails";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
 
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
       {/* Public Authentication Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        }
+      />
 
       {/* Main Website */}
       <Route element={<MainLayout />}>
