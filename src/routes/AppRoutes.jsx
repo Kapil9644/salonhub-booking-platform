@@ -9,6 +9,7 @@ import Salons from "../pages/Salons/Salons";
 import SalonDetails from "../pages/SalonDetails/SalonDetails";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
+import MyBookings from "../pages/MyBookings/MyBookings";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -64,6 +65,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-bookings"
+          element={
+            <ProtectedRoute>
+              <MyBookings />
             </ProtectedRoute>
           }
         />
