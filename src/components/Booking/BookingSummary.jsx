@@ -26,7 +26,7 @@ export default function BookingSummary({
 
     localStorage.setItem("bookings", JSON.stringify(existingBookings));
 
-    navigate("/my-bookings");
+    navigate("/");
   };
   return (
     <div className="sticky top-28 rounded-3xl border border-gray-200 bg-white p-6 shadow-lg">

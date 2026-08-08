@@ -1,5 +1,5 @@
 import ProtectedRoute from "../components/common/ProtectedRoute/ProtectedRoute";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Profile from "../pages/Profile/Profile";
 import MainLayout from "../layouts/MainLayout/MainLayout";
@@ -13,12 +13,13 @@ import MyBookings from "../pages/MyBookings/MyBookings";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <p>Loading...</p>;
   }
 
-  if (user) {
+  if (user && !location.state?.from) {
     return <Navigate to="/" replace />;
   }
 

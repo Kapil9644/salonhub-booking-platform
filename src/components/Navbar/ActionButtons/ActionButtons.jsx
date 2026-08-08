@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 
 export default function ActionButtons({
@@ -7,25 +7,21 @@ export default function ActionButtons({
   showUser = true,
 }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className={mobile ? "flex flex-col gap-3" : "flex items-center gap-4"}>
       {user ? (
         <>
           {showUser && (
-            <span className="font-medium text-gray-700">
+            <Link
+              to="/profile"
+              onClick={onClick}
+              className="font-medium text-slate-700 transition hover:text-purple-600"
+            >
               👤 {user.fullName}
-            </span>
+            </Link>
           )}
-
-          <button
-            onClick={() => {
-              logout();
-              onClick();
-            }}
-            className="rounded-2xl bg-red-500 px-6 py-2 text-white hover:bg-red-600"
-          >
-            Logout
-          </button>
         </>
       ) : (
         <>
