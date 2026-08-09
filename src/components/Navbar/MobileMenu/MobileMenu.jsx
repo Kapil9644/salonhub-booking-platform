@@ -9,32 +9,45 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
   if (!isMenuOpen) return null;
 
   return (
-    <div className="absolute left-0 top-full w-full bg-white shadow-lg lg:hidden">
-      <nav className="flex flex-col p-6">
-        {/* User Name */}
+    <div className="border-t border-gray-100 bg-white shadow-lg lg:hidden">
+      <nav className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+        {/* User Profile */}
         {user && (
           <Link
             to="/profile"
             onClick={() => setIsMenuOpen(false)}
-            className="border-b border-gray-100 py-4 text-slate-700 transition-colors duration-300 hover:text-purple-600"
+            className="mb-3 flex items-center gap-3 rounded-2xl bg-purple-50 px-4 py-3.5 text-slate-800 transition-colors duration-200 hover:bg-purple-100"
           >
-            👤 {user.fullName}
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 text-lg text-white">
+              👤
+            </span>
+
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-500">Welcome back</p>
+
+              <p className="truncate font-semibold text-slate-900">
+                {user.fullName}
+              </p>
+            </div>
           </Link>
         )}
+
         {/* Navigation Links */}
-        {navigation.map((item) => (
-          <Link
-            key={item.id}
-            to={item.href}
-            onClick={() => setIsMenuOpen(false)}
-            className="border-b border-gray-100 py-4 text-slate-700 transition-colors duration-300 hover:text-purple-600"
-          >
-            {item.label}
-          </Link>
-        ))}
+        <div className="divide-y divide-gray-100">
+          {navigation.map((item) => (
+            <Link
+              key={item.id}
+              to={item.href}
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center py-1.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-purple-600"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
 
         {/* Login / Signup / Logout */}
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-5 border-t border-gray-100 pt-5">
           <ActionButtons
             mobile={true}
             showUser={false}

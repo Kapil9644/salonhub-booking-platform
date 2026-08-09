@@ -10,6 +10,8 @@ import SalonDetails from "../pages/SalonDetails/SalonDetails";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
 import MyBookings from "../pages/MyBookings/MyBookings";
+import Services from "../pages/Services/Services";
+import BecomePartner from "../pages/BecomePartner/BecomePartner";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -29,27 +31,27 @@ function PublicRoute({ children }) {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public Authentication Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-
-      <Route
-        path="/signup"
-        element={
-          <PublicRoute>
-            <Signup />
-          </PublicRoute>
-        }
-      />
-
       {/* Main Website */}
+
       <Route element={<MainLayout />}>
+        {/* Public Authentication Routes */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
         <Route path="/" element={<Home />} />
         <Route path="/salons" element={<Salons />} />
         <Route path="/salons/:id" element={<SalonDetails />} />
@@ -78,6 +80,9 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/services" element={<Services />} />
+        <Route path="/partner" element={<BecomePartner />} />
       </Route>
     </Routes>
   );

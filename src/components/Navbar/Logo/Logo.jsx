@@ -1,22 +1,20 @@
-import { Scissors } from "lucide-react";
 import { Link } from "react-router-dom";
 
-
-export default function Logo() {
+export default function Logo({ onClick }) {
   return (
-    <Link to="/" className="flex cursor-pointer items-center gap-3">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg">
-        <Scissors size={22} />
-      </div>
-
+    <Link
+      to="/"
+      onClick={onClick}
+      className="ml-4 inline-block shrink-0 leading-none sm:ml-6 lg:ml-8"
+    >
       <div>
-          <h1 className="text-4xl font-bold text-gray-900">
-           SalonHub
-          </h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          SalonHub
+        </h1>
 
-          <p className="text-xs text-gray-500">
-            Book • Style • Shine
-          </p>
+        <p className="mt-1 text-[10px] font-medium tracking-wide text-gray-500 sm:text-xs">
+          Book • Style • Shine
+        </p>
       </div>
     </Link>
   );

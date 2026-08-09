@@ -3,12 +3,12 @@ import { navigation } from "../../../data/navigation";
 
 export default function DesktopMenu() {
   return (
-    <nav className="hidden lg:flex items-center gap-8">
+    <nav className="hidden items-center gap-7 lg:flex">
       {navigation.map((item) => (
         <Link
           key={item.id}
           to={item.href}
-          className="text-slate-700 hover:text-purple-600 transition-colors duration-300 font-medium"
+          className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-purple-600"
         >
           {item.label}
         </Link>

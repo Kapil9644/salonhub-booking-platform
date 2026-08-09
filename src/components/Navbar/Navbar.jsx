@@ -1,35 +1,36 @@
+import { useState } from "react";
 import Logo from "./Logo/Logo";
 import ActionButtons from "./ActionButtons/ActionButtons";
-import { useState } from "react";
 import DesktopMenu from "./DesktopMenu/DesktopMenu";
 import MobileMenuButton from "./MobileMenuButton/MobileMenuButton";
-import MobileMenu from "./MobileMenu/MobileMenu"; 
+import MobileMenu from "./MobileMenu/MobileMenu";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
-      <div className="mx-auto flex h-24 max-w-[1400px] items-center justify-between px-12">
-        <Logo />
+    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
+        {/* Logo */}
+        <Logo onClick={() => setIsMenuOpen(false)} />
 
         {/* Desktop Navigation */}
-          <DesktopMenu />
+        <DesktopMenu />
 
         {/* Desktop Action Buttons */}
-          <div className="hidden lg:flex">
-            <ActionButtons />
-          </div>
+        <div className="hidden lg:flex">
+          <ActionButtons />
+        </div>
 
         {/* Mobile Menu Button */}
-          <MobileMenuButton
-            isMenuOpen={isMenuOpen}
-            setIsMenuOpen={setIsMenuOpen}
-          />
+        <MobileMenuButton
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+        />
       </div>
-      <MobileMenu
-        isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-      />
+
+      {/* Mobile Menu */}
+      <MobileMenu isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
     </nav>
   );
 }
