@@ -9,6 +9,7 @@ import Salons from "../pages/Salons/Salons";
 import SalonDetails from "../pages/SalonDetails/SalonDetails";
 import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
+import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 import MyBookings from "../pages/MyBookings/MyBookings";
 import Services from "../pages/Services/Services";
 import BecomePartner from "../pages/BecomePartner/BecomePartner";
@@ -49,6 +50,14 @@ export default function AppRoutes() {
           element={
             <PublicRoute>
               <Signup />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
             </PublicRoute>
           }
         />
