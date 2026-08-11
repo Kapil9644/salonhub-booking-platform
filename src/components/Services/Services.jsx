@@ -3,7 +3,7 @@ import ServiceGrid from "./ServiceGrid/ServiceGrid";
 
 export default function Services() {
   return (
-    <section className="bg-gray-50 py-20">
+    <section className="bg-gray-50 py-10 lg:py-16">
       <div className="mx-auto max-w-[1400px] px-12">
         <SectionTitle />
         <ServiceGrid />

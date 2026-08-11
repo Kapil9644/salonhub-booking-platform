@@ -6,7 +6,7 @@ export default function HeroImage() {
       <img
         src={heroSalon}
         alt="Luxury Salon"
-        className="w-full max-w-md lg:max-w-2xl h-auto rounded-3xl object-cover shadow-2xl transition-transform duration-300 hover:scale-[1.02]"
+        className="w-full max-w-md lg:max-w-2xl h-auto rounded-3xl object-cover shadow-xl transition-transform duration-300 hover:scale-[1.02]"
       />
     </div>
   );

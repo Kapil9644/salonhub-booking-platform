@@ -41,7 +41,7 @@ export default function Services() {
               return (
                 <div
                   key={service.id}
-                  className="group rounded-3xl border border-gray-200 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                  className="group rounded-3xl border border-gray-400 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-purple-600 transition duration-300 group-hover:bg-purple-600 group-hover:text-white">
                     <Icon size={28} strokeWidth={1.8} />

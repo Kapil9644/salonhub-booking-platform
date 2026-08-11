@@ -3,7 +3,7 @@ import StepsGrid from "./StepsGrid/StepsGrid";
 
 export default function HowItWorks() {
   return (
-    <section className="bg-white py-20">
+    <section className="bg-white py-6">
       <div className="mx-auto max-w-[1400px] px-12">
         <SectionTitle />
         <StepsGrid />

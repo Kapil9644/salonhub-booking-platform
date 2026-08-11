@@ -29,7 +29,7 @@ export default function SearchBar() {
       </div>
 
       {/* Button */}
-      <button className="w-full rounded-xl bg-purple-600 px-8 py-4 font-semibold text-white whitespace-nowrap transition hover:bg-purple-700 lg:w-auto lg:min-w-[170px]">
+      <button className="w-full rounded-xl bg-purple-600 px-8 py-2 font-semibold text-white whitespace-nowrap transition hover:bg-purple-700 lg:w-auto lg:min-w-[170px]">
         Find Salons
       </button>
     </div>
