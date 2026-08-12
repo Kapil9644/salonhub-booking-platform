@@ -37,3 +37,25 @@ export const resetPassword = async (resetToken, newPassword) => {
 
   return response.data;
 };
+
+export const getProfile = async () => {
+  const response = await api.get("/auth/me");
+
+  return response.data;
+};
+
+export const updateProfile = async (profileData) => {
+  const response = await api.put("/auth/profile", profileData);
+
+  return response.data;
+};
+
+export const uploadProfileImage = async (imageFile) => {
+  const formData = new FormData();
+
+  formData.append("profileImage", imageFile);
+
+  const response = await api.post("/auth/profile-image", formData);
+
+  return response.data;
+};

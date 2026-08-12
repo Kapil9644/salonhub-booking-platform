@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 const PasswordReset = require("../models/PasswordReset");
+const cloudinary = require("../config/cloudinary");
 
 // Register User
 const register = async (req, res) => {
@@ -425,6 +426,120 @@ const getProfile = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { fullName, email } = req.body;
+
+    if (!fullName || !fullName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Full Name is required.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    user.fullName = fullName.trim();
+
+    if (email !== undefined) {
+      user.email = email.trim().toLowerCase();
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile image is required.",
+      });
+    }
+
+    const uploadResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "salonhub/profile-images",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        },
+      );
+
+      stream.end(req.file.buffer);
+    });
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    user.profileImage = uploadResult.secure_url;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile image uploaded successfully.",
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (error) {
+    console.error("Profile image upload error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to upload profile image.",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -432,4 +547,6 @@ module.exports = {
   verifyOtp,
   resetPassword,
   getProfile,
+  updateProfile,
+  uploadProfileImage,
 };
