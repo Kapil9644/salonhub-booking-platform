@@ -7,6 +7,68 @@ import {
   uploadProfileImage,
 } from "../../services/authService";
 
+const compressProfileImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const MAX_SIZE = 500;
+
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width = Math.round((width * MAX_SIZE) / height);
+          height = MAX_SIZE;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+
+          const compressedFile = new File([blob], "profile-image.webp", {
+            type: "image/webp",
+            lastModified: Date.now(),
+          });
+
+          resolve(compressedFile);
+        },
+        "image/webp",
+        0.8,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Unable to process image."));
+    };
+
+    img.src = objectUrl;
+  });
+};
+
 const Profile = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +79,32 @@ const Profile = () => {
   const [editEmail, setEditEmail] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const compressedImage = await compressProfileImage(file);
+
+      console.log("Original image:", (file.size / 1024).toFixed(2), "KB");
+
+      console.log(
+        "Compressed image:",
+        (compressedImage.size / 1024).toFixed(2),
+        "KB",
+      );
+
+      setSelectedImage(compressedImage);
+    } catch (error) {
+      console.error("Image compression failed:", error);
+    }
+
+    e.target.value = "";
+  };
 
   const handleEditProfile = () => {
     setEditFullName(profile?.fullName || "");
@@ -176,7 +264,7 @@ const Profile = () => {
                 id="profileImageInput"
                 style={{ display: "none" }}
                 disabled={savingProfile}
-                onChange={(e) => setSelectedImage(e.target.files[0])}
+                onChange={handleImageChange}
               />
               <button
                 type="button"
@@ -260,6 +348,7 @@ const Profile = () => {
         </div>
 
         <div
+          className="flex justify-center"
           style={{
             marginTop: "30px",
             display: "flex",
@@ -319,34 +408,6 @@ const Profile = () => {
                 }}
               >
                 Edit Profile
-              </button>
-
-              <button
-                onClick={() => navigate("/my-bookings")}
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#7c3aed",
-                  color: "white",
-                  cursor: "pointer",
-                }}
-              >
-                My Bookings
-              </button>
-
-              <button
-                onClick={handleLogout}
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#ef4444",
-                  color: "white",
-                  cursor: "pointer",
-                }}
-              >
-                Logout
               </button>
             </>
           )}

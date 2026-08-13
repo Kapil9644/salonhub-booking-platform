@@ -28,17 +28,19 @@ export default function FooterLinks() {
         ))}
       </FooterColumn>
 
-      <FooterColumn title="Support">
-        {footerLinks.support.map((link) => (
-          <a
-            key={link.id}
-            href={link.href}
-            className="text-gray-300 hover:text-purple-400 transition-colors"
-          >
-            {link.label}
-          </a>
-        ))}
-      </FooterColumn>
+      <div className="hidden sm:block">
+        <FooterColumn title="Support">
+          {footerLinks.support.map((link) => (
+            <a
+              key={link.id}
+              href={link.href}
+              className="text-gray-300 hover:text-purple-400 transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </FooterColumn>
+      </div>
     </>
   );
 }

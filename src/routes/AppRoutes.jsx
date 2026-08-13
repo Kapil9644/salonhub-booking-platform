@@ -13,6 +13,11 @@ import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 import MyBookings from "../pages/MyBookings/MyBookings";
 import Services from "../pages/Services/Services";
 import BecomePartner from "../pages/BecomePartner/BecomePartner";
+import Offers from "../pages/Offers/Offers";
+import Payment from "../pages/Payment/Payment";
+import Notifications from "../pages/Notifications/Notifications";
+import HelpSupport from "../pages/HelpSupport/HelpSupport";
+import AboutUs from "../pages/AboutUs/AboutUs";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -92,6 +97,11 @@ export default function AppRoutes() {
 
         <Route path="/services" element={<Services />} />
         <Route path="/partner" element={<BecomePartner />} />
+        <Route path="/offers" element={<Offers />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/help-support" element={<HelpSupport />} />
+        <Route path="/about" element={<AboutUs />} />
       </Route>
     </Routes>
   );

@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 pt-20 text-white">
-      <div className="mx-auto grid max-w-[1400px] gap-12 px-12 pb-16 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="bg-slate-900 pt-10 text-white lg:pt-20">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-8 px-6 pb-10 sm:px-8 md:gap-12 md:px-12 md:pb-16 lg:grid-cols-4">
         {/* Logo */}
-        <div>
+        <div className="col-span-2 lg:col-span-1">
           <FooterLogo />
 
           <FooterSocials />
