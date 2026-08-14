@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import Logo from "./Logo/Logo";
 import ActionButtons from "./ActionButtons/ActionButtons";
 import DesktopMenu from "./DesktopMenu/DesktopMenu";
@@ -7,10 +8,11 @@ import MobileMenu from "./MobileMenu/MobileMenu";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-8 ">
+      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:pl-0 lg:pr-8">
         {/* Logo */}
         <Logo onClick={() => setIsMenuOpen(false)} />
 
@@ -30,7 +32,11 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      <MobileMenu isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      <MobileMenu
+        key={`${isMenuOpen}-${user?.id ?? "guest"}`}
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+      />
     </nav>
   );
 }

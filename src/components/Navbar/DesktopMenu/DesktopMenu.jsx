@@ -24,7 +24,7 @@ export default function DesktopMenu() {
   }, [isMoreOpen]);
 
   return (
-    <nav className="hidden items-center gap-6 lg:flex">
+    <nav className="hidden items-center gap-9 lg:flex">
       {navigation.primary.map((item) => (
         <Link
           key={item.id}
