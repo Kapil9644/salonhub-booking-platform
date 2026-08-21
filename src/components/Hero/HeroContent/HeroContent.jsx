@@ -17,7 +17,7 @@ export default function HeroContent() {
         seconds
       </p>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <SearchBar />
       </div>
 
