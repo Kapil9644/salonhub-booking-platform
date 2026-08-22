@@ -1,5 +1,6 @@
 import SalonCard from "../../common/SalonCard/SalonCard";
 import { salons } from "../../../data/salons";
+import { calculateDistance } from "../../../utils/distance";
 
 export default function SalonGrid({
   selectedServices = [],
@@ -8,8 +9,29 @@ export default function SalonGrid({
   sortBy = "Recommended",
   searchText = "",
   selectedLocation = "",
+  userLocation = null,
 }) {
   let filteredSalons = [...salons];
+
+  if (userLocation?.latitude != null && userLocation?.longitude != null) {
+    filteredSalons = filteredSalons.map((salon) => {
+      if (salon.latitude == null || salon.longitude == null) {
+        return salon;
+      }
+
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        salon.latitude,
+        salon.longitude,
+      );
+
+      return {
+        ...salon,
+        calculatedDistance: distance,
+      };
+    });
+  }
 
   // Search Filter
   if (searchText.trim()) {
@@ -29,53 +51,38 @@ export default function SalonGrid({
   }
 
   // Location Filter
+
   if (selectedLocation.trim()) {
-    const locationSearch = selectedLocation
+    const normalizedLocation = selectedLocation
       .replace("Current location,", "")
       .trim()
       .toLowerCase();
 
-    const normalizedLocation = locationSearch
-      .replace(/[^\p{L}\p{N}\s]/gu, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // Check whether the selected location directly matches
-    // any salon location.
     const exactLocationMatches = filteredSalons.filter((salon) => {
-      const salonLocation = salon.location
-        .toLowerCase()
-        .replace(/[^\p{L}\p{N}\s]/gu, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+      const area = salon.area?.toLowerCase() || "";
+      const city = salon.city?.toLowerCase() || "";
+      const state = salon.state?.toLowerCase() || "";
+      const location = salon.location?.toLowerCase() || "";
 
       return (
-        salonLocation.includes(normalizedLocation) ||
-        normalizedLocation.includes(salonLocation)
+        normalizedLocation.includes(area) ||
+        normalizedLocation.includes(city) ||
+        normalizedLocation.includes(state) ||
+        location.includes(normalizedLocation)
       );
     });
 
-    // If we have an exact area/location match, use it.
     if (exactLocationMatches.length > 0) {
       filteredSalons = exactLocationMatches;
     } else {
-      // If the selected area is not yet present in our demo
-      // salon database, keep the city-level salon results
-      // instead of incorrectly showing "0 salons".
-      const cityMatch = normalizedLocation.match(
-        /(?:^| )(bhopal|indore|delhi|mumbai|pune)(?: |$)/i,
+      // If the selected area is not present,
+      // fall back to the city.
+      const cityMatches = filteredSalons.filter((salon) =>
+        normalizedLocation.includes(salon.city?.toLowerCase() || ""),
       );
 
-      if (cityMatch) {
-        const city = cityMatch[1].toLowerCase();
-
-        const citySalons = filteredSalons.filter((salon) =>
-          salon.location.toLowerCase().includes(city),
-        );
-
-        if (citySalons.length > 0) {
-          filteredSalons = citySalons;
-        }
+      if (cityMatches.length > 0) {
+        filteredSalons = cityMatches;
       }
     }
   }
@@ -157,7 +164,15 @@ export default function SalonGrid({
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
       {filteredSalons.map((salon) => (
-        <SalonCard key={salon.id} {...salon} />
+        <SalonCard
+          key={salon.id}
+          {...salon}
+          distance={
+            salon.calculatedDistance != null
+              ? `${salon.calculatedDistance.toFixed(1)} km`
+              : salon.distance
+          }
+        />
       ))}
     </div>
   );

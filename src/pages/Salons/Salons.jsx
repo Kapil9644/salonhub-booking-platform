@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "../../context/LocationContext";
 import { useSearchParams } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 import PageHeader from "../../components/Salons/PageHeader/PageHeader";
@@ -8,7 +9,7 @@ import SalonGrid from "../../components/Salons/SalonGrid/SalonGrid";
 
 export default function Salons() {
   const [searchParams] = useSearchParams();
-
+  const { location } = useLocation();
   const searchText = searchParams.get("search") || "";
   const selectedLocation = searchParams.get("location") || "";
 
@@ -49,6 +50,7 @@ export default function Salons() {
                 sortBy={sortBy}
                 searchText={searchText}
                 selectedLocation={selectedLocation}
+                userLocation={location}
               />
             </div>
           </div>
