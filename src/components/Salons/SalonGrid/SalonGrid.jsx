@@ -6,8 +6,79 @@ export default function SalonGrid({
   minimumRating = 0,
   priceRange = "Any Price",
   sortBy = "Recommended",
+  searchText = "",
+  selectedLocation = "",
 }) {
   let filteredSalons = [...salons];
+
+  // Search Filter
+  if (searchText.trim()) {
+    const search = searchText.trim().toLowerCase();
+
+    filteredSalons = filteredSalons.filter((salon) => {
+      const matchesSalonName = salon.name.toLowerCase().includes(search);
+
+      const matchesLocation = salon.location.toLowerCase().includes(search);
+
+      const matchesService = salon.services.some((service) =>
+        service.name.toLowerCase().includes(search),
+      );
+
+      return matchesSalonName || matchesLocation || matchesService;
+    });
+  }
+
+  // Location Filter
+  if (selectedLocation.trim()) {
+    const locationSearch = selectedLocation
+      .replace("Current location,", "")
+      .trim()
+      .toLowerCase();
+
+    const normalizedLocation = locationSearch
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Check whether the selected location directly matches
+    // any salon location.
+    const exactLocationMatches = filteredSalons.filter((salon) => {
+      const salonLocation = salon.location
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return (
+        salonLocation.includes(normalizedLocation) ||
+        normalizedLocation.includes(salonLocation)
+      );
+    });
+
+    // If we have an exact area/location match, use it.
+    if (exactLocationMatches.length > 0) {
+      filteredSalons = exactLocationMatches;
+    } else {
+      // If the selected area is not yet present in our demo
+      // salon database, keep the city-level salon results
+      // instead of incorrectly showing "0 salons".
+      const cityMatch = normalizedLocation.match(
+        /(?:^| )(bhopal|indore|delhi|mumbai|pune)(?: |$)/i,
+      );
+
+      if (cityMatch) {
+        const city = cityMatch[1].toLowerCase();
+
+        const citySalons = filteredSalons.filter((salon) =>
+          salon.location.toLowerCase().includes(city),
+        );
+
+        if (citySalons.length > 0) {
+          filteredSalons = citySalons;
+        }
+      }
+    }
+  }
 
   // Filter by Services
   if (selectedServices.length > 0) {
@@ -66,6 +137,8 @@ export default function SalonGrid({
       break;
   }
 
+  console.log("Search:", searchText);
+  console.log("Location:", selectedLocation);
   console.log("Filtered Salons:", filteredSalons);
   console.log("Count:", filteredSalons.length);
 
@@ -75,7 +148,7 @@ export default function SalonGrid({
         <h2 className="text-2xl font-bold text-gray-700">No salons found 😔</h2>
 
         <p className="mt-3 text-gray-500">
-          Try changing your filters or reset them.
+          Try changing your search, location, or filters.
         </p>
       </div>
     );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 import PageHeader from "../../components/Salons/PageHeader/PageHeader";
 import Filters from "../../components/Salons/Filters/Filters";
@@ -6,6 +7,11 @@ import SortDropdown from "../../components/Salons/SortDropdown/SortDropdown";
 import SalonGrid from "../../components/Salons/SalonGrid/SalonGrid";
 
 export default function Salons() {
+  const [searchParams] = useSearchParams();
+
+  const searchText = searchParams.get("search") || "";
+  const selectedLocation = searchParams.get("location") || "";
+
   const [selectedServices, setSelectedServices] = useState([]);
 
   const [minimumRating, setMinimumRating] = useState(0);
@@ -41,6 +47,8 @@ export default function Salons() {
                 minimumRating={minimumRating}
                 priceRange={priceRange}
                 sortBy={sortBy}
+                searchText={searchText}
+                selectedLocation={selectedLocation}
               />
             </div>
           </div>
