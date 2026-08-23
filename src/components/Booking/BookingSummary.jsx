@@ -12,11 +12,24 @@ export default function BookingSummary({
   const { user } = useAuth();
 
   const handleConfirmBooking = async () => {
+    if (!user) {
+      navigate("/login", {
+        state: {
+          from: {
+            pathname: `/booking/${salon.id}`,
+          },
+        },
+      });
+
+      return;
+    }
+
     try {
       const bookingData = {
         salon: {
           id: salon.id,
           name: salon.name,
+          location: salon.location,
         },
         service: {
           id: selectedService.id,
@@ -28,11 +41,21 @@ export default function BookingSummary({
         time: selectedTime,
       };
 
-      await createBooking(bookingData);
+      const response = await createBooking(bookingData);
 
-      alert("Booking Confirmed 🎉");
+      const confirmedBooking = {
+        ...(response.booking || bookingData),
+        salon: {
+          ...(response.booking?.salon || {}),
+          ...bookingData.salon,
+        },
+      };
 
-      navigate("/");
+      navigate("/booking-confirmation", {
+        state: {
+          booking: confirmedBooking,
+        },
+      });
     } catch (error) {
       console.error("Booking error:", error);
 

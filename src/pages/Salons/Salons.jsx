@@ -1,6 +1,7 @@
 import { useState } from "react";
+
 import { useLocation } from "../../context/LocationContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 import PageHeader from "../../components/Salons/PageHeader/PageHeader";
 import Filters from "../../components/Salons/Filters/Filters";
@@ -8,11 +9,13 @@ import SortDropdown from "../../components/Salons/SortDropdown/SortDropdown";
 import SalonGrid from "../../components/Salons/SalonGrid/SalonGrid";
 
 export default function Salons() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const { location } = useLocation();
   const searchText = searchParams.get("search") || "";
   const selectedLocation = searchParams.get("location") || "";
-
+  const [totalSalons, setTotalSalons] = useState(0);
   const [selectedServices, setSelectedServices] = useState([]);
 
   const [minimumRating, setMinimumRating] = useState(0);
@@ -20,6 +23,19 @@ export default function Salons() {
   const [priceRange, setPriceRange] = useState("Any Price");
 
   const [sortBy, setSortBy] = useState("Recommended");
+
+  const resetFilters = () => {
+    setSelectedServices([]);
+    setMinimumRating(0);
+    setPriceRange("Any Price");
+    setSortBy("Recommended");
+  };
+
+  const startNewSearch = () => {
+    setSearchParams({});
+    resetFilters();
+    navigate("/");
+  };
 
   return (
     <Container>
@@ -40,7 +56,13 @@ export default function Salons() {
           </div>
 
           <div className="lg:col-span-9">
-            <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+            <SortDropdown
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              totalSalons={totalSalons}
+              selectedLocation={selectedLocation}
+              searchText={searchText}
+            />
 
             <div className="mt-6">
               <SalonGrid
@@ -51,6 +73,9 @@ export default function Salons() {
                 searchText={searchText}
                 selectedLocation={selectedLocation}
                 userLocation={location}
+                setTotalSalons={setTotalSalons}
+                onResetFilters={resetFilters}
+                onStartNewSearch={startNewSearch}
               />
             </div>
           </div>

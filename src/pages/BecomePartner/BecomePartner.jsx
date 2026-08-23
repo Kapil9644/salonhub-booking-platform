@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 import { partnerBenefits } from "../../data/partnerBenefits";
 import {
@@ -10,12 +9,9 @@ import {
 } from "lucide-react";
 
 export default function BecomePartner() {
-  const navigate = useNavigate();
-
   const handleGetStarted = () => {
-    alert("Partner registration will be available soon.");
+    window.open("/salon-owner", "_blank", "noopener,noreferrer");
   };
-
   const partnerSteps = [
     {
       id: 1,

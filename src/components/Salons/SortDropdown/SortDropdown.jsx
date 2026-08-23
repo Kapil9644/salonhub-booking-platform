@@ -1,8 +1,36 @@
-export default function SortDropdown({ sortBy, setSortBy, totalSalons = 0 }) {
+export default function SortDropdown({
+  sortBy,
+  setSortBy,
+  totalSalons = 0,
+  selectedLocation = "",
+  searchText = "",
+}) {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 className="text-3xl font-bold text-slate-900">Available Salons</h2>
+
+        {(selectedLocation || searchText) && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+            {selectedLocation && (
+              <span>
+                📍 Near{" "}
+                <span className="font-medium text-gray-700">
+                  {selectedLocation}
+                </span>
+              </span>
+            )}
+
+            {selectedLocation && searchText && <span>·</span>}
+
+            {searchText && (
+              <span>
+                🔍{" "}
+                <span className="font-medium text-gray-700">{searchText}</span>
+              </span>
+            )}
+          </div>
+        )}
 
         <p className="mt-1 text-gray-500">
           Showing {totalSalons} {totalSalons === 1 ? "salon" : "salons"}
@@ -22,6 +50,7 @@ export default function SortDropdown({ sortBy, setSortBy, totalSalons = 0 }) {
           <option>Lowest Price</option>
           <option>Highest Price</option>
           <option>Most Popular</option>
+          <option>Nearest</option>
         </select>
       </div>
     </div>

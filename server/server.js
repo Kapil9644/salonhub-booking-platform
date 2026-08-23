@@ -2,10 +2,11 @@ const bookingRoutes = require("./routes/bookingRoutes");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
+const salonRoutes = require("./routes/salonRoutes");
 const authRoutes = require("./routes/authRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const connectDB = require("./config/db");
+const adminSalonRoutes = require("./routes/adminSalonRoutes");
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/location", locationRoutes);
+app.use("/api/salons", salonRoutes);
+app.use("/api/admin/salons", adminSalonRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

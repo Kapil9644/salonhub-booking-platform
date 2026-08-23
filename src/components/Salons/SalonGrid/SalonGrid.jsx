@@ -10,6 +10,9 @@ export default function SalonGrid({
   searchText = "",
   selectedLocation = "",
   userLocation = null,
+  setTotalSalons,
+  onResetFilters,
+  onStartNewSearch,
 }) {
   let filteredSalons = [...salons];
 
@@ -140,6 +143,15 @@ export default function SalonGrid({
       filteredSalons.sort((a, b) => b.reviews - a.reviews);
       break;
 
+    case "Nearest":
+      filteredSalons.sort((a, b) => {
+        if (a.calculatedDistance == null) return 1;
+        if (b.calculatedDistance == null) return -1;
+
+        return a.calculatedDistance - b.calculatedDistance;
+      });
+      break;
+
     default:
       break;
   }
@@ -149,14 +161,43 @@ export default function SalonGrid({
   console.log("Filtered Salons:", filteredSalons);
   console.log("Count:", filteredSalons.length);
 
+  if (setTotalSalons) {
+    setTotalSalons(filteredSalons.length);
+  }
+
   if (filteredSalons.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 py-20 text-center">
-        <h2 className="text-2xl font-bold text-gray-700">No salons found 😔</h2>
+      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-20 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-3xl">
+          😔
+        </div>
 
-        <p className="mt-3 text-gray-500">
-          Try changing your search, location, or filters.
+        <h2 className="mt-5 text-2xl font-bold text-slate-900">
+          No salons found
+        </h2>
+
+        <p className="mt-3 max-w-md text-gray-500">
+          We couldn't find any salons matching your current search, location, or
+          filters.
         </p>
+
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="rounded-xl border border-purple-200 bg-white px-6 py-3 font-semibold text-purple-700 transition hover:bg-purple-50"
+          >
+            Clear Filters
+          </button>
+
+          <button
+            type="button"
+            onClick={onStartNewSearch}
+            className="rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700"
+          >
+            Start New Search
+          </button>
+        </div>
       </div>
     );
   }

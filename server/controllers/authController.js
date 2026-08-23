@@ -8,7 +8,7 @@ const cloudinary = require("../config/cloudinary");
 // Register User
 const register = async (req, res) => {
   try {
-    const { fullName, phone, email, password } = req.body;
+    const { fullName, phone, email, password, role } = req.body;
 
     // Validation
     if (!fullName || !phone || !password) {
@@ -37,6 +37,7 @@ const register = async (req, res) => {
       phone,
       email,
       password: hashedPassword,
+      role: role === "salon" ? "salon" : "customer",
     });
 
     // Generate JWT
@@ -482,6 +483,7 @@ const updateProfile = async (req, res) => {
 const uploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
+      const { fullName, phone, email, password } = req.body;
       return res.status(400).json({
         success: false,
         message: "Profile image is required.",

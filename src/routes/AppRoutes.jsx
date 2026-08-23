@@ -18,6 +18,14 @@ import Payment from "../pages/Payment/Payment";
 import Notifications from "../pages/Notifications/Notifications";
 import HelpSupport from "../pages/HelpSupport/HelpSupport";
 import AboutUs from "../pages/AboutUs/AboutUs";
+import BookingConfirmation from "../pages/BookingConfirmation/BookingConfirmation";
+import SalonOwner from "../pages/SalonOwner/SalonOwner";
+import SalonOwnerLayout from "../layouts/SalonOwnerLayout/SalonOwnerLayout";
+import SalonOwnerDashboard from "../pages/SalonOwner/SalonOwnerDashboard";
+import SalonProfile from "../pages/SalonOwner/SalonProfile";
+import AdminLayout from "../layouts/AdminLayout/AdminLayout";
+import AdminDashboard from "../pages/Admin/Dashboard/AdminDashboard";
+import SalonApplications from "../pages/Admin/SalonApplications/SalonApplications";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -102,6 +110,23 @@ export default function AppRoutes() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/help-support" element={<HelpSupport />} />
         <Route path="/about" element={<AboutUs />} />
+        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/salon-owner" element={<SalonOwner />} />
+      </Route>
+      <Route element={<SalonOwnerLayout />}>
+        <Route
+          path="/salon-owner/dashboard"
+          element={<SalonOwnerDashboard />}
+        />
+        <Route path="/salon-owner/profile" element={<SalonProfile />} />
+      </Route>
+      <Route element={<AdminLayout />}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+        <Route
+          path="/admin/salon-applications"
+          element={<SalonApplications />}
+        />
       </Route>
     </Routes>
   );
