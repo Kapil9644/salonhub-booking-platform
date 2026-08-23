@@ -5,3 +5,9 @@ export const getPendingSalons = async () => {
 
   return response.data;
 };
+
+export const approveSalon = async (salonId) => {
+  const response = await api.patch(`/admin/salons/${salonId}/approve`);
+
+  return response.data;
+};

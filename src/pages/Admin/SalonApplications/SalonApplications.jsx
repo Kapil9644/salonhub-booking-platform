@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { Clock3, MapPin, Store, User } from "lucide-react";
-import { getPendingSalons } from "../../../services/adminSalonService";
+import {
+  getPendingSalons,
+  approveSalon,
+} from "../../../services/adminSalonService";
 
 export default function SalonApplications() {
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [approvingId, setApprovingId] = useState(null);
 
   useEffect(() => {
     const fetchPendingSalons = async () => {
@@ -29,6 +33,27 @@ export default function SalonApplications() {
 
     fetchPendingSalons();
   }, []);
+
+  const handleApprove = async (salonId) => {
+    try {
+      setApprovingId(salonId);
+      setError("");
+
+      await approveSalon(salonId);
+
+      setSalons((currentSalons) =>
+        currentSalons.filter((salon) => salon._id !== salonId),
+      );
+    } catch (error) {
+      console.error("Failed to approve salon:", error);
+
+      setError(
+        error.response?.data?.message || "Failed to approve salon application.",
+      );
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -171,10 +196,11 @@ export default function SalonApplications() {
 
                 <button
                   type="button"
-                  disabled
-                  className="rounded-full bg-green-500 px-6 py-2.5 text-sm font-semibold text-white opacity-50"
+                  onClick={() => handleApprove(salon._id)}
+                  disabled={approvingId === salon._id}
+                  className="rounded-full bg-green-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Approve
+                  {approvingId === salon._id ? "Approving..." : "Approve"}
                 </button>
 
                 <button
