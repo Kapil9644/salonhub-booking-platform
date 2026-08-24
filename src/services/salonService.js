@@ -39,3 +39,17 @@ export const uploadSalonProfileImage = async (imageFile) => {
 
   return response.data;
 };
+
+// Get salons visible to customers
+export const getPublicSalons = async () => {
+  const response = await api.get("/salons");
+
+  return response.data;
+};
+
+// Get complete details of one public salon
+export const getPublicSalonDetails = async (salonId) => {
+  const response = await api.get(`/salons/${salonId}`);
+
+  return response.data;
+};

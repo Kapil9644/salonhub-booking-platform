@@ -7,7 +7,7 @@ export default function SalonCard({
   name,
   rating,
   reviews,
-  services,
+  services = [],
   location,
   distance,
   price,
@@ -57,7 +57,7 @@ export default function SalonCard({
           <div className="mt-4 flex flex-wrap gap-2">
             {services.map((service) => (
               <span
-                key={service.id}
+                key={service._id || service.id}
                 className="rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-700"
               >
                 {service.name}
@@ -66,13 +66,13 @@ export default function SalonCard({
           </div>
 
           {/* Location */}
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <MapPin size={16} />
-              {location}
-            </div>
-
-            <span>{distance}</span>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} />
+            <span>
+              {typeof location === "object"
+                ? `${location.area || ""}, ${location.city || ""}`
+                : location}
+            </span>
           </div>
 
           {/* Bottom */}

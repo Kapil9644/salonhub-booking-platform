@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getPublicSalons } from "../../services/salonService";
 
 import { useLocation } from "../../context/LocationContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -13,6 +14,9 @@ export default function Salons() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { location } = useLocation();
+  const [salons, setSalons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const searchText = searchParams.get("search") || "";
   const selectedLocation = searchParams.get("location") || "";
   const [totalSalons, setTotalSalons] = useState(0);
@@ -36,6 +40,27 @@ export default function Salons() {
     resetFilters();
     navigate("/");
   };
+
+  useEffect(() => {
+    const fetchSalons = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getPublicSalons();
+
+        setSalons(data.salons || []);
+      } catch (error) {
+        console.error("Failed to fetch public salons:", error);
+
+        setError(error.response?.data?.message || "Failed to load salons.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSalons();
+  }, []);
 
   return (
     <Container>
@@ -66,6 +91,7 @@ export default function Salons() {
 
             <div className="mt-6">
               <SalonGrid
+                salons={salons}
                 selectedServices={selectedServices}
                 minimumRating={minimumRating}
                 priceRange={priceRange}

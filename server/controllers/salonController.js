@@ -1,5 +1,7 @@
 const cloudinary = require("../config/cloudinary");
 const Salon = require("../models/Salon");
+const Service = require("../models/Service");
+const WorkingHours = require("../models/WorkingHours");
 
 // Get salon owned by logged-in salon owner
 const getMySalon = async (req, res) => {
@@ -268,6 +270,7 @@ const toggleSalonStatus = async (req, res) => {
 };
 
 // Get salons visible to customers
+// Get salons visible to customers
 const getPublicSalons = async (req, res) => {
   try {
     const salons = await Salon.find({
@@ -275,12 +278,116 @@ const getPublicSalons = async (req, res) => {
       isListed: true,
     }).sort({ createdAt: -1 });
 
+    const salonsWithServices = await Promise.all(
+      salons.map(async (salon) => {
+        const services = await Service.find({
+          salon: salon._id,
+          isActive: true,
+        }).sort({ createdAt: -1 });
+
+        const lowestPrice =
+          services.length > 0
+            ? Math.min(...services.map((service) => service.price))
+            : null;
+
+        return {
+          _id: salon._id,
+          name: salon.name,
+          profileImage: salon.profileImage,
+          about: salon.about,
+          location: salon.location,
+          phone: salon.phone,
+          email: salon.email,
+          isListed: salon.isListed,
+          isOpen: salon.isOpen,
+          approvalStatus: salon.approvalStatus,
+          services,
+          price: lowestPrice,
+          priceLabel:
+            lowestPrice !== null
+              ? `₹${lowestPrice} onwards`
+              : "Price unavailable",
+        };
+      }),
+    );
+
     res.status(200).json({
       success: true,
-      salons,
+      salons: salonsWithServices,
     });
   } catch (error) {
     console.error("Get public salons error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// Get complete details of a public salon
+const getPublicSalonDetails = async (req, res) => {
+  try {
+    const salon = await Salon.findOne({
+      _id: req.params.salonId,
+      approvalStatus: "Approved",
+      isListed: true,
+    });
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found.",
+      });
+    }
+
+    const services = await Service.find({
+      salon: salon._id,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    let workingHours = await WorkingHours.findOne({
+      salon: salon._id,
+    });
+
+    if (!workingHours) {
+      workingHours = await WorkingHours.create({
+        salon: salon._id,
+      });
+    }
+
+    const startingPrice =
+      services.length > 0
+        ? Math.min(...services.map((service) => service.price))
+        : null;
+
+    res.status(200).json({
+      success: true,
+      salon: {
+        _id: salon._id,
+        name: salon.name,
+        profileImage: salon.profileImage,
+        about: salon.about,
+        location: salon.location,
+        phone: salon.phone,
+        email: salon.email,
+        isListed: salon.isListed,
+        isOpen: salon.isOpen,
+        approvalStatus: salon.approvalStatus,
+
+        services,
+
+        workingHours,
+
+        startingPrice,
+        priceLabel:
+          startingPrice !== null
+            ? `₹${startingPrice} onwards`
+            : "Price unavailable",
+      },
+    });
+  } catch (error) {
+    console.error("Get public salon details error:", error);
 
     res.status(500).json({
       success: false,
@@ -297,4 +404,5 @@ module.exports = {
   toggleSalonStatus,
   uploadSalonProfileImage,
   getPublicSalons,
+  getPublicSalonDetails,
 };

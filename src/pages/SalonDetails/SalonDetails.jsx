@@ -1,23 +1,76 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+
 import Container from "../../layouts/Container/Container";
-import { salons } from "../../data/salons";
 import HeroSection from "../../components/SalonDetails/HeroSection";
 import AboutSection from "../../components/SalonDetails/AboutSection";
 import WorkingHours from "../../components/SalonDetails/WorkingHours";
 import BookingCard from "../../components/SalonDetails/BookingCard";
 import ServicesSection from "../../components/SalonDetails/ServicesSection";
 
+import { getPublicSalonDetails } from "../../services/salonService";
+
 export default function SalonDetails() {
   const { id } = useParams();
-  const salon = salons.find((salon) => salon.id === Number(id));
+
+  const [salon, setSalon] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
 
-  if (!salon) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchSalonDetails = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getPublicSalonDetails(id);
+
+        if (!data.success || !data.salon) {
+          throw new Error("Salon details not found.");
+        }
+
+        setSalon(data.salon);
+      } catch (error) {
+        console.error("Failed to fetch salon details:", error);
+
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to load salon details.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchSalonDetails();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Container>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <p className="text-lg font-semibold text-gray-500">
+            Loading salon details...
+          </p>
+        </div>
+      </Container>
+    );
+  }
+
+  if (error || !salon) {
     return (
       <Container>
         <div className="py-20 text-center">
-          <h1 className="text-3xl font-bold">Salon not found</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Salon not found</h1>
+
+          <p className="mt-3 text-gray-500">
+            {error || "Unable to load salon details."}
+          </p>
         </div>
       </Container>
     );
@@ -32,7 +85,7 @@ export default function SalonDetails() {
           <AboutSection about={salon.about} />
 
           <ServicesSection
-            services={salon.services}
+            services={salon.services || []}
             selectedService={selectedService}
             setSelectedService={setSelectedService}
           />

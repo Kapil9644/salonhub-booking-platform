@@ -1,8 +1,8 @@
 import SalonCard from "../../common/SalonCard/SalonCard";
-import { salons } from "../../../data/salons";
 import { calculateDistance } from "../../../utils/distance";
 
 export default function SalonGrid({
+  salons = [],
   selectedServices = [],
   minimumRating = 0,
   priceRange = "Any Price",
@@ -206,8 +206,9 @@ export default function SalonGrid({
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
       {filteredSalons.map((salon) => (
         <SalonCard
-          key={salon.id}
+          key={salon._id}
           {...salon}
+          image={salon.profileImage}
           distance={
             salon.calculatedDistance != null
               ? `${salon.calculatedDistance.toFixed(1)} km`

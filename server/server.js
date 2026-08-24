@@ -7,6 +7,8 @@ const authRoutes = require("./routes/authRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const connectDB = require("./config/db");
 const adminSalonRoutes = require("./routes/adminSalonRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
+const workingHoursRoutes = require("./routes/workingHoursRoutes");
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/salons", salonRoutes);
 app.use("/api/admin/salons", adminSalonRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/working-hours", workingHoursRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

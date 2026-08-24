@@ -14,6 +14,7 @@ const {
   toggleSalonVisibility,
   toggleSalonStatus,
   getPublicSalons,
+  getPublicSalonDetails,
 } = require("../controllers/salonController");
 
 const protect = require("../middleware/authMiddleware");
@@ -36,11 +37,16 @@ router.patch("/my/visibility", protect, toggleSalonVisibility);
 // Toggle open/closed status
 router.patch("/my/status", protect, toggleSalonStatus);
 
+// Upload salon profile image
 router.post(
   "/my/profile-image",
   protect,
   upload.single("profileImage"),
   uploadSalonProfileImage,
 );
+
+// Get complete details of one public salon
+// Keep this LAST because :salonId is a dynamic route
+router.get("/:salonId", getPublicSalonDetails);
 
 module.exports = router;
