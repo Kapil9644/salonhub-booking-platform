@@ -15,6 +15,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isSalonOwnerLogin = location.pathname === "/salon-owner/login";
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
@@ -36,7 +37,13 @@ const Login = () => {
 
       alert("Login Successful 🎉");
 
-      navigate(location.state?.from?.pathname || "/");
+      if (isSalonOwnerLogin) {
+        navigate("/salon-owner/dashboard", { replace: true });
+      } else {
+        navigate(location.state?.from?.pathname || "/", {
+          replace: true,
+        });
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Login Failed");
     } finally {
@@ -46,10 +53,9 @@ const Login = () => {
 
   return (
     <div className="min-h-fit bg-gray-50 px-4 py-10 sm:py-8">
-      <h2 className="text-3xl font-bold text-gray-900 text-center mb-10">
-        SalonHub Login
+      <h2 className="text-center text-3xl font-bold text-gray-900">
+        {isSalonOwnerLogin ? "Salon Owner Login" : "SalonHub Login"}
       </h2>
-
       <form
         onSubmit={handleSubmit}
         className="mx-auto max-w-md rounded-2xl border border-gray-400 bg-white p-6 shadow-lg sm:p-8"
@@ -112,7 +118,7 @@ const Login = () => {
         <p className="mt-6 text-center text-sm text-gray-500">
           Don't have an account?{" "}
           <Link
-            to="/signup"
+            to={isSalonOwnerLogin ? "/salon-owner/signup" : "/signup"}
             className="font-semibold text-purple-600 transition hover:text-purple-700"
           >
             Sign Up

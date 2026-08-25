@@ -8,6 +8,7 @@ import {
   Settings,
   Store,
 } from "lucide-react";
+import { useSalonOwnerAuth } from "../../../context/SalonOwnerAuthContext";
 
 const menuItems = [
   {
@@ -43,6 +44,11 @@ const menuItems = [
 ];
 
 export default function SalonOwnerSidebar() {
+  const { logoutSalonOwner } = useSalonOwnerAuth();
+  const handleLogout = () => {
+    logoutSalonOwner();
+    window.location.replace("/salon-owner");
+  };
   return (
     <aside className="hidden min-h-[calc(100vh-64px)] w-64 shrink-0 border-r border-gray-200 bg-white lg:block">
       <div className="flex h-full flex-col p-4">
@@ -71,7 +77,11 @@ export default function SalonOwnerSidebar() {
         </nav>
 
         <div className="mt-auto border-t border-gray-100 pt-4">
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-600">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-red-50 hover:text-red-600"
+          >
             <LogOut size={19} />
 
             <span>Logout</span>

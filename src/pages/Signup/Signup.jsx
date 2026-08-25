@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { registerUser } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 
 const Signup = () => {
@@ -19,6 +19,8 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isSalonOwnerSignup = location.pathname === "/salon-owner/signup";
 
   const handleChange = (e) => {
     setFormData({
@@ -37,13 +39,22 @@ const Signup = () => {
     try {
       setLoading(true);
 
-      const data = await registerUser(formData);
+      const registrationData = {
+        ...formData,
+        role: isSalonOwnerSignup ? "salon" : "customer",
+      };
+
+      const data = await registerUser(registrationData);
 
       login(data.user, data.token);
 
       alert("Registration Successful 🎉");
 
-      navigate("/");
+      if (isSalonOwnerSignup) {
+        navigate("/salon-owner/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       alert(error.response?.data?.message || "Registration Failed");
     } finally {
@@ -54,7 +65,7 @@ const Signup = () => {
   return (
     <div className="min-h-fit bg-gray-50 px-4 py-10 sm:py-8">
       <h1 className="mb-10 text-center text-3xl font-bold text-gray-900">
-        SalonHub Signup
+        {isSalonOwnerSignup ? "Become a Salon Partner" : "SalonHub Signup"}
       </h1>
       <form
         onSubmit={handleSubmit}
@@ -96,19 +107,21 @@ const Signup = () => {
           />
         </div>
 
-        <div>
-          <label>Account Type</label>
+        {!isSalonOwnerSignup && (
+          <div>
+            <label>Account Type</label>
 
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-          >
-            <option value="customer">Customer</option>
-            <option value="salon">Salon Owner</option>
-          </select>
-        </div>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+            >
+              <option value="customer">Customer</option>
+              <option value="salon">Salon Owner</option>
+            </select>
+          </div>
+        )}
 
         <div>
           <label>Password</label>
@@ -167,12 +180,16 @@ const Signup = () => {
           disabled={loading}
           className="w-full rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {loading
+            ? "Creating Account..."
+            : isSalonOwnerSignup
+              ? "Create Salon Owner Account"
+              : "Create Account"}
         </button>
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{" "}
           <Link
-            to="/login"
+            to={isSalonOwnerSignup ? "/salon-owner/login" : "/login"}
             className="font-semibold text-purple-600 transition hover:text-purple-700"
           >
             Login

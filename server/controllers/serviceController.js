@@ -252,7 +252,6 @@ const deleteService = async (req, res) => {
 module.exports = {
   getMyServices,
   getPublicSalonServices,
-
   createService,
   updateService,
   deleteService,

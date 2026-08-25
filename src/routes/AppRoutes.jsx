@@ -1,3 +1,4 @@
+import SalonOwnerRoute from "../components/common/SalonOwnerRoute/SalonOwnerRoute";
 import ProtectedRoute from "../components/common/ProtectedRoute/ProtectedRoute";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -28,6 +29,10 @@ import AdminDashboard from "../pages/Admin/Dashboard/AdminDashboard";
 import SalonApplications from "../pages/Admin/SalonApplications/SalonApplications";
 import SalonOwnerServices from "../pages/SalonOwner/Services";
 import WorkingHours from "../pages/SalonOwner/WorkingHours";
+import SalonOwnerLogin from "../pages/SalonOwner/SalonOwnerLogin/SalonOwnerLogin";
+import SalonOwnerSignup from "../pages/SalonOwner/SalonOwnerSignup/SalonOwnerSignup";
+import SalonOwnerPublicLayout from "../layouts/SalonOwnerPublicLayout/SalonOwnerPublicLayout";
+import SalonOwnerForgotPassword from "../pages/SalonOwner/SalonOwnerForgotPassword/SalonOwnerForgotPassword";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -51,23 +56,10 @@ export default function AppRoutes() {
 
       <Route element={<MainLayout />}>
         {/* Public Authentication Routes */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
+        <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          }
-        />
+        <Route path="/signup" element={<Signup />} />
+
         <Route
           path="/forgot-password"
           element={
@@ -113,16 +105,39 @@ export default function AppRoutes() {
         <Route path="/help-support" element={<HelpSupport />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-        <Route path="/salon-owner" element={<SalonOwner />} />
       </Route>
-      <Route element={<SalonOwnerLayout />}>
+
+      {/* Salon Owner Public Portal */}
+      <Route element={<SalonOwnerPublicLayout />}>
+        <Route path="/salon-owner" element={<SalonOwner />} />
+
+        <Route path="/salon-owner/login" element={<SalonOwnerLogin />} />
+
+        <Route path="/salon-owner/signup" element={<SalonOwnerSignup />} />
+
         <Route
-          path="/salon-owner/dashboard"
-          element={<SalonOwnerDashboard />}
+          path="/salon-owner/forgot-password"
+          element={<SalonOwnerForgotPassword />}
         />
-        <Route path="/salon-owner/profile" element={<SalonProfile />} />
-        <Route path="/salon-owner/services" element={<SalonOwnerServices />} />
-        <Route path="/salon-owner/working-hours" element={<WorkingHours />} />
+      </Route>
+
+      {/* Salon Owner Dashboard */}
+      <Route element={<SalonOwnerRoute />}>
+        <Route element={<SalonOwnerLayout />}>
+          <Route
+            path="/salon-owner/dashboard"
+            element={<SalonOwnerDashboard />}
+          />
+
+          <Route path="/salon-owner/profile" element={<SalonProfile />} />
+
+          <Route
+            path="/salon-owner/services"
+            element={<SalonOwnerServices />}
+          />
+
+          <Route path="/salon-owner/working-hours" element={<WorkingHours />} />
+        </Route>
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
