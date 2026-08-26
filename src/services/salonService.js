@@ -1,31 +1,36 @@
 import api from "./api";
+import salonOwnerApi from "./salonOwnerApi";
+
+// ================================
+// SALON OWNER APIs
+// ================================
 
 export const getMySalon = async () => {
-  const response = await api.get("/salons/my");
+  const response = await salonOwnerApi.get("/salons/my");
 
   return response.data;
 };
 
 export const createSalon = async (salonData) => {
-  const response = await api.post("/salons", salonData);
+  const response = await salonOwnerApi.post("/salons", salonData);
 
   return response.data;
 };
 
 export const updateSalon = async (salonData) => {
-  const response = await api.put("/salons/my", salonData);
+  const response = await salonOwnerApi.put("/salons/my", salonData);
 
   return response.data;
 };
 
 export const toggleSalonVisibility = async () => {
-  const response = await api.patch("/salons/my/visibility");
+  const response = await salonOwnerApi.patch("/salons/my/visibility");
 
   return response.data;
 };
 
 export const toggleSalonStatus = async () => {
-  const response = await api.patch("/salons/my/status");
+  const response = await salonOwnerApi.patch("/salons/my/status");
 
   return response.data;
 };
@@ -35,19 +40,24 @@ export const uploadSalonProfileImage = async (imageFile) => {
 
   formData.append("profileImage", imageFile);
 
-  const response = await api.post("/salons/my/profile-image", formData);
+  const response = await salonOwnerApi.post(
+    "/salons/my/profile-image",
+    formData,
+  );
 
   return response.data;
 };
 
-// Get salons visible to customers
+// ================================
+// PUBLIC / CUSTOMER APIs
+// ================================
+
 export const getPublicSalons = async () => {
   const response = await api.get("/salons");
 
   return response.data;
 };
 
-// Get complete details of one public salon
 export const getPublicSalonDetails = async (salonId) => {
   const response = await api.get(`/salons/${salonId}`);
 

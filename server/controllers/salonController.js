@@ -17,9 +17,29 @@ const getMySalon = async (req, res) => {
       });
     }
 
+    // Get active services count
+    const servicesCount = await Service.countDocuments({
+      salon: salon._id,
+      isActive: true,
+    });
+
+    // Get working hours
+    let workingHours = await WorkingHours.findOne({
+      salon: salon._id,
+    });
+
+    // Create default working hours if they don't exist
+    if (!workingHours) {
+      workingHours = await WorkingHours.create({
+        salon: salon._id,
+      });
+    }
+
     res.status(200).json({
       success: true,
       salon,
+      servicesCount,
+      workingHours,
     });
   } catch (error) {
     console.error("Get my salon error:", error);
@@ -30,7 +50,6 @@ const getMySalon = async (req, res) => {
     });
   }
 };
-
 // Create salon profile
 const createSalon = async (req, res) => {
   try {

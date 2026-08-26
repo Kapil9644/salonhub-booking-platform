@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { Camera, MapPin, Save, Store } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Edit3,
+  Eye,
+  EyeOff,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Store,
+  XCircle,
+} from "lucide-react";
+
 import {
   createSalon,
   getMySalon,
@@ -21,12 +34,22 @@ const emptyForm = {
 
 export default function SalonProfile() {
   const [formData, setFormData] = useState(emptyForm);
+
   const [salonExists, setSalonExists] = useState(false);
+  const [salon, setSalon] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [profileImage, setProfileImage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
   const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [isListed, setIsListed] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchSalon = async () => {
@@ -34,25 +57,30 @@ export default function SalonProfile() {
         setLoading(true);
 
         const data = await getMySalon();
-        const salon = data.salon;
+        const currentSalon = data.salon;
 
+        setSalon(currentSalon);
         setSalonExists(true);
 
         setFormData({
-          name: salon.name || "",
-          about: salon.about || "",
-          address: salon.location?.address || "",
-          area: salon.location?.area || "",
-          city: salon.location?.city || "",
-          state: salon.location?.state || "",
-          pincode: salon.location?.pincode || "",
-          phone: salon.phone || "",
-          email: salon.email || "",
+          name: currentSalon.name || "",
+          about: currentSalon.about || "",
+          address: currentSalon.location?.address || "",
+          area: currentSalon.location?.area || "",
+          city: currentSalon.location?.city || "",
+          state: currentSalon.location?.state || "",
+          pincode: currentSalon.location?.pincode || "",
+          phone: currentSalon.phone || "",
+          email: currentSalon.email || "",
         });
-        setProfileImage(salon.profileImage || "");
-        setApprovalStatus(salon.approvalStatus || "Pending");
+
+        setProfileImage(currentSalon.profileImage || "");
+        setApprovalStatus(currentSalon.approvalStatus || "Pending");
+        setIsListed(Boolean(currentSalon.isListed));
+        setIsOpen(Boolean(currentSalon.isOpen));
       } catch (error) {
         if (error.response?.status === 404) {
+          setSalon(null);
           setSalonExists(false);
           setFormData(emptyForm);
         } else {
@@ -66,8 +94,8 @@ export default function SalonProfile() {
     fetchSalon();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
     setFormData((current) => ({
       ...current,
@@ -75,76 +103,120 @@ export default function SalonProfile() {
     }));
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
 
-    if (!file) return;
+  const handleCancel = () => {
+    if (salon) {
+      setFormData({
+        name: salon.name || "",
+        about: salon.about || "",
+        address: salon.location?.address || "",
+        area: salon.location?.area || "",
+        city: salon.location?.city || "",
+        state: salon.location?.state || "",
+        pincode: salon.location?.pincode || "",
+        phone: salon.phone || "",
+        email: salon.email || "",
+      });
 
-    if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image.");
+      setProfileImage(salon.profileImage || "");
+    }
+
+    setSelectedImage(null);
+    setImagePreview("");
+    setIsEditing(false);
+  };
+
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
       return;
     }
 
-    try {
-      setUploadingImage(true);
-
-      const data = await uploadSalonProfileImage(file);
-
-      setProfileImage(data.salon.profileImage || "");
-
-      alert("Salon profile photo updated successfully.");
-    } catch (error) {
-      console.error("Salon image upload error:", error);
-
-      alert(
-        error.response?.data?.message ||
-          "Failed to upload salon image. Please try again.",
-      );
-    } finally {
-      setUploadingImage(false);
-      e.target.value = "";
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image.");
+      event.target.value = "";
+      return;
     }
+
+    setSelectedImage(file);
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    event.target.value = "";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formData.name.trim()) {
+      alert("Salon name is required.");
+      return;
+    }
 
     try {
       setSaving(true);
 
       const salonData = {
-        name: formData.name,
-        about: formData.about,
+        name: formData.name.trim(),
+        about: formData.about.trim(),
         location: {
-          address: formData.address,
-          area: formData.area,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
+          address: formData.address.trim(),
+          area: formData.area.trim(),
+          city: formData.city.trim(),
+          state: formData.state.trim(),
+          pincode: formData.pincode.trim(),
         },
-        phone: formData.phone,
-        email: formData.email,
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
       };
 
+      // Save salon information first
       const data = salonExists
         ? await updateSalon(salonData)
         : await createSalon(salonData);
 
+      let updatedSalon = data.salon;
+
+      setSalon(updatedSalon);
       setSalonExists(true);
 
+      // Upload selected image only after Save Changes
+      if (selectedImage) {
+        const imageData = await uploadSalonProfileImage(selectedImage);
+
+        updatedSalon = imageData.salon;
+
+        setSalon(updatedSalon);
+        setProfileImage(updatedSalon.profileImage || "");
+
+        setSelectedImage(null);
+        setImagePreview("");
+      } else {
+        setProfileImage(updatedSalon.profileImage || "");
+      }
+
       setFormData({
-        name: data.salon.name || "",
-        about: data.salon.about || "",
-        address: data.salon.location?.address || "",
-        area: data.salon.location?.area || "",
-        city: data.salon.location?.city || "",
-        state: data.salon.location?.state || "",
-        pincode: data.salon.location?.pincode || "",
-        phone: data.salon.phone || "",
-        email: data.salon.email || "",
+        name: updatedSalon.name || "",
+        about: updatedSalon.about || "",
+        address: updatedSalon.location?.address || "",
+        area: updatedSalon.location?.area || "",
+        city: updatedSalon.location?.city || "",
+        state: updatedSalon.location?.state || "",
+        pincode: updatedSalon.location?.pincode || "",
+        phone: updatedSalon.phone || "",
+        email: updatedSalon.email || "",
       });
 
-      setApprovalStatus(data.salon.approvalStatus || "Pending");
+      setApprovalStatus(updatedSalon.approvalStatus || "Pending");
+      setIsListed(Boolean(updatedSalon.isListed));
+      setIsOpen(Boolean(updatedSalon.isOpen));
+
+      setIsEditing(false);
 
       alert(
         salonExists
@@ -163,146 +235,194 @@ export default function SalonProfile() {
     }
   };
 
+  const getApprovalStyles = () => {
+    if (approvalStatus === "Approved") {
+      return {
+        wrapper: "bg-green-100 text-green-700",
+        icon: <CheckCircle2 size={16} />,
+      };
+    }
+
+    if (approvalStatus === "Rejected") {
+      return {
+        wrapper: "bg-red-100 text-red-700",
+        icon: <XCircle size={16} />,
+      };
+    }
+
+    return {
+      wrapper: "bg-yellow-100 text-yellow-700",
+      icon: <span className="h-2 w-2 rounded-full bg-yellow-500" />,
+    };
+  };
+
+  const approvalStyles = getApprovalStyles();
+
+  const getLocationText = () => {
+    const parts = [
+      formData.area,
+      formData.city,
+      formData.state,
+      formData.pincode,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(", ") : "Location not added";
+  };
+
   if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-gray-500">Loading salon information...</p>
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="mb-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
+            SalonHub for Business
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold text-slate-900">My Salon</h1>
+
+          <p className="mt-2 text-gray-500">
+            Manage your salon's business information.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-gray-500">Loading salon information...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      {/* Header */}
-      <div>
+    <div className="mx-auto w-full max-w-5xl">
+      {/* Page Header */}
+      <div className="mb-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-          Salon Profile
+          SalonHub for Business
         </p>
 
         <h1 className="mt-2 text-3xl font-bold text-slate-900">My Salon</h1>
 
         <p className="mt-2 text-gray-500">
-          Manage your salon's basic information and location.
+          Manage your salon's business information and public details.
         </p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        {/* Approval Status */}
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Approval Status
-              </h2>
+      {/* Salon Header Card */}
+      <section className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-100 bg-gray-50 px-5 py-6 sm:px-8 sm:py-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            {/* Salon Identity */}
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              {/* TOP IMAGE - NO CAMERA BUTTON */}
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-purple-100 shadow-sm sm:h-28 sm:w-28">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt={formData.name || "Salon"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Store size={42} className="text-purple-500" />
+                )}
+              </div>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Your salon's current approval status on SalonHub.
-              </p>
+              <div className="min-w-0 flex-1">
+                <h2 className="whitespace-nowrap text-xl font-bold text-slate-900 sm:text-2xl">
+                  {formData.name || "Your Salon"}
+                </h2>
+
+                <div className="mt-1 flex items-start gap-1.5 text-sm text-gray-500">
+                  <MapPin size={16} className="mt-0.5 shrink-0" />
+
+                  <span className="line-clamp-2">{getLocationText()}</span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${approvalStyles.wrapper}`}
+                  >
+                    {approvalStyles.icon}
+
+                    {approvalStatus === "Pending"
+                      ? "Pending Approval"
+                      : approvalStatus}
+                  </span>
+
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      isListed
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {isListed ? <Eye size={14} /> : <EyeOff size={14} />}
+
+                    {isListed ? "Listed" : "Hidden"}
+                  </span>
+
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                      isOpen
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isOpen ? "bg-green-600" : "bg-gray-500"
+                      }`}
+                    />
+
+                    {isOpen ? "Open" : "Closed"}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <span
-              className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-                approvalStatus === "Approved"
-                  ? "bg-green-100 text-green-700"
-                  : approvalStatus === "Rejected"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
-              }`}
-            >
-              {approvalStatus}
-            </span>
-          </div>
-
-          <div className="mt-5 rounded-2xl bg-gray-50 p-4">
-            {approvalStatus === "Pending" && (
-              <p className="text-sm leading-6 text-gray-600">
-                Your salon profile has been submitted and is waiting for admin
-                approval. It will not appear publicly on SalonHub until it is
-                approved.
-              </p>
-            )}
-
-            {approvalStatus === "Approved" && (
-              <p className="text-sm leading-6 text-gray-600">
-                Your salon has been approved by SalonHub. You can now manage
-                your salon and make it visible to customers.
-              </p>
-            )}
-
-            {approvalStatus === "Rejected" && (
-              <p className="text-sm leading-6 text-gray-600">
-                Your salon profile was rejected by the admin. Please review your
-                information and contact SalonHub support.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* Salon Profile Photo */}
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-              <Camera size={21} />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Salon Profile Photo
-              </h2>
-
-              <p className="text-sm text-gray-500">
-                Add a photo that represents your salon.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-col items-center gap-5 sm:flex-row">
-            <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt="Salon"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Store size={42} className="text-gray-400" />
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="salon-profile-image"
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-full bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 ${
-                  uploadingImage ? "pointer-events-none opacity-60" : ""
-                }`}
+            {/* Edit Button */}
+            {!isEditing && salonExists && (
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-purple-300 px-5 py-3 font-semibold text-purple-700 transition hover:bg-purple-50 sm:w-auto"
               >
-                <Camera size={18} />
-
-                {uploadingImage ? "Uploading..." : "Upload Photo"}
-              </label>
-
-              <input
-                id="salon-profile-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                disabled={uploadingImage}
-              />
-
-              <p className="mt-3 text-sm text-gray-500">
-                JPG, PNG or WebP. Choose a clear photo of your salon.
-              </p>
-            </div>
+                <Edit3 size={18} />
+                Edit Profile
+              </button>
+            )}
           </div>
-        </section>
+        </div>
 
+        {/* Approval Message */}
+        <div className="border-b border-gray-100 px-5 py-5 sm:px-8">
+          {approvalStatus === "Pending" && (
+            <p className="text-sm leading-6 text-gray-600">
+              Your salon profile is waiting for admin approval. Customers will
+              not be able to see your salon until it has been approved.
+            </p>
+          )}
+
+          {approvalStatus === "Approved" && (
+            <p className="text-sm leading-6 text-gray-600">
+              Your salon has been approved. You can manage your salon
+              information and visibility from this dashboard.
+            </p>
+          )}
+
+          {approvalStatus === "Rejected" && (
+            <p className="text-sm leading-6 text-gray-600">
+              Your salon application was rejected. Please review your salon
+              information and contact SalonHub support.
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         {/* Basic Information */}
-
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
               <Store size={21} />
             </div>
 
@@ -328,9 +448,10 @@ export default function SalonProfile() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                disabled={!isEditing}
                 required
                 placeholder="Enter salon name"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
@@ -343,18 +464,19 @@ export default function SalonProfile() {
                 name="about"
                 value={formData.about}
                 onChange={handleChange}
+                disabled={!isEditing}
                 rows={5}
                 placeholder="Describe your salon, services and experience..."
-                className="mt-2 w-full resize-none rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
           </div>
         </section>
 
         {/* Location */}
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
               <MapPin size={21} />
             </div>
 
@@ -380,8 +502,9 @@ export default function SalonProfile() {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="Full salon address"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
@@ -395,8 +518,9 @@ export default function SalonProfile() {
                 name="area"
                 value={formData.area}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="e.g. MP Nagar"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
@@ -410,8 +534,9 @@ export default function SalonProfile() {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="e.g. Bhopal"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
@@ -425,8 +550,9 @@ export default function SalonProfile() {
                 name="state"
                 value={formData.state}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="e.g. Madhya Pradesh"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
@@ -440,28 +566,36 @@ export default function SalonProfile() {
                 name="pincode"
                 value={formData.pincode}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="e.g. 462011"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
           </div>
         </section>
 
-        {/* Contact */}
-        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              Contact Information
-            </h2>
+        {/* Contact Information */}
+        <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+              <Phone size={21} />
+            </div>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Contact details customers can use to reach your salon.
-            </p>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Contact Information
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Contact details customers can use to reach your salon.
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-semibold text-gray-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Phone size={16} />
                 Phone Number
               </label>
 
@@ -470,13 +604,15 @@ export default function SalonProfile() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="Salon phone number"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Mail size={16} />
                 Email
               </label>
 
@@ -485,29 +621,120 @@ export default function SalonProfile() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                disabled={!isEditing}
                 placeholder="Salon email"
-                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
             </div>
           </div>
         </section>
 
-        {/* Save */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center justify-center gap-2 rounded-full bg-purple-600 px-8 py-3.5 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Save size={19} />
+        {/* Salon Profile Photo */}
+        <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+              <Camera size={21} />
+            </div>
 
-            {saving
-              ? "Saving..."
-              : salonExists
-                ? "Save Changes"
-                : "Create Salon Profile"}
-          </button>
-        </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Salon Profile Photo
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Use a clear photo that represents your salon.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
+            {/* Bottom Photo Preview */}
+            <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+              {imagePreview || profileImage ? (
+                <img
+                  src={imagePreview || profileImage}
+                  alt={formData.name || "Salon"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Store size={42} className="text-gray-400" />
+              )}
+            </div>
+
+            {/* Change Photo */}
+            <div className="min-w-0">
+              <label
+                htmlFor="salon-profile-image"
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 sm:w-auto ${
+                  !isEditing
+                    ? "pointer-events-none cursor-not-allowed opacity-50"
+                    : "cursor-pointer"
+                }`}
+              >
+                <Camera size={18} />
+                Change Photo
+              </label>
+
+              <input
+                id="salon-profile-image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                disabled={!isEditing}
+                className="hidden"
+              />
+
+              <p className="mt-3 text-sm leading-5 text-gray-500">
+                JPG, PNG or WebP. Choose a clear photo of your salon.
+              </p>
+
+              {selectedImage && (
+                <p className="mt-2 text-sm font-medium text-purple-600">
+                  New photo selected. Click Save Changes to upload it.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Actions */}
+        {isEditing && (
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={saving}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-7 py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-7 py-3.5 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              <Save size={19} />
+
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        )}
+
+        {/* Create Salon */}
+        {!salonExists && (
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-7 py-3.5 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              <Save size={19} />
+
+              {saving ? "Creating..." : "Create Salon Profile"}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

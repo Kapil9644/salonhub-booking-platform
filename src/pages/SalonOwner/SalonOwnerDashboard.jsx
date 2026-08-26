@@ -1,29 +1,52 @@
 import { useEffect, useState } from "react";
-import { CalendarCheck, Clock3, Eye, EyeOff, Store } from "lucide-react";
+import {
+  CalendarCheck,
+  Clock3,
+  Eye,
+  EyeOff,
+  Scissors,
+  Store,
+} from "lucide-react";
 import { getMySalon } from "../../services/salonService";
 
 export default function SalonOwnerDashboard() {
-  const [salon, setSalon] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    salon: null,
+    servicesCount: 0,
+    workingHours: null,
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSalon = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
         const data = await getMySalon();
 
-        setSalon(data.salon || null);
+        setDashboardData({
+          salon: data.salon || null,
+          servicesCount: data.servicesCount || 0,
+          workingHours: data.workingHours || null,
+        });
       } catch (error) {
-        console.error("Failed to fetch salon:", error);
-        setSalon(null);
+        console.error("Failed to fetch salon dashboard:", error);
+
+        setDashboardData({
+          salon: null,
+          servicesCount: 0,
+          workingHours: null,
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSalon();
+    fetchDashboardData();
   }, []);
+
+  const { salon, servicesCount, workingHours } = dashboardData;
 
   const getApprovalStatus = () => {
     if (!salon) return null;
@@ -48,7 +71,29 @@ export default function SalonOwnerDashboard() {
     };
   };
 
+  const getTodayWorkingHours = () => {
+    if (!workingHours) return null;
+
+    const days = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+
+    const today = days[new Date().getDay()];
+
+    return {
+      day: today,
+      schedule: workingHours[today],
+    };
+  };
+
   const approval = getApprovalStatus();
+  const todayHours = getTodayWorkingHours();
 
   if (loading) {
     return (
@@ -77,7 +122,7 @@ export default function SalonOwnerDashboard() {
         <h1 className="mt-2 text-3xl font-bold text-slate-900">Dashboard</h1>
 
         <p className="mt-2 text-gray-500">
-          Manage your salon and appointments from one place.
+          Manage your salon and business from one place.
         </p>
       </div>
 
@@ -159,42 +204,56 @@ export default function SalonOwnerDashboard() {
 
       {/* Stats */}
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Today's Appointments */}
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500">Today's Appointments</p>
 
               <p className="mt-2 text-3xl font-bold text-slate-900">0</p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Appointments feature coming soon
+              </p>
             </div>
 
             <CalendarCheck className="text-purple-600" size={22} />
           </div>
         </div>
 
+        {/* Upcoming */}
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500">Upcoming</p>
 
               <p className="mt-2 text-3xl font-bold text-slate-900">0</p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Appointments feature coming soon
+              </p>
             </div>
 
             <Clock3 className="text-purple-600" size={22} />
           </div>
         </div>
 
+        {/* Services */}
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500">Services</p>
+              <p className="text-sm text-gray-500">Active Services</p>
 
-              <p className="mt-2 text-3xl font-bold text-slate-900">0</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">
+                {servicesCount}
+              </p>
             </div>
 
-            <Store className="text-purple-600" size={22} />
+            <Scissors className="text-purple-600" size={22} />
           </div>
         </div>
 
+        {/* Visibility */}
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between">
             <div>
@@ -213,6 +272,69 @@ export default function SalonOwnerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Business Status */}
+      {salon && (
+        <section className="mt-8 grid gap-5 lg:grid-cols-2">
+          {/* Salon Status */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Salon Status</h2>
+
+            <div className="mt-5 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Current Status</p>
+
+                <p
+                  className={`mt-1 font-semibold ${
+                    salon.isOpen ? "text-green-600" : "text-gray-500"
+                  }`}
+                >
+                  {salon.isOpen ? "Open" : "Closed"}
+                </p>
+              </div>
+
+              <span
+                className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                  salon.isOpen
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {salon.isOpen ? "Open Now" : "Closed"}
+              </span>
+            </div>
+          </div>
+
+          {/* Today's Working Hours */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">
+              Today's Working Hours
+            </h2>
+
+            {todayHours?.schedule ? (
+              <div className="mt-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm capitalize text-gray-500">
+                    {todayHours.day}
+                  </p>
+
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {todayHours.schedule.isOpen
+                      ? `${todayHours.schedule.openTime} - ${todayHours.schedule.closeTime}`
+                      : "Closed"}
+                  </p>
+                </div>
+
+                <Clock3 className="text-purple-600" size={22} />
+              </div>
+            ) : (
+              <p className="mt-5 text-sm text-gray-500">
+                Working hours are not available.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

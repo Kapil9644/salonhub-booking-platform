@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 const SalonOwnerAuthContext = createContext();
 
@@ -16,25 +22,25 @@ export function SalonOwnerAuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const loginSalonOwner = (userData, token) => {
+  const loginSalonOwner = useCallback((userData, token) => {
     localStorage.setItem("salonOwnerUser", JSON.stringify(userData));
     localStorage.setItem("salonOwnerToken", token);
 
     setSalonOwner(userData);
-  };
+  }, []);
 
-  const updateSalonOwner = (userData) => {
+  const updateSalonOwner = useCallback((userData) => {
     localStorage.setItem("salonOwnerUser", JSON.stringify(userData));
 
     setSalonOwner(userData);
-  };
+  }, []);
 
-  const logoutSalonOwner = () => {
+  const logoutSalonOwner = useCallback(() => {
     localStorage.removeItem("salonOwnerUser");
     localStorage.removeItem("salonOwnerToken");
 
     setSalonOwner(null);
-  };
+  }, []);
 
   return (
     <SalonOwnerAuthContext.Provider
