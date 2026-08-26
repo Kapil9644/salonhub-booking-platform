@@ -15,7 +15,6 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isSalonOwnerLogin = location.pathname === "/salon-owner/login";
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
@@ -33,17 +32,19 @@ const Login = () => {
 
       const data = await loginUser(formData);
 
+      // Only customer accounts can use Customer Login
+      if (data.user?.role !== "customer") {
+        alert("This account is not registered as a Customer.");
+        return;
+      }
+
       login(data.user, data.token);
 
       alert("Login Successful 🎉");
 
-      if (isSalonOwnerLogin) {
-        navigate("/salon-owner/dashboard", { replace: true });
-      } else {
-        navigate(location.state?.from?.pathname || "/", {
-          replace: true,
-        });
-      }
+      navigate(location.state?.from?.pathname || "/", {
+        replace: true,
+      });
     } catch (error) {
       alert(error.response?.data?.message || "Login Failed");
     } finally {
@@ -54,7 +55,7 @@ const Login = () => {
   return (
     <div className="min-h-fit bg-gray-50 px-4 py-10 sm:py-8">
       <h2 className="text-center text-3xl font-bold text-gray-900">
-        {isSalonOwnerLogin ? "Salon Owner Login" : "SalonHub Login"}
+        SalonHub Login
       </h2>
       <form
         onSubmit={handleSubmit}
@@ -118,7 +119,7 @@ const Login = () => {
         <p className="mt-6 text-center text-sm text-gray-500">
           Don't have an account?{" "}
           <Link
-            to={isSalonOwnerLogin ? "/salon-owner/signup" : "/signup"}
+            to="/signup"
             className="font-semibold text-purple-600 transition hover:text-purple-700"
           >
             Sign Up

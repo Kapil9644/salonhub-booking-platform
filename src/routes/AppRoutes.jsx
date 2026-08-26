@@ -33,6 +33,7 @@ import SalonOwnerLogin from "../pages/SalonOwner/SalonOwnerLogin/SalonOwnerLogin
 import SalonOwnerSignup from "../pages/SalonOwner/SalonOwnerSignup/SalonOwnerSignup";
 import SalonOwnerPublicLayout from "../layouts/SalonOwnerPublicLayout/SalonOwnerPublicLayout";
 import SalonOwnerForgotPassword from "../pages/SalonOwner/SalonOwnerForgotPassword/SalonOwnerForgotPassword";
+import SalonOwnerPublicRoute from "../components/common/SalonOwnerPublicRoute/SalonOwnerPublicRoute";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -108,17 +109,20 @@ export default function AppRoutes() {
       </Route>
 
       {/* Salon Owner Public Portal */}
+      {/* Salon Owner Public Portal */}
       <Route element={<SalonOwnerPublicLayout />}>
         <Route path="/salon-owner" element={<SalonOwner />} />
 
-        <Route path="/salon-owner/login" element={<SalonOwnerLogin />} />
+        <Route element={<SalonOwnerPublicRoute />}>
+          <Route path="/salon-owner/login" element={<SalonOwnerLogin />} />
 
-        <Route path="/salon-owner/signup" element={<SalonOwnerSignup />} />
+          <Route path="/salon-owner/signup" element={<SalonOwnerSignup />} />
 
-        <Route
-          path="/salon-owner/forgot-password"
-          element={<SalonOwnerForgotPassword />}
-        />
+          <Route
+            path="/salon-owner/forgot-password"
+            element={<SalonOwnerForgotPassword />}
+          />
+        </Route>
       </Route>
 
       {/* Salon Owner Dashboard */}
