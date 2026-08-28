@@ -208,6 +208,7 @@ export default function SalonGrid({
         <SalonCard
           key={salon._id}
           {...salon}
+          id={salon._id}
           image={salon.profileImage}
           distance={
             salon.calculatedDistance != null

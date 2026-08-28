@@ -45,7 +45,7 @@ export default function SalonProfile() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvalStatus, setApprovalStatus] = useState("Not Created");
   const [isListed, setIsListed] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -83,6 +83,8 @@ export default function SalonProfile() {
           setSalon(null);
           setSalonExists(false);
           setFormData(emptyForm);
+          setApprovalStatus("Not Created");
+          setIsEditing(true);
         } else {
           console.error("Failed to load salon:", error);
         }
@@ -698,7 +700,7 @@ export default function SalonProfile() {
         </section>
 
         {/* Actions */}
-        {isEditing && (
+        {isEditing && salonExists && (
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
@@ -721,6 +723,7 @@ export default function SalonProfile() {
           </div>
         )}
 
+        {/* Create Salon */}
         {/* Create Salon */}
         {!salonExists && (
           <div className="flex justify-end">

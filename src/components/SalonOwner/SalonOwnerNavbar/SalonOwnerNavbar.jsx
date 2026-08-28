@@ -8,7 +8,18 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
 
   const [salonName, setSalonName] = useState("");
 
+  // Public / authentication pages
+  const isPublicSalonOwnerPage =
+    window.location.pathname === "/salon-owner" ||
+    window.location.pathname === "/salon-owner/login" ||
+    window.location.pathname === "/salon-owner/signup";
+
   useEffect(() => {
+    // Don't fetch salon information on public/auth pages
+    if (isPublicSalonOwnerPage) {
+      return;
+    }
+
     const fetchSalonName = async () => {
       try {
         const data = await getMySalon();
@@ -21,10 +32,9 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
     };
 
     fetchSalonName();
-  }, []);
+  }, [isPublicSalonOwnerPage]);
 
   const ownerName = salonOwner?.fullName || "Salon Owner";
-
   const ownerImage = salonOwner?.profileImage || "";
 
   return (
@@ -71,7 +81,7 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Owner Photo */}
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-100 font-semibold text-purple-600">
-              {ownerImage ? (
+              {ownerImage && !isPublicSalonOwnerPage ? (
                 <img
                   src={ownerImage}
                   alt={ownerName}
@@ -85,11 +95,15 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
             {/* Owner Name + Salon */}
             <div className="hidden min-w-0 sm:block">
               <p className="max-w-[180px] truncate text-sm font-semibold text-slate-900">
-                {ownerName}
+                {isPublicSalonOwnerPage ? "Salon Owner" : ownerName}
               </p>
 
               <p className="max-w-[180px] truncate text-xs text-gray-500">
-                {salonName ? `${salonName} Owner` : "Salon Owner"}
+                {isPublicSalonOwnerPage
+                  ? "Salon Owner"
+                  : salonName
+                    ? `${salonName} Owner`
+                    : "Salon Owner"}
               </p>
             </div>
           </div>

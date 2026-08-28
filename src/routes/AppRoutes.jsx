@@ -35,6 +35,10 @@ import SalonOwnerPublicLayout from "../layouts/SalonOwnerPublicLayout/SalonOwner
 import SalonOwnerForgotPassword from "../pages/SalonOwner/SalonOwnerForgotPassword/SalonOwnerForgotPassword";
 import SalonOwnerPublicRoute from "../components/common/SalonOwnerPublicRoute/SalonOwnerPublicRoute";
 import SalonOwnerProfile from "../pages/SalonOwner/SalonOwnerProfile/SalonOwnerProfile";
+import AdminRoute from "../components/common/AdminRoute/AdminRoute";
+import AdminLogin from "../pages/Admin/Login/AdminLogin";
+import AdminPublicRoute from "../components/common/AdminPublicRoute/AdminPublicRoute";
+import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -58,7 +62,14 @@ export default function AppRoutes() {
 
       <Route element={<MainLayout />}>
         {/* Public Authentication Routes */}
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
 
         <Route path="/signup" element={<Signup />} />
 
@@ -148,13 +159,26 @@ export default function AppRoutes() {
           <Route path="/salon-owner/working-hours" element={<WorkingHours />} />
         </Route>
       </Route>
-      <Route element={<AdminLayout />}>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      {/* Admin Entry */}
+      <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
 
-        <Route
-          path="/admin/salon-applications"
-          element={<SalonApplications />}
-        />
+      {/* Admin Public Authentication */}
+      <Route element={<AdminPublicLayout />}>
+        <Route element={<AdminPublicRoute />}>
+          <Route path="/admin/login" element={<AdminLogin />} />
+        </Route>
+      </Route>
+
+      {/* Admin Protected Pages */}
+      <Route element={<AdminRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+          <Route
+            path="/admin/salon-applications"
+            element={<SalonApplications />}
+          />
+        </Route>
       </Route>
     </Routes>
   );

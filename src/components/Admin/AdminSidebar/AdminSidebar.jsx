@@ -7,12 +7,11 @@ import {
   LogOut,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext";
+import { useAdminAuth } from "../../../context/useAdminAuth";
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
-
+  const { logout } = useAdminAuth();
   const menuItems = [
     {
       label: "Dashboard",
@@ -48,7 +47,7 @@ export default function AdminSidebar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/admin/login", { replace: true });
   };
 
   return (

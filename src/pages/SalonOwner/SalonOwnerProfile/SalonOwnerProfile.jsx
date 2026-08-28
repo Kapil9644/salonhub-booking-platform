@@ -115,10 +115,8 @@ export default function SalonOwnerProfile() {
       try {
         setLoading(true);
 
-        const [profileData, salonData] = await Promise.all([
-          getSalonOwnerProfile(),
-          getMySalon(),
-        ]);
+        // Fetch owner profile independently
+        const profileData = await getSalonOwnerProfile();
 
         if (profileData.user?.role !== "salon") {
           throw new Error("This account is not a Salon Owner account.");
@@ -127,7 +125,19 @@ export default function SalonOwnerProfile() {
         setProfile(profileData.user);
         updateSalonOwner(profileData.user);
 
-        setSalon(salonData.salon || null);
+        // Fetch salon separately.
+        // A 404 is expected when the owner has not created a salon yet.
+        try {
+          const salonData = await getMySalon();
+          setSalon(salonData.salon || null);
+        } catch (salonError) {
+          if (salonError.response?.status === 404) {
+            setSalon(null);
+          } else {
+            console.error("Failed to fetch salon:", salonError);
+            setSalon(null);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch salon owner profile:", error);
       } finally {

@@ -9,6 +9,7 @@ const connectDB = require("./config/db");
 const adminSalonRoutes = require("./routes/adminSalonRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const workingHoursRoutes = require("./routes/workingHoursRoutes");
+const adminAuthRoutes = require("./routes/adminAuthRoutes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/admin-auth", adminAuthRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/salons", salonRoutes);

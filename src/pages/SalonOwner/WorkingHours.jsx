@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock3, Save } from "lucide-react";
+import { Clock3, Save, X } from "lucide-react";
 import {
   getMyWorkingHours,
   updateMyWorkingHours,
@@ -33,11 +33,12 @@ const defaultWorkingHours = {
 
 export default function WorkingHours() {
   const [workingHours, setWorkingHours] = useState(defaultWorkingHours);
+  const [savedWorkingHours, setSavedWorkingHours] =
+    useState(defaultWorkingHours);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   useEffect(() => {
     const fetchWorkingHours = async () => {
       try {
@@ -48,6 +49,7 @@ export default function WorkingHours() {
 
         if (data?.workingHours) {
           setWorkingHours(data.workingHours);
+          setSavedWorkingHours(data.workingHours);
         }
       } catch (error) {
         console.error("Failed to fetch working hours:", error);
@@ -62,6 +64,18 @@ export default function WorkingHours() {
 
     fetchWorkingHours();
   }, []);
+
+  useEffect(() => {
+    if (!success) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSuccess("");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [success]);
 
   const handleToggle = (day) => {
     setWorkingHours((previous) => ({
@@ -97,6 +111,7 @@ export default function WorkingHours() {
 
       if (data?.workingHours) {
         setWorkingHours(data.workingHours);
+        setSavedWorkingHours(data.workingHours);
       }
 
       setSuccess("Working hours updated successfully.");
@@ -109,6 +124,12 @@ export default function WorkingHours() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setWorkingHours(savedWorkingHours);
+    setError("");
+    setSuccess("");
   };
 
   if (loading) {
@@ -147,8 +168,17 @@ export default function WorkingHours() {
 
       {/* Success */}
       {success && (
-        <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4">
+        <div className="mt-6 flex items-center justify-between rounded-2xl border border-green-200 bg-green-50 p-4">
           <p className="font-medium text-green-700">{success}</p>
+
+          <button
+            type="button"
+            onClick={() => setSuccess("")}
+            className="rounded-lg p-1 text-green-700 transition hover:bg-green-100"
+            aria-label="Close success message"
+          >
+            <X size={18} />
+          </button>
         </div>
       )}
 
@@ -261,13 +291,24 @@ export default function WorkingHours() {
           })}
         </div>
 
-        {/* Save */}
-        <div className="flex justify-end border-t border-gray-100 bg-gray-50 p-5">
+        {/* Actions */}
+        <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 p-5 sm:flex-row sm:justify-end">
+          {/* Cancel */}
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={saving}
+            className="w-full rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            Cancel
+          </button>
+
+          {/* Save */}
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             <Save size={18} />
 
