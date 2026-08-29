@@ -14,7 +14,7 @@ export default function SalonOwner() {
 
           {/* Heading */}
           <h1 className="mt-8 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Grow Your Salon With SalonHub
+            Grow Your Salon With Rupiva
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-gray-500">

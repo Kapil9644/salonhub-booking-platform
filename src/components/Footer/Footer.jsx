@@ -21,7 +21,7 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-slate-700 py-6">
         <p className="text-center text-gray-400">
-          © {new Date().getFullYear()} SalonHub. All rights reserved.
+          © {new Date().getFullYear()} Rupiva. All rights reserved.
         </p>
       </div>
     </footer>

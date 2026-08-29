@@ -99,7 +99,7 @@ export default function SalonOwnerDashboard() {
     return (
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-          SalonHub for Business
+          Rupiva for Business
         </p>
 
         <h1 className="mt-2 text-3xl font-bold text-slate-900">Dashboard</h1>
@@ -116,7 +116,7 @@ export default function SalonOwnerDashboard() {
       {/* Header */}
       <div>
         <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-          SalonHub for Business
+          Rupiva for Business
         </p>
 
         <h1 className="mt-2 text-3xl font-bold text-slate-900">Dashboard</h1>
@@ -182,7 +182,7 @@ export default function SalonOwnerDashboard() {
             {salon.approvalStatus === "Rejected" && (
               <p className="text-sm leading-6 text-gray-600">
                 Your salon application was rejected. Please review your salon
-                information and contact SalonHub support.
+                information and contact Rupiva support.
               </p>
             )}
           </div>
@@ -196,8 +196,7 @@ export default function SalonOwnerDashboard() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
-            Create your salon profile to start managing your business on
-            SalonHub.
+            Create your salon profile to start managing your business on Rupiva.
           </p>
         </section>
       )}

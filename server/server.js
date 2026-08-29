@@ -32,7 +32,7 @@ app.use("/api/working-hours", workingHoursRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Welcome to SalonHub API 🚀",
+    message: "Welcome to Rupiva API 🚀",
   });
 });
 

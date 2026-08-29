@@ -16,7 +16,7 @@ export default function Services() {
         <Container>
           <div className="py-16 text-center sm:py-20">
             <p className="font-semibold uppercase tracking-wider text-purple-600">
-              SalonHub Services
+              Rupiva Services
             </p>
 
             <h1 className="mt-3 text-4xl font-bold text-slate-900 sm:text-5xl">

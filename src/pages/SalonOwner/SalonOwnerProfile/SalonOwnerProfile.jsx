@@ -270,7 +270,7 @@ export default function SalonOwnerProfile() {
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-            SalonHub for Business
+            Rupiva for Business
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-slate-900">
@@ -294,7 +294,7 @@ export default function SalonOwnerProfile() {
       {/* Page Header */}
       <div className="mb-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-          SalonHub for Business
+          Rupiva for Business
         </p>
 
         <h1 className="mt-2 text-3xl font-bold text-slate-900">

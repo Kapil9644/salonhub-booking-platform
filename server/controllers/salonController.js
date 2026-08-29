@@ -241,8 +241,8 @@ const toggleSalonVisibility = async (req, res) => {
     res.status(200).json({
       success: true,
       message: salon.isListed
-        ? "Salon is now visible on SalonHub."
-        : "Salon is now hidden from SalonHub.",
+        ? "Salon is now visible on Rupiva."
+        : "Salon is now hidden from Rupiva.",
       isListed: salon.isListed,
     });
   } catch (error) {

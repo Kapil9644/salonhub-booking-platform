@@ -1,9 +1,4 @@
-import {
-  Users,
-  CalendarCheck,
-  Wallet,
-  TrendingUp,
-} from "lucide-react";
+import { Users, CalendarCheck, Wallet, TrendingUp } from "lucide-react";
 
 export const partnerBenefits = [
   {
@@ -24,8 +19,7 @@ export const partnerBenefits = [
     id: 3,
     icon: Wallet,
     title: "Secure Payments",
-    description:
-      "Receive payments quickly and securely through SalonHub.",
+    description: "Receive payments quickly and securely through Rupiva.",
   },
   {
     id: 4,

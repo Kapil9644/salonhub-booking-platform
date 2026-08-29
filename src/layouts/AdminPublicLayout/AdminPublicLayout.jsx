@@ -14,7 +14,7 @@ export default function AdminPublicLayout() {
             </div>
 
             <div>
-              <h1 className="font-bold text-slate-900">SalonHub</h1>
+              <h1 className="font-bold text-slate-900">Rupiva</h1>
 
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>

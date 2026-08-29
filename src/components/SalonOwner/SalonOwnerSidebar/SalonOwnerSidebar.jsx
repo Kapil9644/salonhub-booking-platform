@@ -124,7 +124,7 @@ export default function SalonOwnerSidebar({
             </div>
 
             <div>
-              <h2 className="font-bold text-slate-900">SalonHub</h2>
+              <h2 className="font-bold text-slate-900">Rupiva</h2>
               <p className="text-xs text-gray-500">For Business</p>
             </div>
           </div>

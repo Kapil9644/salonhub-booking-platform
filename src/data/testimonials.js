@@ -13,8 +13,7 @@ export const testimonials = [
     name: "Rahul Verma",
     city: "Indore",
     rating: 4.9,
-    review:
-      "Found an excellent salon near my location. Highly recommended!",
+    review: "Found an excellent salon near my location. Highly recommended!",
   },
 
   {
@@ -67,9 +66,6 @@ export const testimonials = [
     name: "Rohit Tiwari",
     city: "Lucknow",
     rating: 4.8,
-    review:
-      "Booking appointments has become much easier thanks to SalonHub.",
+    review: "Booking appointments has become much easier thanks to Rupiva.",
   },
-
-    
 ];

@@ -37,7 +37,7 @@ export default function AdminDashboard() {
         </h1>
 
         <p className="mt-2 text-gray-500">
-          Manage SalonHub and monitor platform activity.
+          Manage Rupiva and monitor platform activity.
         </p>
       </div>
 
@@ -74,12 +74,12 @@ export default function AdminDashboard() {
       {/* Welcome / Quick Actions */}
       <section className="mt-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-xl font-bold text-slate-900">
-          Welcome to SalonHub Admin
+          Welcome to Rupiva Admin
         </h2>
 
         <p className="mt-2 max-w-2xl leading-7 text-gray-500">
           From here you will be able to review salon applications, manage salons
-          and customers, monitor appointments and control the SalonHub platform.
+          and customers, monitor appointments and control the Rupiva platform.
         </p>
 
         <div className="mt-6 rounded-2xl bg-purple-50 p-5">

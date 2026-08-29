@@ -6,7 +6,7 @@ export default function SectionTitle() {
       </h2>
 
       <p className="mt-3 text-lg text-gray-600">
-        Thousands of happy customers trust SalonHub for their beauty bookings.
+        Thousands of happy customers trust Rupiva for their beauty bookings.
       </p>
     </div>
   );

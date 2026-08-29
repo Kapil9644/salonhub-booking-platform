@@ -13,7 +13,7 @@ export default function Logo({ onClick }) {
 
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-            SalonHub
+            Rupiva
           </h1>
 
           <p className="mt-1 text-[10px] font-medium tracking-wide text-gray-500 sm:text-xs">

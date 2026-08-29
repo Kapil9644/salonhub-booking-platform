@@ -59,7 +59,7 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
             </div>
 
             <div className="min-w-0">
-              <h1 className="font-bold text-slate-900">SalonHub</h1>
+              <h1 className="font-bold text-slate-900">Rupiva</h1>
 
               <p className="text-xs text-gray-500">For Business</p>
             </div>

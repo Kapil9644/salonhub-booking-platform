@@ -94,7 +94,7 @@ export default function AdminLogin() {
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Sign in to access the SalonHub Admin Panel.
+            Sign in to access the Rupiva Admin Panel.
           </p>
         </div>
 

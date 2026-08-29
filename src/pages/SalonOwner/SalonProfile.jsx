@@ -276,7 +276,7 @@ export default function SalonProfile() {
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-            SalonHub for Business
+            Rupiva for Business
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-slate-900">My Salon</h1>
@@ -298,7 +298,7 @@ export default function SalonProfile() {
       {/* Page Header */}
       <div className="mb-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-purple-600">
-          SalonHub for Business
+          Rupiva for Business
         </p>
 
         <h1 className="mt-2 text-3xl font-bold text-slate-900">My Salon</h1>
@@ -413,7 +413,7 @@ export default function SalonProfile() {
           {approvalStatus === "Rejected" && (
             <p className="text-sm leading-6 text-gray-600">
               Your salon application was rejected. Please review your salon
-              information and contact SalonHub support.
+              information and contact Rupiva support.
             </p>
           )}
         </div>

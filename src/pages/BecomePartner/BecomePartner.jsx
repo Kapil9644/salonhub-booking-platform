@@ -39,7 +39,7 @@ export default function BecomePartner() {
       icon: TrendingUp,
       title: "Grow Your Business",
       description:
-        "Reach more customers, build reviews and grow your salon with SalonHub.",
+        "Reach more customers, build reviews and grow your salon with Rupiva.",
     },
   ];
 
@@ -55,15 +55,15 @@ export default function BecomePartner() {
               </div>
 
               <p className="mt-6 font-semibold uppercase tracking-wider text-purple-600">
-                SalonHub for Business
+                Rupiva for Business
               </p>
 
               <h1 className="mt-3 text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Grow Your Salon With SalonHub
+                Grow Your Salon With Rupiva
               </h1>
 
               <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">
-                Join SalonHub and connect your salon with customers looking for
+                Join Rupiva and connect your salon with customers looking for
                 professional beauty and grooming services nearby.
               </p>
 
@@ -92,8 +92,8 @@ export default function BecomePartner() {
             </h2>
 
             <p className="mt-4 text-gray-600">
-              SalonHub gives you the tools and visibility you need to manage
-              your salon and reach more customers.
+              Rupiva gives you the tools and visibility you need to manage your
+              salon and reach more customers.
             </p>
           </div>
 
@@ -182,8 +182,8 @@ export default function BecomePartner() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl text-purple-100">
-              Join SalonHub and put your salon in front of customers who are
-              ready to book.
+              Join Rupiva and put your salon in front of customers who are ready
+              to book.
             </p>
 
             <button

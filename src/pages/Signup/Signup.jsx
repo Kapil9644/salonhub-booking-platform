@@ -65,7 +65,7 @@ const Signup = () => {
   return (
     <div className="min-h-fit bg-gray-50 px-4 py-10 sm:py-8">
       <h1 className="mb-10 text-center text-3xl font-bold text-gray-900">
-        {isSalonOwnerSignup ? "Become a Salon Partner" : "SalonHub Signup"}
+        {isSalonOwnerSignup ? "Become a Salon Partner" : "Rupiva Signup"}
       </h1>
       <form
         onSubmit={handleSubmit}

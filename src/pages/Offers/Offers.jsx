@@ -4,7 +4,7 @@ const Offers = () => {
       <h1 className="text-3xl font-bold text-slate-900">Offers</h1>
 
       <p className="mt-2 text-slate-600">
-        Explore the latest offers and discounts available on SalonHub.
+        Explore the latest offers and discounts available on Rupiva.
       </p>
     </div>
   );

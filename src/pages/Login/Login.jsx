@@ -55,7 +55,7 @@ const Login = () => {
   return (
     <div className="min-h-fit bg-gray-50 px-4 py-10 sm:py-8">
       <h2 className="text-center text-3xl font-bold text-gray-900">
-        SalonHub Login
+        Rupiva Login
       </h2>
       <form
         onSubmit={handleSubmit}
