@@ -70,6 +70,10 @@ export default function MyBookings() {
     (booking) => booking.status === "Cancelled",
   );
 
+  const completedBookings = bookings.filter(
+    (booking) => booking.status === "Completed",
+  );
+
   const toggleSection = (section) => {
     setActiveSection((current) => (current === section ? null : section));
   };
@@ -85,7 +89,9 @@ export default function MyBookings() {
           <h3 className="text-xl font-bold text-slate-900">
             {booking.salon?.name || "Salon"}
           </h3>
-
+          <p className="mt-1 text-sm font-semibold text-purple-600">
+            Booking ID #{booking._id?.slice(-6).toUpperCase()}
+          </p>
           {booking.salon?.location && (
             <div className="mt-2 flex items-start gap-2 text-sm text-gray-500">
               <MapPin size={16} className="mt-0.5 shrink-0 text-purple-600" />
@@ -316,6 +322,69 @@ export default function MyBookings() {
                   ) : (
                     <div className="space-y-5">
                       {upcomingBookings.map(renderBookingCard)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Completed Bookings */}
+            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+              <button
+                type="button"
+                onClick={() => toggleSection("completed")}
+                className="flex w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-green-50/40 sm:p-6"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-600">
+                    <CalendarDays size={22} />
+                  </div>
+
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                      Completed Bookings
+                    </h2>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      View your completed appointments.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+                    {completedBookings.length}
+                  </span>
+
+                  <ChevronDown
+                    size={22}
+                    className={`text-gray-500 transition-transform duration-300 ${
+                      activeSection === "completed" ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {activeSection === "completed" && (
+                <div className="border-t border-gray-100 bg-gray-50/50 p-4 sm:p-6">
+                  {completedBookings.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-12 text-center">
+                      <CalendarDays
+                        size={36}
+                        className="mx-auto text-gray-300"
+                      />
+
+                      <h3 className="mt-4 font-semibold text-gray-700">
+                        No completed bookings
+                      </h3>
+
+                      <p className="mt-1 text-sm text-gray-500">
+                        Completed appointments will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {completedBookings.map(renderBookingCard)}
                     </div>
                   )}
                 </div>
