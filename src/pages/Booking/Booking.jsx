@@ -1,10 +1,12 @@
 import { useLocation, useParams } from "react-router-dom";
+import { useState } from "react";
+
 import Container from "../../layouts/Container/Container";
 import BookingHeader from "../../components/Booking/BookingHeader";
-import { useState } from "react";
 import DateSelector from "../../components/Booking/DateSelector";
 import TimeSlotSelector from "../../components/Booking/TimeSlotSelector";
 import BookingSummary from "../../components/Booking/BookingSummary";
+
 import { salons } from "../../data/salons";
 
 export default function Booking() {
@@ -12,8 +14,13 @@ export default function Booking() {
   const { id } = useParams();
 
   const salon = state?.salon || salons.find((salon) => salon.id === Number(id));
-  const selectedService = state?.selectedService || salon?.services?.[0];
-  const [selectedDate, setSelectedDate] = useState(null);
+
+  // Selected multiple services
+  const selectedServices =
+    state?.selectedServices ||
+    (state?.selectedService ? [state.selectedService] : []);
+
+  const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
 
   if (!salon) {
@@ -34,7 +41,7 @@ export default function Booking() {
     <Container>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <BookingHeader salon={salon} selectedService={selectedService} />
+          <BookingHeader salon={salon} selectedServices={selectedServices} />
 
           <DateSelector
             selectedDate={selectedDate}
@@ -51,7 +58,7 @@ export default function Booking() {
         <div>
           <BookingSummary
             salon={salon}
-            selectedService={selectedService}
+            selectedServices={selectedServices}
             selectedDate={selectedDate}
             selectedTime={selectedTime}
           />

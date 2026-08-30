@@ -83,14 +83,24 @@ export default function MyBookings() {
       <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
         <div>
           <h3 className="text-xl font-bold text-slate-900">
-            {booking.salon.name}
+            {booking.salon?.name || "Salon"}
           </h3>
 
-          {booking.salon.location && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-              <MapPin size={16} className="shrink-0 text-purple-600" />
+          {booking.salon?.location && (
+            <div className="mt-2 flex items-start gap-2 text-sm text-gray-500">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-purple-600" />
 
-              <span>{booking.salon.location}</span>
+              <span>
+                {[
+                  booking.salon.location.address,
+                  booking.salon.location.area,
+                  booking.salon.location.city,
+                  booking.salon.location.state,
+                  booking.salon.location.pincode,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "Location not available"}
+              </span>
             </div>
           )}
         </div>
@@ -108,29 +118,69 @@ export default function MyBookings() {
 
       {/* Details */}
       <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
-        {/* Service */}
-        <div className="rounded-2xl bg-gray-50 p-4">
+        {/* Services */}
+        <div className="rounded-2xl bg-gray-50 p-4 sm:col-span-2">
           <div className="flex items-center gap-2 text-gray-400">
             <Scissors size={15} />
 
             <p className="text-xs font-medium uppercase tracking-wide">
-              Service
+              Services
+            </p>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            {booking.services?.length > 0 ? (
+              booking.services.map((service) => (
+                <div
+                  key={service.id || service._id}
+                  className="flex items-center justify-between gap-4"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {service.name}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      {service.duration} min
+                    </p>
+                  </div>
+
+                  <p className="font-semibold text-purple-600">
+                    ₹{service.price}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="font-semibold text-gray-500">
+                No service details available
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Total Price */}
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            Total Price
+          </p>
+
+          <p className="mt-2 text-xl font-bold text-purple-600">
+            ₹{booking.totalPrice ?? 0}
+          </p>
+        </div>
+
+        {/* Total Duration */}
+        <div className="rounded-2xl bg-gray-50 p-4">
+          <div className="flex items-center gap-2 text-gray-400">
+            <Clock size={15} />
+
+            <p className="text-xs font-medium uppercase tracking-wide">
+              Total Duration
             </p>
           </div>
 
           <p className="mt-2 font-semibold text-slate-900">
-            {booking.service.name}
-          </p>
-        </div>
-
-        {/* Price */}
-        <div className="rounded-2xl bg-gray-50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-            Price
-          </p>
-
-          <p className="mt-2 text-xl font-bold text-purple-600">
-            ₹{booking.service.price}
+            {booking.totalDuration ?? 0} min
           </p>
         </div>
 

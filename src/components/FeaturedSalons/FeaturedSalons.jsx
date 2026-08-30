@@ -3,8 +3,8 @@ import SalonGrid from "./SalonGrid/SalonGrid";
 
 export default function FeaturedSalons() {
   return (
-    <section className=" bg-white py-2 lg:">
-      <div className="mx-auto max-w-[1400px] px-12">
+    <section className="bg-white py-2 lg:py-4">
+      <div className="mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12">
         <SectionTitle />
         <SalonGrid />
       </div>

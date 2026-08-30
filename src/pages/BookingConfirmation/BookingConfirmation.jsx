@@ -72,23 +72,53 @@ export default function BookingConfirmation() {
             </h2>
 
             {booking.salon?.location && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-                <MapPin size={16} />
-                <span>{booking.salon.location}</span>
+              <div className="mt-2 flex items-start gap-2 text-sm text-gray-500">
+                <MapPin size={16} className="mt-0.5 shrink-0" />
+
+                <span>
+                  {[
+                    booking.salon.location.address,
+                    booking.salon.location.area,
+                    booking.salon.location.city,
+                    booking.salon.location.state,
+                    booking.salon.location.pincode,
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || "Location not available"}
+                </span>
               </div>
             )}
 
             <div className="mt-6 space-y-4">
-              {/* Service */}
-              <div className="flex items-center justify-between gap-4">
+              {/* Services */}
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Receipt size={18} className="text-purple-600" />
-                  <span className="text-gray-500">Service</span>
+                  <span className="text-gray-500">Services</span>
                 </div>
 
-                <span className="font-semibold text-slate-900">
-                  {booking.service?.name}
-                </span>
+                <div className="text-right">
+                  {booking.services?.length > 0 ? (
+                    booking.services.map((service) => (
+                      <div
+                        key={service.id || service._id}
+                        className="mb-2 last:mb-0"
+                      >
+                        <p className="font-semibold text-slate-900">
+                          {service.name}
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          {service.duration} min · ₹{service.price}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="font-semibold text-gray-500">
+                      Service details unavailable
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Date */}
@@ -123,7 +153,15 @@ export default function BookingConfirmation() {
                   </span>
 
                   <span className="text-2xl font-bold text-purple-600">
-                    ₹{booking.service?.price}
+                    ₹{booking.totalPrice ?? 0}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Total Duration</span>
+
+                  <span className="font-semibold text-slate-900">
+                    {booking.totalDuration ?? 0} min
                   </span>
                 </div>
               </div>

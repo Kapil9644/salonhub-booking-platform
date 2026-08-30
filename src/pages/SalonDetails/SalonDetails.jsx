@@ -14,7 +14,9 @@ export default function SalonDetails() {
   const { id } = useParams();
 
   const [salon, setSalon] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
+
+  // Multiple selected services
+  const [selectedServices, setSelectedServices] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -86,15 +88,15 @@ export default function SalonDetails() {
 
           <ServicesSection
             services={salon.services || []}
-            selectedService={selectedService}
-            setSelectedService={setSelectedService}
+            selectedServices={selectedServices}
+            setSelectedServices={setSelectedServices}
           />
 
           <WorkingHours workingHours={salon.workingHours} />
         </div>
 
         <div>
-          <BookingCard salon={salon} selectedService={selectedService} />
+          <BookingCard salon={salon} selectedServices={selectedServices} />
         </div>
       </div>
     </Container>

@@ -1,21 +1,98 @@
 const Booking = require("../models/Booking");
+const Service = require("../models/Service");
+const Salon = require("../models/Salon");
 
-// Create a new booking
+// ========================================
+// CREATE A NEW BOOKING
+// ========================================
 const createBooking = async (req, res) => {
   try {
-    const { salon, service, date, time } = req.body;
+    const { salon, services, date, time } = req.body;
 
-    if (!salon || !service || !date || !time) {
+    if (!salon?.id || !services?.length || !date || !time) {
       return res.status(400).json({
         success: false,
-        message: "Salon, service, date and time are required.",
+        message: "Salon, services, date and time are required.",
       });
     }
 
+    // Find salon from database
+    const salonData = await Salon.findById(salon.id);
+
+    if (!salonData) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found.",
+      });
+    }
+
+    // Salon must be approved and listed
+    if (salonData.approvalStatus !== "Approved" || !salonData.isListed) {
+      return res.status(400).json({
+        success: false,
+        message: "This salon is currently unavailable for booking.",
+      });
+    }
+
+    // Get service IDs
+    const serviceIds = services.map((service) => service.id);
+
+    // Fetch actual active services from database
+    const serviceData = await Service.find({
+      _id: { $in: serviceIds },
+      salon: salonData._id,
+      isActive: true,
+    });
+
+    // Make sure every selected service exists
+    if (serviceData.length !== serviceIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more selected services are invalid.",
+      });
+    }
+
+    // Prepare booking services using database values
+    const bookingServices = serviceData.map((service) => ({
+      id: service._id,
+      name: service.name,
+      price: service.price,
+      duration: service.duration,
+    }));
+
+    // Calculate totals on server
+    const totalPrice = bookingServices.reduce(
+      (total, service) => total + service.price,
+      0,
+    );
+
+    const totalDuration = bookingServices.reduce(
+      (total, service) => total + service.duration,
+      0,
+    );
+
+    // Create booking
     const booking = await Booking.create({
       user: req.user.id,
-      salon,
-      service,
+
+      salon: {
+        id: salonData._id,
+        name: salonData.name,
+
+        location: {
+          address: salonData.location?.address || "",
+          area: salonData.location?.area || "",
+          city: salonData.location?.city || "",
+          state: salonData.location?.state || "",
+          pincode: salonData.location?.pincode || "",
+        },
+      },
+
+      services: bookingServices,
+
+      totalPrice,
+      totalDuration,
+
       date,
       time,
     });
@@ -35,7 +112,9 @@ const createBooking = async (req, res) => {
   }
 };
 
-// Get bookings of logged-in user
+// ========================================
+// GET BOOKINGS OF LOGGED-IN USER
+// ========================================
 const getMyBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({
@@ -56,15 +135,17 @@ const getMyBookings = async (req, res) => {
   }
 };
 
-// Edit an existing booking
+// ========================================
+// EDIT AN EXISTING BOOKING
+// ========================================
 const updateBooking = async (req, res) => {
   try {
-    const { salon, service, date, time } = req.body;
+    const { salon, services, date, time } = req.body;
 
-    if (!salon || !service || !date || !time) {
+    if (!salon?.id || !services?.length || !date || !time) {
       return res.status(400).json({
         success: false,
-        message: "Salon, service, date and time are required.",
+        message: "Salon, services, date and time are required.",
       });
     }
 
@@ -87,8 +168,63 @@ const updateBooking = async (req, res) => {
       });
     }
 
-    booking.salon = salon;
-    booking.service = service;
+    const salonData = await Salon.findById(salon.id);
+
+    if (!salonData) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found.",
+      });
+    }
+
+    const serviceIds = services.map((service) => service.id);
+
+    const serviceData = await Service.find({
+      _id: { $in: serviceIds },
+      salon: salonData._id,
+      isActive: true,
+    });
+
+    if (serviceData.length !== serviceIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more selected services are invalid.",
+      });
+    }
+
+    const bookingServices = serviceData.map((service) => ({
+      id: service._id,
+      name: service.name,
+      price: service.price,
+      duration: service.duration,
+    }));
+
+    const totalPrice = bookingServices.reduce(
+      (total, service) => total + service.price,
+      0,
+    );
+
+    const totalDuration = bookingServices.reduce(
+      (total, service) => total + service.duration,
+      0,
+    );
+
+    booking.salon = {
+      id: salonData._id,
+      name: salonData.name,
+
+      location: {
+        address: salonData.location?.address || "",
+        area: salonData.location?.area || "",
+        city: salonData.location?.city || "",
+        state: salonData.location?.state || "",
+        pincode: salonData.location?.pincode || "",
+      },
+    };
+
+    booking.services = bookingServices;
+    booking.totalPrice = totalPrice;
+    booking.totalDuration = totalDuration;
     booking.date = date;
     booking.time = time;
 
@@ -109,7 +245,9 @@ const updateBooking = async (req, res) => {
   }
 };
 
-// Cancel an existing booking
+// ========================================
+// CANCEL AN EXISTING BOOKING
+// ========================================
 const cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findOne({

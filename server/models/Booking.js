@@ -1,5 +1,36 @@
 const mongoose = require("mongoose");
 
+const bookingServiceSchema = new mongoose.Schema(
+  {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      required: true,
+    },
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    duration: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const bookingSchema = new mongoose.Schema(
   {
     user: {
@@ -10,36 +41,68 @@ const bookingSchema = new mongoose.Schema(
 
     salon: {
       id: {
-        type: Number,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Salon",
         required: true,
       },
+
       name: {
         type: String,
         required: true,
+        trim: true,
       },
+
       location: {
-        type: String,
-        required: true,
+        address: {
+          type: String,
+          default: "",
+        },
+
+        area: {
+          type: String,
+          default: "",
+        },
+
+        city: {
+          type: String,
+          default: "",
+        },
+
+        state: {
+          type: String,
+          default: "",
+        },
+
+        pincode: {
+          type: String,
+          default: "",
+        },
       },
     },
 
-    service: {
-      id: {
-        type: Number,
-        required: true,
+    services: {
+      type: [bookingServiceSchema],
+      required: true,
+
+      validate: {
+        validator: function (services) {
+          return services.length > 0;
+        },
+
+        message: "At least one service is required.",
       },
-      name: {
-        type: String,
-        required: true,
-      },
-      price: {
-        type: Number,
-        required: true,
-      },
-      duration: {
-        type: String,
-        required: true,
-      },
+    },
+
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    totalDuration: {
+      type: Number,
+      required: true,
+      min: 1,
     },
 
     date: {
@@ -50,6 +113,7 @@ const bookingSchema = new mongoose.Schema(
     time: {
       type: String,
       required: true,
+      trim: true,
     },
 
     status: {

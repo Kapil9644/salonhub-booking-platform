@@ -1,94 +1,77 @@
+import { useEffect, useState } from "react";
+
 import SalonCard from "../../common/SalonCard/SalonCard";
-import { salons } from "../../../data/salons";
+import { getPublicSalons } from "../../../services/salonService";
 
-export default function SalonGrid({
-  selectedServices = [],
-  minimumRating = 0,
-  priceRange = "Any Price",
-  sortBy = "Recommended",
-}) {
+export default function SalonGrid() {
+  const [salons, setSalons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  let filteredSalons = [...salons];
+  useEffect(() => {
+    const fetchFeaturedSalons = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  // Filter by Services
-  if (selectedServices.length > 0) {
-    filteredSalons = filteredSalons.filter((salon) =>
-      selectedServices.some((service) =>
-        salon.services.includes(service)
-      )
-    );
-  }
+        const data = await getPublicSalons();
 
-  // Rating Filter
-  if (minimumRating > 0) {
-    filteredSalons = filteredSalons.filter(
-      (salon) => salon.rating >= minimumRating
-    );
-  }
+        setSalons((data.salons || []).slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch featured salons:", error);
 
-  // Price Filter
-  if (priceRange !== "Any Price") {
-    filteredSalons = filteredSalons.filter((salon) => {
-      switch (priceRange) {
-        case "₹0 - ₹500":
-          return salon.price <= 500;
-
-        case "₹500 - ₹1000":
-          return salon.price > 500 && salon.price <= 1000;
-
-        case "₹1000+":
-          return salon.price > 1000;
-
-        default:
-          return true;
+        setError(
+          error.response?.data?.message || "Failed to load featured salons.",
+        );
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+
+    fetchFeaturedSalons();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+        {[1, 2, 3].map((item) => (
+          <div
+            key={item}
+            className="h-[480px] animate-pulse rounded-3xl border border-gray-200 bg-gray-100"
+          />
+        ))}
+      </div>
+    );
   }
 
-  // Sorting
-  switch (sortBy) {
-    case "Highest Rated":
-      filteredSalons.sort((a, b) => b.rating - a.rating);
-      break;
-
-    case "Lowest Price":
-      filteredSalons.sort((a, b) => a.price - b.price);
-      break;
-
-    case "Highest Price":
-      filteredSalons.sort((a, b) => b.price - a.price);
-      break;
-
-    case "Most Popular":
-      filteredSalons.sort((a, b) => b.reviews - a.reviews);
-      break;
-
-    default:
-      break;
+  if (error) {
+    return (
+      <div className="mt-8 rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+        <p className="font-medium text-red-600">{error}</p>
+      </div>
+    );
   }
-  
-  if (filteredSalons.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 py-20 text-center">
-          <h2 className="text-2xl font-bold text-gray-700">
-            No salons found 😔
-          </h2>
 
-          <p className="mt-3 text-gray-500">
-            Try changing your filters or reset them.
-          </p>
-        </div>
-      );
+  if (salons.length === 0) {
+    return (
+      <div className="mt-8 rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center">
+        <p className="font-medium text-gray-500">
+          No featured salons available right now.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-      {filteredSalons.map((salon) => (
+      {salons.map((salon) => (
         <SalonCard
-          key={salon.id}
+          key={salon._id}
           {...salon}
+          id={salon._id}
+          image={salon.profileImage}
         />
       ))}
     </div>
   );
-  }
+}
