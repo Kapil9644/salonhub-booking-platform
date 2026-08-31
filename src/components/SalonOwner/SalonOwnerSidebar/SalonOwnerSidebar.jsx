@@ -89,7 +89,8 @@ export default function SalonOwnerSidebar({
             })}
           </nav>
 
-          <div className="mt-auto border-t border-gray-100 pt-4">
+          <div className="mt-0 border-t border-gray-100 pt-4">
+            {" "}
             <button
               type="button"
               onClick={handleLogout}
@@ -140,7 +141,8 @@ export default function SalonOwnerSidebar({
         </div>
 
         {/* Mobile Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav className="space-y-1 overflow-y-auto p-4">
+          {" "}
           {menuItems.map((item) => {
             const Icon = item.icon;
 
@@ -165,7 +167,8 @@ export default function SalonOwnerSidebar({
         </nav>
 
         {/* Mobile Logout */}
-        <div className="border-t border-gray-100 p-4">
+        <div className="border-t border-gray-100 px-4 pt-2 pb-2">
+          {" "}
           <button
             type="button"
             onClick={handleLogout}

@@ -80,6 +80,16 @@ const salonSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    statusOverride: {
+      type: String,
+      enum: ["auto", "open", "closed"],
+      default: "auto",
+    },
+
+    statusOverrideDate: {
+      type: String,
+      default: "",
+    },
     approvalStatus: {
       type: String,
       enum: ["Pending", "Approved", "Rejected"],

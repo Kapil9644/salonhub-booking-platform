@@ -8,6 +8,7 @@ import {
   Store,
 } from "lucide-react";
 import { getMySalon } from "../../services/salonService";
+import { getSalonOwnerAppointments } from "../../services/salonOwnerBookingService";
 
 export default function SalonOwnerDashboard() {
   const [dashboardData, setDashboardData] = useState({
@@ -16,6 +17,7 @@ export default function SalonOwnerDashboard() {
     workingHours: null,
   });
 
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,13 +25,18 @@ export default function SalonOwnerDashboard() {
       try {
         setLoading(true);
 
-        const data = await getMySalon();
+        const [salonData, appointmentData] = await Promise.all([
+          getMySalon(),
+          getSalonOwnerAppointments(),
+        ]);
 
         setDashboardData({
-          salon: data.salon || null,
-          servicesCount: data.servicesCount || 0,
-          workingHours: data.workingHours || null,
+          salon: salonData.salon || null,
+          servicesCount: salonData.servicesCount || 0,
+          workingHours: salonData.workingHours || null,
         });
+
+        setAppointments(appointmentData.bookings || []);
       } catch (error) {
         console.error("Failed to fetch salon dashboard:", error);
 
@@ -38,6 +45,8 @@ export default function SalonOwnerDashboard() {
           servicesCount: 0,
           workingHours: null,
         });
+
+        setAppointments([]);
       } finally {
         setLoading(false);
       }
@@ -47,6 +56,32 @@ export default function SalonOwnerDashboard() {
   }, []);
 
   const { salon, servicesCount, workingHours } = dashboardData;
+
+  const today = new Date();
+
+  const todayAppointments = appointments.filter((booking) => {
+    if (!booking.date) return false;
+
+    const bookingDate = new Date(booking.date);
+
+    return (
+      bookingDate.getFullYear() === today.getFullYear() &&
+      bookingDate.getMonth() === today.getMonth() &&
+      bookingDate.getDate() === today.getDate()
+    );
+  });
+
+  const upcomingAppointments = appointments.filter(
+    (booking) => booking.status === "Upcoming",
+  );
+
+  const completedAppointments = appointments.filter(
+    (booking) => booking.status === "Completed",
+  );
+
+  const cancelledAppointments = appointments.filter(
+    (booking) => booking.status === "Cancelled",
+  );
 
   const getApprovalStatus = () => {
     if (!salon) return null;
@@ -201,90 +236,187 @@ export default function SalonOwnerDashboard() {
         </section>
       )}
 
-      {/* Stats */}
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {/* Today's Appointments */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Today's Appointments</p>
+      {/* Appointments Overview */}
+      <section className="mt-8">
+        <h2 className="mb-5 text-xl font-bold text-slate-900">
+          Appointments Overview
+        </h2>
 
-              <p className="mt-2 text-3xl font-bold text-slate-900">0</p>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Today's Appointments */}
+          <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Today's Appointments
+                </p>
 
-              <p className="mt-1 text-xs text-gray-400">
-                Appointments feature coming soon
-              </p>
+                <p className="mt-3 text-3xl font-bold text-purple-600">
+                  {todayAppointments.length}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Appointments scheduled for today
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-100">
+                <CalendarCheck size={22} className="text-purple-600" />
+              </div>
             </div>
+          </div>
 
-            <CalendarCheck className="text-purple-600" size={22} />
+          {/* Upcoming Appointments */}
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Upcoming Appointments
+                </p>
+
+                <p className="mt-3 text-3xl font-bold text-blue-600">
+                  {upcomingAppointments.length}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Upcoming appointments
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100">
+                <Clock3 size={22} className="text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Completed Appointments */}
+          <div className="rounded-2xl border border-green-100 bg-green-50/50 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Completed Appointments
+                </p>
+
+                <p className="mt-3 text-3xl font-bold text-green-600">
+                  {completedAppointments.length}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Appointments completed
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+                <CalendarCheck size={22} className="text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Cancelled Appointments */}
+          <div className="rounded-2xl border border-red-100 bg-red-50/50 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Cancelled Appointments
+                </p>
+
+                <p className="mt-3 text-3xl font-bold text-red-600">
+                  {cancelledAppointments.length}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Appointments cancelled
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100">
+                <CalendarCheck size={22} className="text-red-600" />
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Upcoming */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Upcoming</p>
+      {/* Business Overview */}
+      <section className="mt-8">
+        <h2 className="mb-5 text-xl font-bold text-slate-900">
+          Business Overview
+        </h2>
 
-              <p className="mt-2 text-3xl font-bold text-slate-900">0</p>
+        <div className="grid gap-5 lg:grid-cols-2">
+          {/* Active Services */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                <Scissors size={22} className="text-purple-600" />
+              </div>
 
-              <p className="mt-1 text-xs text-gray-400">
-                Appointments feature coming soon
-              </p>
+              <div>
+                <p className="text-sm text-gray-500">Active Services</p>
+
+                <p className="mt-1 text-2xl font-bold text-purple-600">
+                  {servicesCount}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Total services you offer
+                </p>
+              </div>
             </div>
+          </div>
 
-            <Clock3 className="text-purple-600" size={22} />
+          {/* Salon Visibility */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                  salon?.isListed ? "bg-green-100" : "bg-gray-100"
+                }`}
+              >
+                {salon?.isListed ? (
+                  <Eye size={22} className="text-green-600" />
+                ) : (
+                  <EyeOff size={22} className="text-gray-500" />
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Salon Visibility</p>
+
+                <p
+                  className={`mt-1 text-2xl font-bold ${
+                    salon?.isListed ? "text-green-600" : "text-gray-500"
+                  }`}
+                >
+                  {salon?.isListed ? "Listed" : "Hidden"}
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  {salon?.isListed
+                    ? "Your salon is visible to customers"
+                    : "Your salon is hidden from customers"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Services */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Active Services</p>
-
-              <p className="mt-2 text-3xl font-bold text-slate-900">
-                {servicesCount}
-              </p>
-            </div>
-
-            <Scissors className="text-purple-600" size={22} />
-          </div>
-        </div>
-
-        {/* Visibility */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Salon Visibility</p>
-
-              <p className="mt-2 font-semibold text-slate-900">
-                {salon?.isListed ? "Listed" : "Hidden"}
-              </p>
-            </div>
-
-            {salon?.isListed ? (
-              <Eye className="text-green-600" size={22} />
-            ) : (
-              <EyeOff className="text-gray-400" size={22} />
-            )}
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* Business Status */}
       {salon && (
         <section className="mt-8 grid gap-5 lg:grid-cols-2">
           {/* Salon Status */}
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">Salon Status</h2>
-
-            <div className="mt-5 flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-gray-500">Current Status</p>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Salon Status
+                </h2>
+
+                <p className="mt-4 text-sm text-gray-500">Current Status</p>
 
                 <p
-                  className={`mt-1 font-semibold ${
+                  className={`mt-1 text-2xl font-bold ${
                     salon.isOpen ? "text-green-600" : "text-gray-500"
                   }`}
                 >
@@ -292,45 +424,51 @@ export default function SalonOwnerDashboard() {
                 </p>
               </div>
 
-              <span
-                className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                  salon.isOpen
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {salon.isOpen ? "Open Now" : "Closed"}
-              </span>
+              <div className="text-right">
+                <span
+                  className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${
+                    salon.isOpen
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {salon.isOpen ? "Open Now" : "Closed"}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Today's Working Hours */}
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">
-              Today's Working Hours
-            </h2>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Today's Working Hours
+                </h2>
 
-            {todayHours?.schedule ? (
-              <div className="mt-5 flex items-center justify-between">
-                <div>
-                  <p className="text-sm capitalize text-gray-500">
-                    {todayHours.day}
+                {todayHours?.schedule ? (
+                  <>
+                    <p className="mt-5 text-2xl font-bold text-slate-900">
+                      {todayHours.schedule.isOpen
+                        ? `${todayHours.schedule.openTime} - ${todayHours.schedule.closeTime}`
+                        : "Closed"}
+                    </p>
+
+                    <p className="mt-2 text-sm capitalize text-gray-500">
+                      {todayHours.day}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-5 text-sm text-gray-500">
+                    Working hours are not available.
                   </p>
-
-                  <p className="mt-1 font-semibold text-slate-900">
-                    {todayHours.schedule.isOpen
-                      ? `${todayHours.schedule.openTime} - ${todayHours.schedule.closeTime}`
-                      : "Closed"}
-                  </p>
-                </div>
-
-                <Clock3 className="text-purple-600" size={22} />
+                )}
               </div>
-            ) : (
-              <p className="mt-5 text-sm text-gray-500">
-                Working hours are not available.
-              </p>
-            )}
+
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-50">
+                <Clock3 size={24} className="text-purple-600" />
+              </div>
+            </div>
           </div>
         </section>
       )}

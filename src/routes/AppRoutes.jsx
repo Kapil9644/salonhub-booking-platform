@@ -40,6 +40,7 @@ import AdminLogin from "../pages/Admin/Login/AdminLogin";
 import AdminPublicRoute from "../components/common/AdminPublicRoute/AdminPublicRoute";
 import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
+import SalonOwnerSettings from "../pages/SalonOwner/Settings";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -158,6 +159,10 @@ export default function AppRoutes() {
           />
 
           <Route path="/salon-owner/working-hours" element={<WorkingHours />} />
+          <Route
+            path="/salon-owner/settings"
+            element={<SalonOwnerSettings />}
+          />
           <Route
             path="/salon-owner/appointments"
             element={<SalonOwnerAppointments />}

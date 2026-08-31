@@ -3,6 +3,65 @@ const Salon = require("../models/Salon");
 const Service = require("../models/Service");
 const WorkingHours = require("../models/WorkingHours");
 
+// ========================================
+// CALCULATE CURRENT SALON OPEN/CLOSED STATUS
+// ========================================
+const calculateSalonOpenStatus = (salon, workingHours) => {
+  const today = new Date();
+
+  // Use India Standard Time
+  const indiaDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(today);
+
+  const indiaTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(today);
+
+  const dayName = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+  })
+    .format(today)
+    .toLowerCase();
+
+  const todayHours = workingHours?.[dayName];
+
+  // No working hours found for today
+  if (!todayHours) {
+    return false;
+  }
+
+  // ========================================
+  // MANUAL OVERRIDE
+  // ========================================
+  if (salon.statusOverrideDate === indiaDate) {
+    if (salon.statusOverride === "open") {
+      return true;
+    }
+
+    if (salon.statusOverride === "closed") {
+      return false;
+    }
+  }
+
+  // ========================================
+  // AUTOMATIC WORKING HOURS
+  // ========================================
+  if (!todayHours.isOpen) {
+    return false;
+  }
+
+  if (!todayHours.openTime || !todayHours.closeTime) {
+    return false;
+  }
+
+  return indiaTime >= todayHours.openTime && indiaTime < todayHours.closeTime;
+};
+
 // Get salon owned by logged-in salon owner
 const getMySalon = async (req, res) => {
   try {
@@ -35,9 +94,14 @@ const getMySalon = async (req, res) => {
       });
     }
 
+    const currentIsOpen = calculateSalonOpenStatus(salon, workingHours);
+
     res.status(200).json({
       success: true,
-      salon,
+      salon: {
+        ...salon.toObject(),
+        isOpen: currentIsOpen,
+      },
       servicesCount,
       workingHours,
     });
@@ -304,6 +368,12 @@ const getPublicSalons = async (req, res) => {
           isActive: true,
         }).sort({ createdAt: -1 });
 
+        const workingHours = await WorkingHours.findOne({
+          salon: salon._id,
+        });
+
+        const currentIsOpen = calculateSalonOpenStatus(salon, workingHours);
+
         const lowestPrice =
           services.length > 0
             ? Math.min(...services.map((service) => service.price))
@@ -318,7 +388,7 @@ const getPublicSalons = async (req, res) => {
           phone: salon.phone,
           email: salon.email,
           isListed: salon.isListed,
-          isOpen: salon.isOpen,
+          isOpen: currentIsOpen,
           approvalStatus: salon.approvalStatus,
           services,
           price: lowestPrice,
@@ -375,6 +445,8 @@ const getPublicSalonDetails = async (req, res) => {
       });
     }
 
+    const currentIsOpen = calculateSalonOpenStatus(salon, workingHours);
+
     const startingPrice =
       services.length > 0
         ? Math.min(...services.map((service) => service.price))
@@ -391,7 +463,7 @@ const getPublicSalonDetails = async (req, res) => {
         phone: salon.phone,
         email: salon.email,
         isListed: salon.isListed,
-        isOpen: salon.isOpen,
+        isOpen: currentIsOpen,
         approvalStatus: salon.approvalStatus,
 
         services,

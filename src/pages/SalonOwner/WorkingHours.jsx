@@ -232,14 +232,6 @@ export default function WorkingHours() {
                       }`}
                     />
                   </button>
-
-                  <span
-                    className={`text-sm font-medium ${
-                      schedule?.isOpen ? "text-green-600" : "text-gray-500"
-                    }`}
-                  >
-                    {schedule?.isOpen ? "Open" : "Closed"}
-                  </span>
                 </div>
 
                 {/* Time */}
