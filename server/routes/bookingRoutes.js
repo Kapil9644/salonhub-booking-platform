@@ -7,6 +7,7 @@ const {
   getMyBookings,
   updateBooking,
   cancelBooking,
+  getBookedSlots,
 } = require("../controllers/bookingController");
 
 const protect = require("../middleware/authMiddleware");
@@ -16,6 +17,9 @@ router.post("/", protect, createBooking);
 
 // Get logged-in user's bookings
 router.get("/my", protect, getMyBookings);
+
+// Get booked time slots for a salon and date
+router.get("/booked-slots", protect, getBookedSlots);
 
 // Edit booking
 router.put("/:id", protect, updateBooking);

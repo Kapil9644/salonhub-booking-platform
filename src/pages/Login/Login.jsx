@@ -59,7 +59,7 @@ const Login = () => {
       </h2>
       <form
         onSubmit={handleSubmit}
-        className="mx-auto max-w-md rounded-2xl border border-gray-400 bg-white p-6 shadow-lg sm:p-8"
+        className="mx-auto mt-10 max-w-md rounded-2xl border border-gray-400 bg-white p-6 shadow-lg sm:p-8"
       >
         <div>
           <label>Phone Number</label>

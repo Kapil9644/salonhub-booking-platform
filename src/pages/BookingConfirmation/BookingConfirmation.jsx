@@ -67,6 +67,16 @@ export default function BookingConfirmation() {
 
           {/* Booking Details */}
           <div className="mt-8 rounded-2xl bg-gray-50 p-6 text-left">
+            {/* Booking ID */}
+            <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-purple-100 bg-purple-50 px-4 py-0">
+              <span className="text-sm font-medium text-gray-500">
+                Booking ID
+              </span>
+
+              <span className="font-bold tracking-wide text-purple-700">
+                #{booking._id ? booking._id.slice(-6).toUpperCase() : "--"}
+              </span>
+            </div>
             <h2 className="text-xl font-bold text-slate-900">
               {booking.salon?.name}
             </h2>

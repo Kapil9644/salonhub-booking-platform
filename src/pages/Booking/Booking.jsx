@@ -52,6 +52,7 @@ export default function Booking() {
             selectedDate={selectedDate}
             selectedTime={selectedTime}
             setSelectedTime={setSelectedTime}
+            salon={salon}
           />
         </div>
 

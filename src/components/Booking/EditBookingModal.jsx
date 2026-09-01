@@ -234,7 +234,7 @@ export default function EditBookingModal({ booking, onClose, onUpdated }) {
 
         totalDuration,
 
-        date: new Date(`${selectedDate}T00:00:00`),
+        date: selectedDate,
 
         time: selectedTime,
       };

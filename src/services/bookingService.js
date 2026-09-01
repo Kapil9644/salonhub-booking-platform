@@ -12,6 +12,17 @@ export const getMyBookings = async () => {
   return response.data;
 };
 
+export const getBookedSlots = async (salonId, date) => {
+  const response = await api.get("/bookings/booked-slots", {
+    params: {
+      salonId,
+      date,
+    },
+  });
+
+  return response.data;
+};
+
 export const updateBooking = async (bookingId, bookingData) => {
   const response = await api.put(`/bookings/${bookingId}`, bookingData);
 
