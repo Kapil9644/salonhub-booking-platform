@@ -6,6 +6,7 @@ export default function TimeSlotSelector({
   selectedTime,
   setSelectedTime,
   salon,
+  selectedServices,
 }) {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -146,6 +147,42 @@ export default function TimeSlotSelector({
       .format(bookingDate)
       .toLowerCase();
   };
+  const totalDuration = (selectedServices || []).reduce(
+    (total, service) => total + Number(service.duration || 0),
+    0,
+  );
+
+  const isTimeSlotOverlappingBooking = (time) => {
+    const slotStartMinutes = timeToMinutes(convertTimeTo24Hour(time));
+
+    if (slotStartMinutes === null) {
+      return false;
+    }
+
+    const slotEndMinutes = slotStartMinutes + totalDuration;
+
+    return bookedSlots.some((booking) => {
+      const bookingTime = typeof booking === "string" ? booking : booking.time;
+
+      const bookingDuration =
+        typeof booking === "string" ? 0 : Number(booking.duration || 0);
+
+      const bookingStartMinutes = timeToMinutes(
+        convertTimeTo24Hour(bookingTime),
+      );
+
+      if (bookingStartMinutes === null || bookingDuration <= 0) {
+        return bookingTime === time;
+      }
+
+      const bookingEndMinutes = bookingStartMinutes + bookingDuration;
+
+      return (
+        slotStartMinutes < bookingEndMinutes &&
+        slotEndMinutes > bookingStartMinutes
+      );
+    });
+  };
 
   const dayName = getDayName(selectedDate);
   const dayHours = salon?.workingHours?.[dayName];
@@ -175,10 +212,9 @@ export default function TimeSlotSelector({
 
     const slots = [];
 
-    // Generate a slot every 30 minutes
     for (
       let currentTime = openingMinutes;
-      currentTime < closingMinutes;
+      currentTime + totalDuration <= closingMinutes;
       currentTime += 30
     ) {
       slots.push(formatTime(currentTime));
@@ -213,8 +249,7 @@ export default function TimeSlotSelector({
       {selectedDate && dayHours?.isOpen && availableTimeSlots.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {availableTimeSlots.map((time) => {
-            const isBooked = bookedSlots.includes(time);
-
+            const isBooked = isTimeSlotOverlappingBooking(time);
             return (
               <button
                 key={time}

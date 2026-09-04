@@ -58,8 +58,29 @@ const getBookingDayName = (date) => {
     .toLowerCase();
 };
 
+const timeToMinutes = (time) => {
+  if (!time || typeof time !== "string") {
+    return null;
+  }
+
+  const [hours, minutes] = time.split(":").map(Number);
+
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+};
+
 // Validate booking time against salon working hours
-const validateBookingTime = async (salonId, date, time) => {
+const validateBookingTime = async (salonId, date, time, totalDuration = 0) => {
   const dayName = getBookingDayName(date);
   const bookingTime = convertTimeTo24Hour(time);
 
@@ -97,16 +118,91 @@ const validateBookingTime = async (salonId, date, time) => {
     };
   }
 
-  if (bookingTime < dayHours.openTime || bookingTime >= dayHours.closeTime) {
+  const bookingStartMinutes = timeToMinutes(bookingTime);
+  const closingMinutes = timeToMinutes(dayHours.closeTime);
+
+  if (bookingStartMinutes === null || closingMinutes === null) {
+    return {
+      valid: false,
+      message: "Salon working hours are not properly configured.",
+    };
+  }
+
+  // Booking must start within salon working hours.
+  if (
+    bookingStartMinutes < timeToMinutes(dayHours.openTime) ||
+    bookingStartMinutes >= closingMinutes
+  ) {
     return {
       valid: false,
       message: `This time slot is outside the salon's working hours (${dayHours.openTime} - ${dayHours.closeTime}).`,
     };
   }
 
+  // The complete service duration must finish before or exactly at closing time.
+  const bookingEndMinutes = bookingStartMinutes + Number(totalDuration || 0);
+
+  if (bookingEndMinutes > closingMinutes) {
+    return {
+      valid: false,
+      message: `This booking cannot be completed within the salon's working hours. The salon closes at ${dayHours.closeTime}.`,
+    };
+  }
+
   return {
     valid: true,
   };
+};
+
+const hasBookingTimeOverlap = async (
+  salonId,
+  date,
+  bookingTime,
+  bookingDuration,
+  excludeBookingId = null,
+) => {
+  const requestedStartMinutes = timeToMinutes(convertTimeTo24Hour(bookingTime));
+
+  if (requestedStartMinutes === null) {
+    return false;
+  }
+
+  const requestedEndMinutes =
+    requestedStartMinutes + Number(bookingDuration || 0);
+
+  const existingBookingsQuery = {
+    "salon.id": salonId,
+    date: new Date(date),
+    status: "Upcoming",
+  };
+
+  if (excludeBookingId) {
+    existingBookingsQuery._id = {
+      $ne: excludeBookingId,
+    };
+  }
+
+  const existingBookings = await Booking.find(existingBookingsQuery).select(
+    "time totalDuration",
+  );
+
+  return existingBookings.some((booking) => {
+    const existingStartMinutes = timeToMinutes(
+      convertTimeTo24Hour(booking.time),
+    );
+
+    if (existingStartMinutes === null) {
+      return false;
+    }
+
+    const existingEndMinutes =
+      existingStartMinutes + Number(booking.totalDuration || 0);
+
+    return (
+      requestedStartMinutes < existingEndMinutes &&
+      requestedEndMinutes > existingStartMinutes
+    );
+  });
 };
 
 // CREATE A NEW BOOKING
@@ -137,36 +233,6 @@ const createBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "This salon is currently unavailable for booking.",
-      });
-    }
-
-    // Validate selected date and time against salon working hours
-    const workingHoursValidation = await validateBookingTime(
-      salonData._id,
-      date,
-      time,
-    );
-
-    if (!workingHoursValidation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: workingHoursValidation.message,
-      });
-    }
-
-    // Check whether this salon/date/time slot is already booked
-    const existingBooking = await Booking.findOne({
-      "salon.id": salonData._id,
-      date: new Date(date),
-      time,
-      status: "Upcoming",
-    });
-
-    if (existingBooking) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "This time slot is already booked. Please select another time.",
       });
     }
 
@@ -206,6 +272,37 @@ const createBooking = async (req, res) => {
       (total, service) => total + service.duration,
       0,
     );
+
+    // Check whether the requested time overlaps with an existing booking
+    const hasOverlap = await hasBookingTimeOverlap(
+      salonData._id,
+      date,
+      time,
+      totalDuration,
+    );
+
+    if (hasOverlap) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This time slot overlaps with an existing booking. Please select another time.",
+      });
+    }
+
+    // Validate booking time including total service duration
+    const workingHoursValidation = await validateBookingTime(
+      salonData._id,
+      date,
+      time,
+      totalDuration,
+    );
+
+    if (!workingHoursValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: workingHoursValidation.message,
+      });
+    }
 
     // Create booking
     const booking = await Booking.create({
@@ -322,36 +419,9 @@ const updateBooking = async (req, res) => {
     }
 
     // Validate selected date and time against salon working hours
-    const workingHoursValidation = await validateBookingTime(
-      salonData._id,
-      date,
-      time,
-    );
-
-    if (!workingHoursValidation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: workingHoursValidation.message,
-      });
-    }
 
     // Check whether the new salon/date/time slot is already booked
     // Exclude the current booking itself.
-    const existingBooking = await Booking.findOne({
-      _id: { $ne: booking._id },
-      "salon.id": salonData._id,
-      date: new Date(date),
-      time,
-      status: "Upcoming",
-    });
-
-    if (existingBooking) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "This time slot is already booked. Please select another time.",
-      });
-    }
 
     const serviceIds = services.map((service) => service.id);
 
@@ -384,6 +454,39 @@ const updateBooking = async (req, res) => {
       (total, service) => total + service.duration,
       0,
     );
+
+    // Check whether the new time overlaps with another existing booking
+    // Exclude the current booking itself.
+    const hasOverlap = await hasBookingTimeOverlap(
+      salonData._id,
+      date,
+      time,
+      totalDuration,
+      booking._id,
+    );
+
+    if (hasOverlap) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This time slot overlaps with an existing booking. Please select another time.",
+      });
+    }
+
+    // Validate booking time including total service duration
+    const workingHoursValidation = await validateBookingTime(
+      salonData._id,
+      date,
+      time,
+      totalDuration,
+    );
+
+    if (!workingHoursValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: workingHoursValidation.message,
+      });
+    }
 
     booking.salon = {
       id: salonData._id,
@@ -498,9 +601,12 @@ const getBookedSlots = async (req, res) => {
         $lte: endDate,
       },
       status: "Upcoming",
-    }).select("time");
+    }).select("time totalDuration");
 
-    const bookedSlots = bookings.map((booking) => booking.time);
+    const bookedSlots = bookings.map((booking) => ({
+      time: booking.time,
+      duration: booking.totalDuration,
+    }));
 
     res.status(200).json({
       success: true,
