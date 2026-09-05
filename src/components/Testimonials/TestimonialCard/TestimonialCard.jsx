@@ -2,35 +2,39 @@ import { Star, CircleCheckBig, User } from "lucide-react";
 
 export default function TestimonialCard({ name, city, rating, review }) {
   return (
-    <div className="rounded-3xl bg-white p-8 shadow-lg border border-gray-400 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
       {/* Customer */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100">
-          <User className="text-purple-600" size={30} />
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100">
+          <User className="text-purple-600" size={18} />
         </div>
 
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">{name}</h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-bold leading-4 text-gray-900">
+            {name}
+          </h3>
 
-          <p className="text-gray-500">{city}</p>
+          <p className="text-[10px] leading-3 text-gray-500">{city}</p>
         </div>
       </div>
 
       {/* Rating */}
-      <div className="mt-6 flex items-center gap-2">
-        <Star className="fill-yellow-400 text-yellow-400" size={18} />
-
-        <span className="font-semibold">{rating}</span>
+      <div className="mt-2 flex items-center gap-1">
+        <Star className="fill-yellow-400 text-yellow-400" size={13} />
+        <span className="text-xs font-semibold">{rating}</span>
       </div>
 
       {/* Review */}
-      <p className="mt-5 leading-7 text-gray-600">"{review}"</p>
+      <p className="mt-1.5 line-clamp-2 text-xs leading-4 text-gray-600">
+        "{review}"
+      </p>
 
       {/* Verified */}
-      <div className="mt-6 flex items-center gap-2 text-green-600">
-        <CircleCheckBig size={18} />
-
-        <span className="font-medium">Verified Customer</span>
+      <div className="mt-2 flex items-center gap-1 text-green-600">
+        <CircleCheckBig size={13} />
+        <span className="text-[10px] font-medium leading-3">
+          Verified Customer
+        </span>
       </div>
     </div>
   );

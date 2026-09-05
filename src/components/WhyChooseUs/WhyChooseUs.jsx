@@ -3,8 +3,8 @@ import FeatureGrid from "./FeatureGrid/FeatureGrid";
 
 export default function WhyChooseUs() {
   return (
-    <section className="bg-gray-50 py-10">
-      <div className="mx-auto max-w-[1400px] px-12 ">
+    <section className="bg-gray-50 py-5 sm:py-6 lg:py-7">
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionTitle />
         <FeatureGrid />
       </div>

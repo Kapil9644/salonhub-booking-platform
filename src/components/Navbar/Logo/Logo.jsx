@@ -6,18 +6,30 @@ export default function Logo({ onClick }) {
     <Link
       to="/"
       onClick={onClick}
-      className="ml-4 inline-block shrink-0 leading-none sm:ml-6 lg:ml-8"
+      className="inline-flex shrink-0 items-center leading-none"
     >
-      <div className="flex items-center gap-2">
-        <Scissors size={28} className="text-purple-600" />
+      <div className="flex items-center gap-3">
+        {/* Logo Icon */}
+        <div className="relative flex h-[58px] w-[58px] items-center justify-center">
+          {/* Soft golden circle */}
+          <div className="absolute left-[7px] top-[7px] h-6 w-6 rounded-full border-[5px] border-[#D4B85A]" />
 
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          {/* Scissors */}
+          <Scissors
+            size={48}
+            strokeWidth={2.5}
+            className="relative z-10 -rotate-[10deg] text-purple-700"
+          />
+        </div>
+
+        {/* Brand */}
+        <div className="flex flex-col">
+          <h1 className="text-[30px] font-extrabold leading-none tracking-tight text-black sm:text-[34px]">
             Rupiva
           </h1>
 
-          <p className="mt-1 text-[10px] font-medium tracking-wide text-gray-500 sm:text-xs">
-            Book • Style • Shine
+          <p className="mt-1 text-[9px] font-medium tracking-[0.18em] text-gray-500 sm:text-[10px]">
+            BOOK • STYLE • SHINE
           </p>
         </div>
       </div>

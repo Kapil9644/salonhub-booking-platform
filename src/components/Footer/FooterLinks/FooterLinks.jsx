@@ -9,7 +9,7 @@ export default function FooterLinks() {
           <a
             key={link.id}
             href={link.href}
-            className="text-gray-300 hover:text-purple-400 transition-colors"
+            className="text-xs text-gray-300 transition-colors hover:text-purple-400 sm:text-sm"
           >
             {link.label}
           </a>
@@ -21,7 +21,7 @@ export default function FooterLinks() {
           <a
             key={link.id}
             href={link.href}
-            className="text-gray-300 hover:text-purple-400 transition-colors"
+            className="text-xs text-gray-300 transition-colors hover:text-purple-400 sm:text-sm"
           >
             {link.label}
           </a>
@@ -34,7 +34,7 @@ export default function FooterLinks() {
             <a
               key={link.id}
               href={link.href}
-              className="text-gray-300 hover:text-purple-400 transition-colors"
+              className="text-xs text-gray-300 transition-colors hover:text-purple-400 sm:text-sm"
             >
               {link.label}
             </a>

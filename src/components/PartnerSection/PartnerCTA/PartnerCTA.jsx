@@ -4,10 +4,10 @@ export default function PartnerCTA() {
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-4">
       <button
         onClick={handleBecomePartner}
-        className="rounded-2xl bg-purple-600 px-8 py-4 text-lg font-semibold text-white transition-all duration-300 hover:bg-purple-700 hover:shadow-xl"
+        className="rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-purple-700 hover:shadow-md"
       >
         Become a Partner
       </button>

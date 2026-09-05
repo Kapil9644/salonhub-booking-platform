@@ -1,11 +1,11 @@
 export default function SectionTitle() {
   return (
-    <div className="text-center mb-12">
-      <h2 className="text-4xl font-bold text-gray-900">
+    <div className="mb-4 text-center sm:mb-5">
+      <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-[26px]">
         What Our Customers Say
       </h2>
 
-      <p className="mt-3 text-lg text-gray-600">
+      <p className="mt-1.5 text-sm leading-5 text-gray-600 sm:text-[15px]">
         Thousands of happy customers trust Rupiva for their beauty bookings.
       </p>
     </div>

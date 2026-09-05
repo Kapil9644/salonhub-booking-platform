@@ -6,6 +6,7 @@ import {
   Paintbrush,
   UserRound,
 } from "lucide-react";
+import { LiaPenSolid } from "react-icons/lia";
 
 export const services = [
   {
@@ -43,5 +44,29 @@ export const services = [
     title: "Styling",
     description: "Party & wedding styling",
     icon: Brush,
+  },
+  {
+    id: 7,
+    title: "Massage",
+    description: "Relaxing massage therapy",
+    icon: Hand,
+  },
+  {
+    id: 8,
+    title: "Eyelash Extensions",
+    description: "Beautiful eyelash extensions",
+    icon: Sparkles,
+  },
+  {
+    id: 9,
+    title: "Lip & Eyebrow Tinting",
+    description: "Enhance your natural beauty",
+    icon: LiaPenSolid,
+  },
+  {
+    id: 10,
+    title: "Nail Art",
+    description: "Beautiful nail art designs",
+    icon: Paintbrush,
   },
 ];

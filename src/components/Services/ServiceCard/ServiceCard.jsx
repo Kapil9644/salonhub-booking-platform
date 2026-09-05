@@ -1,18 +1,22 @@
 export default function ServiceCard({ title, description, icon: Icon }) {
   return (
-    <div className="group rounded-3xl bg-white p-8 text-center border border-gray-400 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 transition group-hover:bg-purple-600">
+    <div className="group flex h-[140px] flex-col rounded-xl border border-gray-200 bg-white p-2.5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-purple-500 hover:ring-1 hover:ring-purple-500 hover:shadow-md active:border-purple-500 active:ring-1 active:ring-purple-500 sm:h-[145px] sm:p-3">
+      <div className="mx-auto mb-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 transition group-hover:bg-purple-600">
         <Icon
-          size={36}
+          size={20}
           className="text-purple-600 transition group-hover:text-white"
         />
       </div>
 
-      <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+      <h3 className="truncate text-sm font-bold leading-4 text-gray-900">
+        {title}
+      </h3>
 
-      <p className="mt-3 text-gray-500">{description}</p>
+      <p className="mt-1 line-clamp-2 min-h-[28px] text-[10px] leading-3.5 text-gray-500">
+        {description}
+      </p>
 
-      <button className="mt-6 font-semibold text-purple-600 transition hover:translate-x-1">
+      <button className="mt-auto pt-1 text-[11px] font-semibold leading-4 text-purple-600 transition hover:translate-x-0.5">
         Learn More →
       </button>
     </div>

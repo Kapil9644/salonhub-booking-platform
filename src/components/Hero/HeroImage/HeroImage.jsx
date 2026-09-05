@@ -2,12 +2,14 @@ import heroSalon from "../../../assets/images/hero-salon.jpg";
 
 export default function HeroImage() {
   return (
-    <div className="w-full lg:w-1/2 flex justify-center">
-      <img
-        src={heroSalon}
-        alt="Luxury Salon"
-        className="w-full max-w-md lg:max-w-2xl h-auto rounded-3xl object-cover shadow-xl transition-transform duration-300 hover:scale-[1.02]"
-      />
+    <div className="flex w-full justify-end">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl shadow-lg">
+        <img
+          src={heroSalon}
+          alt="Luxury Salon"
+          className="h-48 w-full object-cover transition-transform duration-300 hover:scale-[1.02] sm:h-46 md:h-51 lg:h-62"
+        />
+      </div>
     </div>
   );
 }

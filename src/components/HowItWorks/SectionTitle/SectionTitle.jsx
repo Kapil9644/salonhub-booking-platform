@@ -1,11 +1,11 @@
 export default function SectionTitle() {
   return (
-    <div className="mb-12 text-center">
-      <h2 className="text-4xl font-bold text-gray-900">
+    <div className="mb-4 text-center sm:mb-5">
+      <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-[26px]">
         How It Works
       </h2>
 
-      <p className="mt-3 text-lg text-gray-600">
+      <p className="mt-1.5 text-sm leading-5 text-gray-600 sm:text-[15px]">
         Book your salon appointment in just three simple steps.
       </p>
     </div>

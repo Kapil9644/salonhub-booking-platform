@@ -11,8 +11,8 @@ export default function Navbar() {
   const { user } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:pl-0 lg:pr-8">
+    <nav className="sticky top-0 z-50 w-full bg-white px-3 py-3 sm:px-5 sm:py-4 lg:px-8 lg:py-5">
+      <div className="mx-auto flex min-h-[76px] w-full max-w-[1280px] items-center justify-between rounded-[24px] border border-[#a98cf8] bg-white px-4 shadow-[0_10px_30px_rgba(15,23,42,0.12)] sm:min-h-[84px] sm:rounded-[28px] sm:px-6 lg:px-7">
         {/* Logo */}
         <Logo onClick={() => setIsMenuOpen(false)} />
 

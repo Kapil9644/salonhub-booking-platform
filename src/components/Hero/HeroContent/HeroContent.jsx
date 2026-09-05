@@ -3,25 +3,25 @@ import TrustedCustomers from "../TrustedCustomers/TrustedCustomers";
 
 export default function HeroContent() {
   return (
-    <div>
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-black-400">
+    <div className="w-full">
+      <h1 className="text-2xl font-extrabold leading-none tracking-tight text-slate-900 sm:text-4xl lg:text-4xl">
         Look Great
       </h1>
 
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-purple-700">
+      <h1 className="text-2xl font-extrabold leading-none tracking-tight text-purple-700 sm:text-3xl lg:text-4xl">
         Book Instantly
       </h1>
 
-      <p className="mt-4 text-base sm:text-lg leading-7 sm:leading-8 text-slate-600">
+      <p className="mt-1.5 max-w-xl text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-5">
         Find trusted salons near you and book your preferred time slot in
         seconds
       </p>
 
-      <div className="mt-4">
+      <div className="mt-3 w-full">
         <SearchBar />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-2">
         <TrustedCustomers />
       </div>
     </div>

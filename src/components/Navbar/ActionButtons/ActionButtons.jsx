@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Bell,
+  CalendarDays,
+  CircleHelp,
+  CreditCard,
+  LogIn,
+  LogOut,
+  Tag,
+  UserRound,
+  ChevronDown,
+} from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
 export default function ActionButtons({
@@ -9,6 +20,7 @@ export default function ActionButtons({
 }) {
   const { user, logout } = useAuth();
   console.log("Navbar User:", user);
+
   const navigate = useNavigate();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const accountMenuRef = useRef(null);
@@ -39,6 +51,9 @@ export default function ActionButtons({
     navigate("/");
   };
 
+  /* =========================
+     MOBILE
+  ========================= */
   if (mobile) {
     return (
       <div className="flex flex-col gap-3">
@@ -47,15 +62,16 @@ export default function ActionButtons({
             <Link
               to="/login"
               onClick={onClick}
-              className="rounded-2xl border border-purple-600 px-6 py-2 text-center font-medium text-purple-600 transition-all duration-200 hover:bg-purple-50"
+              className="flex items-center justify-center gap-2 rounded-xl border border-purple-600 px-5 py-2.5 text-sm font-semibold text-purple-600 transition-all duration-200 hover:bg-purple-50"
             >
+              <LogIn size={17} strokeWidth={2} />
               Login
             </Link>
 
             <Link
               to="/signup"
               onClick={onClick}
-              className="rounded-2xl bg-purple-600 px-6 py-2 text-center font-medium text-white transition-all duration-200 hover:bg-purple-700"
+              className="flex items-center justify-center rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-purple-700"
             >
               Sign Up
             </Link>
@@ -64,9 +80,9 @@ export default function ActionButtons({
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 px-0 py-2 text-left text-sm font-medium text-red-600 transition-colors duration-200 hover:text-red-700"
+            className="flex w-full items-center gap-2 rounded-xl px-2 py-2.5 text-left text-sm font-semibold text-red-600 transition-colors duration-200 hover:bg-red-50"
           >
-            <span>🚪</span>
+            <LogOut size={17} strokeWidth={2} />
             <span>Logout</span>
           </button>
         )}
@@ -74,110 +90,181 @@ export default function ActionButtons({
     );
   }
 
+  /* =========================
+     DESKTOP
+  ========================= */
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2.5">
       {user ? (
         showUser && (
-          <div ref={accountMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setIsAccountOpen((prev) => !prev)}
-              className="flex items-center gap-2 rounded-2xl px-3 py-2 font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
+          <>
+            {/* Notification */}
+            <Link
+              to="/notifications"
+              aria-label="Notifications"
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-all duration-200 hover:bg-purple-50 hover:text-purple-600"
             >
-              {user.profileImage ? (
-                <img
-                  src={user.profileImage}
-                  alt="Profile"
-                  className="h-9 w-9 rounded-full object-cover"
-                />
-              ) : (
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-lg">
-                  👤
+              <Bell size={21} strokeWidth={2} />
+            </Link>
+
+            {/* Account */}
+            <div ref={accountMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAccountOpen((prev) => !prev)}
+                className={`flex h-12 max-w-[190px] items-center gap-2 rounded-full border px-2.5 transition-all duration-200 ${
+                  isAccountOpen
+                    ? "border-purple-200 bg-purple-50"
+                    : "border-gray-200 bg-gray-50 hover:border-purple-200 hover:bg-purple-50"
+                }`}
+              >
+                {/* Avatar */}
+                {user.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt="Profile"
+                    className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white"
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 ring-2 ring-white">
+                    <UserRound size={18} strokeWidth={2} />
+                  </span>
+                )}
+
+                {/* Customer Name */}
+                <span className="min-w-0 max-w-[105px] truncate text-left text-sm font-semibold text-slate-800">
+                  {user.fullName}
                 </span>
-              )}
 
-              <span className="max-w-32 truncate text-base font-semibold">
-                {user.fullName}
-              </span>
-            </button>
+                {/* Dropdown Arrow */}
+                <ChevronDown
+                  size={16}
+                  strokeWidth={2}
+                  className={`shrink-0 text-slate-500 transition-transform duration-200 ${
+                    isAccountOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-            {isAccountOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-gray-100 bg-white py-2 shadow-xl">
-                <div className="border-b border-gray-100 px-4 py-3">
-                  <p className="text-xs text-gray-500">Welcome back</p>
-                  <p className="truncate font-semibold text-slate-900">
-                    {user.fullName}
-                  </p>
+              {/* Account Dropdown */}
+              {isAccountOpen && (
+                <div className="absolute right-0 top-full z-50 mt-3 w-64 overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+                  {/* Profile Header */}
+                  <div className="mb-1 flex items-center gap-3 rounded-xl bg-purple-50 px-3 py-3">
+                    {user.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt="Profile"
+                        className="h-11 w-11 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-600 text-white">
+                        <UserRound size={20} strokeWidth={2} />
+                      </span>
+                    )}
+
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-gray-500">
+                        Welcome back
+                      </p>
+
+                      <p className="truncate text-sm font-bold text-slate-900">
+                        {user.fullName}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <UserRound size={17} strokeWidth={2} />
+                    My Account
+                  </Link>
+
+                  <Link
+                    to="/my-bookings"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <CalendarDays size={17} strokeWidth={2} />
+                    My Bookings
+                  </Link>
+
+                  <Link
+                    to="/payment"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <CreditCard size={17} strokeWidth={2} />
+                    Payments
+                  </Link>
+
+                  <Link
+                    to="/offers"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <Tag size={17} strokeWidth={2} />
+                    Offers
+                  </Link>
+
+                  <Link
+                    to="/notifications"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <Bell size={17} strokeWidth={2} />
+                    Notifications
+                  </Link>
+
+                  <Link
+                    to="/help-support"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <CircleHelp size={17} strokeWidth={2} />
+                    Help
+                  </Link>
+
+                  <div className="my-1.5 border-t border-gray-100" />
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-600 transition-colors duration-200 hover:bg-red-50"
+                  >
+                    <LogOut size={17} strokeWidth={2} />
+                    Logout
+                  </button>
                 </div>
+              )}
+            </div>
 
-                <Link
-                  to="/profile"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  My Account
-                </Link>
-
-                <Link
-                  to="/my-bookings"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  My Bookings
-                </Link>
-
-                <Link
-                  to="/payment"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  Payments
-                </Link>
-
-                <Link
-                  to="/offers"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  Offers
-                </Link>
-
-                <Link
-                  to="/notifications"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  Notifications
-                </Link>
-
-                <Link
-                  to="/help-support"
-                  onClick={() => setIsAccountOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600"
-                >
-                  Help
-                </Link>
-
-                <div className="my-1 border-t border-gray-100" />
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="block w-full px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+            {/* Book Now */}
+            <Link
+              to="/salons"
+              className="inline-flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-purple-600 px-5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-purple-700 hover:shadow-md"
+            >
+              Book Now
+            </Link>
+          </>
         )
       ) : (
         <>
           <Link
             to="/login"
-            className="rounded-2xl border border-purple-600 px-6 py-2 text-center font-medium text-purple-600 transition-all duration-200 hover:bg-purple-50"
+            className="inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl border border-purple-600 px-5 text-sm font-semibold text-purple-600 transition-all duration-200 hover:bg-purple-50"
           >
             Sign In
+          </Link>
+
+          <Link
+            to="/signup"
+            className="inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-purple-600 px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-purple-700"
+          >
+            Sign Up
           </Link>
         </>
       )}

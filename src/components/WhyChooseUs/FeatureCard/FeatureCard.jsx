@@ -1,16 +1,20 @@
 export default function FeatureCard({ icon: Icon, title, description }) {
   return (
-    <div className="group rounded-3xl bg-white p-8 text-center border border-gray-400 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-purple-100 transition-all duration-300 group-hover:bg-purple-600">
+    <div className="group rounded-2xl border border-gray-200 bg-white p-3 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-4">
+      <div className="mx-auto mb-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 transition-all duration-300 group-hover:bg-purple-600">
         <Icon
-          size={36}
+          size={21}
           className="text-purple-600 transition-all duration-300 group-hover:text-white"
         />
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
+      <h3 className="text-sm font-bold leading-5 text-gray-900 sm:text-base">
+        {title}
+      </h3>
 
-      <p className="mt-4 text-gray-500">{description}</p>
+      <p className="mt-1.5 line-clamp-2 text-xs leading-4.5 text-gray-500 sm:text-sm">
+        {description}
+      </p>
     </div>
   );
 }

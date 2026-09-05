@@ -1,9 +1,4 @@
-import {
-  Zap,
-  BadgeCheck,
-  ShieldCheck,
-  CalendarCheck,
-} from "lucide-react";
+import { Zap, BadgeCheck, ShieldCheck, CalendarCheck } from "lucide-react";
 
 export const whyChooseUs = [
   {
@@ -15,7 +10,7 @@ export const whyChooseUs = [
   {
     id: 2,
     icon: BadgeCheck,
-    title: "Verified Salons",
+    title: "Verified Services",
     description: "Only trusted and quality-checked salon partners.",
   },
   {

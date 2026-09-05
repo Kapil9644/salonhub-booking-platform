@@ -41,6 +41,7 @@ import AdminPublicRoute from "../components/common/AdminPublicRoute/AdminPublicR
 import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
 import SalonOwnerSettings from "../pages/SalonOwner/Settings";
+import Testimonials from "../pages/Testimonials/Testimonials";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -113,6 +114,7 @@ export default function AppRoutes() {
         />
 
         <Route path="/services" element={<Services />} />
+        <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/partner" element={<BecomePartner />} />
         <Route path="/offers" element={<Offers />} />
         <Route path="/payment" element={<Payment />} />

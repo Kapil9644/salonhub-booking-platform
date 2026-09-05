@@ -3,7 +3,14 @@ import { Link } from "react-router-dom";
 import ActionButtons from "../ActionButtons/ActionButtons";
 import { useAuth } from "../../../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import {
+  X,
+  UserRound,
+  ChevronDown,
+  ChevronUp,
+  Compass,
+  Handshake,
+} from "lucide-react";
 
 export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
   const { user } = useAuth();
@@ -33,75 +40,118 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
     };
   }, [isMenuOpen, setIsMenuOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isMenuOpen]);
+
   if (!isMenuOpen) return null;
 
   return (
     <div
       ref={mobileMenuRef}
-      className="fixed right-0 top-0 z-[60] w-[48vw] min-w-[150px] max-w-[200px] max-h-screen overflow-y-auto border-l border-b border-gray-100 bg-white shadow-2xl lg:hidden"
+      className="fixed right-3 top-3 z-[60] flex max-h-[calc(100vh-24px)] w-[min(70vw,300px)] flex-col overflow-hidden overscroll-contain rounded-3xl border border-purple-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.20)] lg:hidden"
     >
-      <div className="flex items-center justify-end px-3 pt-3">
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-purple-600">
+            Rupiva
+          </p>
+          <p className="mt-0.5 text-sm font-medium text-slate-500">
+            Book • Style • Shine
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() => setIsMenuOpen(false)}
           aria-label="Close menu"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors duration-200 hover:bg-gray-100 hover:text-slate-900"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-slate-600 transition-all duration-200 hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700"
         >
-          <X size={18} strokeWidth={2} />
+          <X size={19} strokeWidth={2} />
         </button>
       </div>
 
-      <nav className="w-full px-3 py-4">
+      <nav className="min-h-0 overflow-y-auto px-4 py-4">
         {/* User Profile */}
         {user && (
           <Link
             to="/profile"
             onClick={() => setIsMenuOpen(false)}
-            className="mb-3 flex min-w-0 items-center gap-2 rounded-2xl bg-purple-50 px-2.5 py-2.5 text-slate-800 transition-colors duration-200 hover:bg-purple-100"
+            className="mb-4 flex min-w-0 items-center gap-3 rounded-2xl border border-purple-100 bg-purple-50 px-3 py-3 transition-all duration-200 hover:bg-purple-100"
           >
             {user.profileImage ? (
               <img
                 src={user.profileImage}
                 alt="Profile"
-                className="h-8 w-8 shrink-0 rounded-full object-cover"
+                className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-white"
               />
             ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm text-white">
-                👤
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-600 text-white ring-2 ring-white">
+                <UserRound size={19} strokeWidth={2} />
               </span>
             )}
 
             <div className="min-w-0 flex-1">
-              <p className="whitespace-nowrap text-[9px] font-medium text-gray-500">
+              <p className="text-[11px] font-medium text-gray-500">
                 Welcome back
               </p>
 
-              <p className="truncate font-semibold text-slate-900">
+              <p className="truncate text-sm font-bold text-slate-900">
                 {user.fullName}
               </p>
+
+              <p className="mt-0.5 text-xs text-purple-600">View profile</p>
             </div>
           </Link>
         )}
 
         {/* Account */}
         {user && (
-          <div className="mt-4 border-t border-gray-100 pt-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Account
-            </p>
+          <div className="border-t border-gray-100 pt-4">
+            <button
+              type="button"
+              onClick={() =>
+                setActiveSection((prev) =>
+                  prev === "account" ? null : "account",
+                )
+              }
+              className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] text-gray-500 transition-colors duration-200 hover:bg-gray-50 hover:text-purple-600"
+            >
+              <span className="flex items-center gap-2">
+                <UserRound size={15} strokeWidth={2} />
+                Account
+              </span>
 
-            <div className="divide-y divide-gray-100">
-              {navigation.account.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center py-2 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:text-purple-600"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
+              {activeSection === "account" ? (
+                <ChevronUp size={16} strokeWidth={2} />
+              ) : (
+                <ChevronDown size={16} strokeWidth={2} />
+              )}
+            </button>
+
+            {activeSection === "account" && (
+              <div className="mt-2 space-y-1">
+                {navigation.account.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -109,8 +159,8 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
         <div
           className={
             user
-              ? "mt-5 border-t border-gray-100 pt-4"
-              : "border-t border-gray-100 pt-3"
+              ? "mt-4 border-t border-gray-100 pt-4"
+              : "border-t border-gray-100 pt-4"
           }
         >
           {user ? (
@@ -121,30 +171,36 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
                   prev === "explore" ? null : "explore",
                 )
               }
-              className="flex w-full items-center justify-between py-1 text-xs font-semibold uppercase tracking-wider text-gray-500 transition-colors duration-200 hover:text-purple-600"
+              className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] text-gray-500 transition-colors duration-200 hover:bg-gray-50 hover:text-purple-600"
             >
-              <span>Explore</span>
-
-              <span className="text-sm leading-none">
-                {activeSection === "explore" ? "−" : "+"}
+              <span className="flex items-center gap-2">
+                <Compass size={15} strokeWidth={2} />
+                Explore
               </span>
+
+              {activeSection === "explore" ? (
+                <ChevronUp size={16} strokeWidth={2} />
+              ) : (
+                <ChevronDown size={16} strokeWidth={2} />
+              )}
             </button>
           ) : (
-            <div className="py-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <div className="px-2 py-2">
+              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">
+                <Compass size={15} strokeWidth={2} />
                 Explore
               </span>
             </div>
           )}
 
           {(!user || activeSection === "explore") && (
-            <div className="mt-2 flex flex-col">
+            <div className="mt-2 space-y-1">
               {navigation.primary.map((item) => (
                 <Link
                   key={item.id}
                   to={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center py-2 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:text-purple-600"
+                  className="flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
                 >
                   {item.label}
                 </Link>
@@ -153,8 +209,9 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
               <Link
                 to="/partner"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center py-2 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:text-purple-600"
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
               >
+                <Handshake size={17} strokeWidth={2} />
                 Become Partner
               </Link>
             </div>
@@ -162,14 +219,12 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
         </div>
 
         {/* Utility Actions */}
-        <div className="mt-4 border-t border-gray-100 pt-3">
-          <div className="mt-1">
-            <ActionButtons
-              mobile={true}
-              showUser={false}
-              onClick={() => setIsMenuOpen(false)}
-            />
-          </div>
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <ActionButtons
+            mobile={true}
+            showUser={false}
+            onClick={() => setIsMenuOpen(false)}
+          />
         </div>
       </nav>
     </div>
