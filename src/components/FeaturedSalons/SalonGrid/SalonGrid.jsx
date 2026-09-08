@@ -1,13 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
+import { useLocation } from "../../../context/LocationContext";
 import SalonCard from "../../common/SalonCard/SalonCard";
 import { getPublicSalons } from "../../../services/salonService";
+import { calculateDistance } from "../../../utils/distance";
 
 export default function SalonGrid() {
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { location } = useLocation();
+  const salonsWithDistance = salons.map((salon) => {
+    const salonLatitude = salon.location?.latitude;
+    const salonLongitude = salon.location?.longitude;
+
+    if (
+      location?.latitude == null ||
+      location?.longitude == null ||
+      salonLatitude == null ||
+      salonLongitude == null
+    ) {
+      return salon;
+    }
+
+    const distance = calculateDistance(
+      location.latitude,
+      location.longitude,
+      salonLatitude,
+      salonLongitude,
+    );
+
+    return {
+      ...salon,
+      calculatedDistance: distance,
+    };
+  });
 
   const scrollRef = useRef(null);
 
@@ -147,12 +174,21 @@ export default function SalonGrid() {
         ref={scrollRef}
         className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-1 scrollbar-hide sm:gap-4"
       >
-        {salons.map((salon) => (
+        {salonsWithDistance.map((salon) => (
           <div
             key={salon._id}
             className="w-[calc((100%-0.75rem)/2)] min-w-[calc((100%-0.75rem)/2)] shrink-0 snap-start md:w-[calc((100%-2rem)/3)] md:min-w-[calc((100%-2rem)/3)] lg:w-[calc((100%-5rem)/6)] lg:min-w-[calc((100%-5rem)/6)]"
           >
-            <SalonCard {...salon} id={salon._id} image={salon.profileImage} />
+            <SalonCard
+              {...salon}
+              id={salon._id}
+              image={salon.profileImage}
+              distance={
+                salon.calculatedDistance != null
+                  ? `${salon.calculatedDistance.toFixed(1)} km`
+                  : salon.distance
+              }
+            />
           </div>
         ))}
       </div>

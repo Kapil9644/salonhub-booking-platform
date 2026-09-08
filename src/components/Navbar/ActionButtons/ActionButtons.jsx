@@ -245,7 +245,7 @@ export default function ActionButtons({
             {/* Book Now */}
             <Link
               to="/salons"
-              className="inline-flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-purple-600 px-5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-purple-700 hover:shadow-md"
+              className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-purple-600 px-5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-purple-700 hover:shadow-md"
             >
               Book Now
             </Link>

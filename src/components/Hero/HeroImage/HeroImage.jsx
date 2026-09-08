@@ -7,7 +7,7 @@ export default function HeroImage() {
         <img
           src={heroSalon}
           alt="Luxury Salon"
-          className="h-48 w-full object-cover transition-transform duration-300 hover:scale-[1.02] sm:h-46 md:h-51 lg:h-62"
+          className="h-40 w-full object-cover transition-transform duration-300 hover:scale-[1.02] sm:h-46 md:h-52 lg:h-56"
         />
       </div>
     </div>

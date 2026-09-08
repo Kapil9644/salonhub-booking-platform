@@ -2,34 +2,65 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
 
+const isSalonOwnerPortal = () => {
+  return window.location.pathname.startsWith("/salon-owner");
+};
+
+const getStorageKeys = () => {
+  if (isSalonOwnerPortal()) {
+    return {
+      userKey: "salonOwnerUser",
+      tokenKey: "salonOwnerToken",
+    };
+  }
+
+  return {
+    userKey: "user",
+    tokenKey: "token",
+  };
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const { userKey } = getStorageKeys();
+    const storedUser = localStorage.getItem(userKey);
 
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Failed to parse stored user:", error);
+        localStorage.removeItem(userKey);
+      }
     }
+
     setLoading(false);
   }, []);
 
   const login = (userData, token) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", token);
+    const { userKey, tokenKey } = getStorageKeys();
+
+    localStorage.setItem(userKey, JSON.stringify(userData));
+    localStorage.setItem(tokenKey, token);
 
     setUser(userData);
   };
 
   const updateUser = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+    const { userKey } = getStorageKeys();
+
+    localStorage.setItem(userKey, JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    const { userKey, tokenKey } = getStorageKeys();
+
+    localStorage.removeItem(userKey);
+    localStorage.removeItem(tokenKey);
 
     setUser(null);
   };

@@ -56,6 +56,15 @@ const salonSchema = new mongoose.Schema(
         default: "",
         trim: true,
       },
+      latitude: {
+        type: Number,
+        default: null,
+      },
+
+      longitude: {
+        type: Number,
+        default: null,
+      },
     },
 
     phone: {

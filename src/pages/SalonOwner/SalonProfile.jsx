@@ -7,6 +7,7 @@ import {
   EyeOff,
   Mail,
   MapPin,
+  Navigation,
   Phone,
   Save,
   Store,
@@ -28,6 +29,8 @@ const emptyForm = {
   city: "",
   state: "",
   pincode: "",
+  latitude: null,
+  longitude: null,
   phone: "",
   email: "",
 };
@@ -70,6 +73,8 @@ export default function SalonProfile() {
           city: currentSalon.location?.city || "",
           state: currentSalon.location?.state || "",
           pincode: currentSalon.location?.pincode || "",
+          latitude: currentSalon.location?.latitude ?? null,
+          longitude: currentSalon.location?.longitude ?? null,
           phone: currentSalon.phone || "",
           email: currentSalon.email || "",
         });
@@ -109,6 +114,47 @@ export default function SalonProfile() {
     setIsEditing(true);
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Location is not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        setFormData((current) => ({
+          ...current,
+          latitude,
+          longitude,
+        }));
+
+        alert("Current location captured successfully.");
+      },
+      (error) => {
+        console.error("Location error:", error);
+
+        if (error.code === 1) {
+          alert(
+            "Location permission was denied. Please allow location access.",
+          );
+        } else if (error.code === 2) {
+          alert("Your location could not be detected. Please try again.");
+        } else if (error.code === 3) {
+          alert("Location request timed out. Please try again.");
+        } else {
+          alert("Unable to get your current location.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
+    );
+  };
+
   const handleCancel = () => {
     if (salon) {
       setFormData({
@@ -119,6 +165,8 @@ export default function SalonProfile() {
         city: salon.location?.city || "",
         state: salon.location?.state || "",
         pincode: salon.location?.pincode || "",
+        latitude: salon.location?.latitude ?? null,
+        longitude: salon.location?.longitude ?? null,
         phone: salon.phone || "",
         email: salon.email || "",
       });
@@ -172,6 +220,8 @@ export default function SalonProfile() {
           city: formData.city.trim(),
           state: formData.state.trim(),
           pincode: formData.pincode.trim(),
+          latitude: formData.latitude,
+          longitude: formData.longitude,
         },
         phone: formData.phone.trim(),
         email: formData.email.trim(),
@@ -572,6 +622,23 @@ export default function SalonProfile() {
                 placeholder="e.g. 462011"
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-gray-50"
               />
+            </div>
+            <div className="sm:col-span-2">
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={!isEditing}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-purple-300 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                <Navigation size={17} />
+                Use My Current Location
+              </button>
+
+              {formData.latitude !== null && formData.longitude !== null && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Location coordinates captured successfully.
+                </p>
+              )}
             </div>
           </div>
         </section>

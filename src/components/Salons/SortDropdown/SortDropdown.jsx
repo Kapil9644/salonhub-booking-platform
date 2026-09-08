@@ -6,14 +6,16 @@ export default function SortDropdown({
   searchText = "",
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h2 className="text-3xl font-bold text-slate-900">Available Salons</h2>
+    <div className="mb-1 flex flex-col gap-2 sm:mb-1 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="ml-1.5 text-1xl font-bold leading-tight text-slate-900 sm:text-1xl">
+          Available Salons
+        </h2>
 
         {(selectedLocation || searchText) && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 sm:text-sm">
             {selectedLocation && (
-              <span>
+              <span className="truncate">
                 📍 Near{" "}
                 <span className="font-medium text-gray-700">
                   {selectedLocation}
@@ -24,7 +26,7 @@ export default function SortDropdown({
             {selectedLocation && searchText && <span>·</span>}
 
             {searchText && (
-              <span>
+              <span className="truncate">
                 🔍{" "}
                 <span className="font-medium text-gray-700">{searchText}</span>
               </span>
@@ -32,18 +34,20 @@ export default function SortDropdown({
           </div>
         )}
 
-        <p className="mt-1 text-gray-500">
+        <p className="mt-0.5 text-xs text-gray-500 sm:text-sm ml-1.5">
           Showing {totalSalons} {totalSalons === 1 ? "salon" : "salons"}
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="font-medium text-gray-600">Sort By</span>
+      <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3 ">
+        <span className="text-sm font-medium text-gray-600 ml-1.5">
+          Sort By
+        </span>
 
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-700 shadow-sm outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-200"
+          className="min-w-0 rounded-lg border border-gray-300 bg-white mr-1.5 pl-2 py-2 text-sm text-gray-700 shadow-sm outline-none transition focus:border-purple-600 focus:ring-2 focus:ring-purple-200 sm:rounded-xl sm:px-2 sm:py-2.5"
         >
           <option>Recommended</option>
           <option>Highest Rated</option>

@@ -2,7 +2,7 @@ import { Star, CircleCheckBig, User } from "lucide-react";
 
 export default function TestimonialCard({ name, city, rating, review }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-purple-500 hover:shadow-md">
       {/* Customer */}
       <div className="flex items-center gap-2.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100">

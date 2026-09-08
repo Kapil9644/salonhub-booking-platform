@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import { useLocation } from "../../context/LocationContext";
 import Container from "../../layouts/Container/Container";
 import HeroSection from "../../components/SalonDetails/HeroSection";
 import AboutSection from "../../components/SalonDetails/AboutSection";
 import WorkingHours from "../../components/SalonDetails/WorkingHours";
 import BookingCard from "../../components/SalonDetails/BookingCard";
 import ServicesSection from "../../components/SalonDetails/ServicesSection";
-
+import { calculateDistance } from "../../utils/distance";
 import { getPublicSalonDetails } from "../../services/salonService";
 
 export default function SalonDetails() {
   const { id } = useParams();
+  const { location: userLocation } = useLocation();
 
   const [salon, setSalon] = useState(null);
 
@@ -52,6 +53,24 @@ export default function SalonDetails() {
     }
   }, [id]);
 
+  const salonLatitude = salon?.location?.latitude;
+  const salonLongitude = salon?.location?.longitude;
+
+  const hasUserLocation =
+    userLocation?.latitude != null && userLocation?.longitude != null;
+
+  const hasSalonLocation = salonLatitude != null && salonLongitude != null;
+
+  const salonDistance =
+    hasUserLocation && hasSalonLocation
+      ? calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          salonLatitude,
+          salonLongitude,
+        )
+      : null;
+
   if (loading) {
     return (
       <Container>
@@ -80,9 +99,12 @@ export default function SalonDetails() {
 
   return (
     <Container>
-      <HeroSection salon={salon} />
-
-      <div className="mt-12 grid gap-8 lg:grid-cols-3">
+      <HeroSection
+        salon={salon}
+        userLocation={userLocation}
+        distance={salonDistance}
+      />
+      <div className="mt-3 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AboutSection about={salon.about} />
 

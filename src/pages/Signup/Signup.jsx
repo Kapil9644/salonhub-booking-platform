@@ -107,22 +107,6 @@ const Signup = () => {
           />
         </div>
 
-        {!isSalonOwnerSignup && (
-          <div>
-            <label>Account Type</label>
-
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
-            >
-              <option value="customer">Customer</option>
-              <option value="salon">Salon Owner</option>
-            </select>
-          </div>
-        )}
-
         <div>
           <label>Password</label>
 

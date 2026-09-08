@@ -1,6 +1,6 @@
 export const filterOptions = {
   services: [
-    "Haircut",
+    "HairCut",
     "Hair Spa",
     "Facial",
     "Beard",
@@ -11,10 +11,5 @@ export const filterOptions = {
 
   ratings: [4, 4.5, 4.8],
 
-  priceRanges: [
-    "Any Price",
-    "₹0 - ₹500",
-    "₹500 - ₹1000",
-    "₹1000+",
-  ],
+  priceRanges: ["Any Price", "₹0 - ₹500", "₹500 - ₹1000", "₹1000+"],
 };

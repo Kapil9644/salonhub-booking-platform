@@ -1,6 +1,6 @@
 export default function ServiceCard({ title, description, icon: Icon }) {
   return (
-    <div className="group flex h-[140px] flex-col rounded-xl border border-gray-200 bg-white p-2.5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-purple-500 hover:ring-1 hover:ring-purple-500 hover:shadow-md active:border-purple-500 active:ring-1 active:ring-purple-500 sm:h-[145px] sm:p-3">
+    <div className="group flex h-[140px] flex-col rounded-xl border border-gray-200 bg-white p-2.5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-1 hover:border-purple-500 hover:shadow-md active:border-purple-500 active:ring-1 active:ring-purple-500 sm:h-[145px] sm:p-3">
       <div className="mx-auto mb-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 transition group-hover:bg-purple-600">
         <Icon
           size={20}

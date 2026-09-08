@@ -18,15 +18,18 @@ export default function SalonGrid({
 
   if (userLocation?.latitude != null && userLocation?.longitude != null) {
     filteredSalons = filteredSalons.map((salon) => {
-      if (salon.latitude == null || salon.longitude == null) {
+      const salonLatitude = salon.location?.latitude;
+      const salonLongitude = salon.location?.longitude;
+
+      if (salonLatitude == null || salonLongitude == null) {
         return salon;
       }
 
       const distance = calculateDistance(
         userLocation.latitude,
         userLocation.longitude,
-        salon.latitude,
-        salon.longitude,
+        salonLatitude,
+        salonLongitude,
       );
 
       return {
@@ -35,7 +38,6 @@ export default function SalonGrid({
       };
     });
   }
-
   // Search Filter
   if (searchText.trim()) {
     const search = searchText.trim().toLowerCase();
@@ -203,7 +205,7 @@ export default function SalonGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
       {filteredSalons.map((salon) => (
         <SalonCard
           key={salon._id}

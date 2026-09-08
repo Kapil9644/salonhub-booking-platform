@@ -394,7 +394,7 @@ const getPublicSalons = async (req, res) => {
           price: lowestPrice,
           priceLabel:
             lowestPrice !== null
-              ? `₹${lowestPrice} onwards`
+              ? `₹${lowestPrice} Onwards`
               : "Price unavailable",
         };
       }),
@@ -473,7 +473,7 @@ const getPublicSalonDetails = async (req, res) => {
         startingPrice,
         priceLabel:
           startingPrice !== null
-            ? `₹${startingPrice} onwards`
+            ? `₹${startingPrice} Onwards`
             : "Price unavailable",
       },
     });

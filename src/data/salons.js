@@ -35,7 +35,7 @@ export const salons = [
     longitude: 77.4346,
     distance: "2.3 km",
     price: 499,
-    priceLabel: "₹499 onwards",
+    priceLabel: "₹499 Onwards",
     isOpen: true,
     about:
       "Glow & Grace Salon is a premium unisex salon offering professional hairstyling, skincare, makeup, beard grooming and spa services. Our experienced stylists focus on delivering a relaxing experience using high-quality products.",
@@ -83,7 +83,7 @@ export const salons = [
     longitude: 77.435,
     distance: "3.8 km",
     price: 699,
-    priceLabel: "₹699 onwards",
+    priceLabel: "₹699 Onwards",
     isOpen: true,
     about:
       "Urban Style Studio is a contemporary salon that specializes in modern hairstyling, makeup, and hair color services. Our team of skilled professionals is dedicated to providing personalized experiences and the latest trends in beauty.",
@@ -131,7 +131,7 @@ export const salons = [
     longitude: 77.4015,
     distance: "1.5 km",
     price: 399,
-    priceLabel: "₹399 onwards",
+    priceLabel: "₹399 Onwards",
     isOpen: false,
     about:
       "Royal Looks Salon is a luxurious salon offering a wide range of services including haircuts, beard grooming, and spa treatments. Our experienced stylists are committed to delivering exceptional results and ensuring a comfortable and relaxing experience for our clients.",
