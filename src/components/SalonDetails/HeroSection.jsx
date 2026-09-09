@@ -1,6 +1,125 @@
-import { MapPin, Star, Navigation, ArrowLeft } from "lucide-react";
+import {
+  Heart,
+  MapPin,
+  Star,
+  Navigation,
+  ArrowLeft,
+  Share2,
+  Check,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  getFavoriteSalons,
+  toggleFavoriteSalon,
+} from "../../services/favoriteService";
 
 export default function HeroSection({ salon, distance }) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/favorites", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        const favorite = (data.salons || []).some(
+          (item) => String(item._id) === String(salon._id),
+        );
+
+        setIsFavorite(favorite);
+      } catch (error) {
+        console.error("Failed to load favorite status:", error);
+      }
+    };
+
+    const token = localStorage.getItem("token");
+
+    if (token && salon?._id) {
+      loadFavoriteStatus();
+    }
+  }, [salon?._id]);
+
+  const handleFavorite = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      setFavoriteLoading(true);
+
+      const data = await toggleFavoriteSalon(salon._id);
+
+      if (data.success) {
+        setIsFavorite(data.isFavorite);
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  const copyLink = async () => {
+    const shareUrl = window.location.href;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const textArea = document.createElement("textarea");
+
+      textArea.value = shareUrl;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      document.execCommand("copy");
+      textArea.remove();
+    }
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Check out ${salon?.name || "this salon"} on Rupiva`,
+          text: `Check out ${salon?.name || "this salon"} on Rupiva.`,
+          url: shareUrl,
+        });
+
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+
+        console.error("Native share failed:", error);
+      }
+    }
+
+    await copyLink();
+  };
   const location = salon.location || {};
 
   const locationText = [location.area, location.city, location.state]
@@ -30,19 +149,68 @@ export default function HeroSection({ salon, distance }) {
         Back to Salons
       </a>
       {/* Salon Image */}
-      {salon.profileImage ? (
-        <img
-          src={salon.profileImage}
-          alt={`${salon.name} salon`}
-          className="h-[180px] w-full rounded-2xl object-cover sm:h-[240px] sm:rounded-2xl lg:h-[280px]"
-        />
-      ) : (
-        <div className="flex h-[180px] w-full items-center justify-center rounded-2xl bg-gray-100 sm:h-[240px] sm:rounded-3xl lg:h-[280px]">
-          <span className="px-4 text-center text-lg font-semibold text-gray-400">
-            Salon image not available
-          </span>
+
+      <div className="relative overflow-hidden rounded-2xl">
+        {salon.profileImage ? (
+          <img
+            src={salon.profileImage}
+            alt={`${salon.name} salon`}
+            className="h-[180px] w-full object-cover sm:h-[240px] lg:h-[280px]"
+          />
+        ) : (
+          <div className="flex h-[180px] w-full items-center justify-center bg-gray-100 sm:h-[240px] lg:h-[280px]">
+            <span className="px-4 text-center text-lg font-semibold text-gray-400">
+              Salon image not available
+            </span>
+          </div>
+        )}
+
+        {/* Image Actions */}
+        <div className="absolute right-3 top-3 flex items-center gap-2">
+          {/* Favorite */}
+          <button
+            type="button"
+            onClick={handleFavorite}
+            disabled={favoriteLoading}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-md backdrop-blur-sm transition hover:scale-105 sm:h-9 sm:w-9 lg:h-10 lg:w-10 ${
+              favoriteLoading ? "cursor-wait opacity-60" : ""
+            }`}
+          >
+            <Heart
+              size={16}
+              strokeWidth={2}
+              className="sm:h-[17px] sm:w-[17px] lg:h-[19px] lg:w-[19px]"
+              fill={isFavorite ? "#ef4444" : "none"}
+              stroke={isFavorite ? "#ef4444" : "currentColor"}
+            />
+          </button>
+
+          {/* Share */}
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Share salon"
+            title={copied ? "Link copied" : "Share salon"}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/90 text-gray-700 shadow-md backdrop-blur-sm transition hover:scale-105 hover:text-purple-600 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
+          >
+            {copied ? (
+              <Check
+                size={16}
+                className="sm:h-[17px] sm:w-[17px] lg:h-[19px] lg:w-[19px]"
+              />
+            ) : (
+              <Share2
+                size={16}
+                className="sm:h-[17px] sm:w-[17px] lg:h-[19px] lg:w-[19px]"
+              />
+            )}
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Salon Information */}
       <div className="mt-3 sm:mt-5">
@@ -106,8 +274,8 @@ export default function HeroSection({ salon, distance }) {
           )}
 
           {/* Starting Price */}
-          <span className="shrink-0 font-semibold text-gray-900 text-1xl  bg-amber-300 px-2 py-1 rounded-lg">
-            Starting {salon.priceLabel || "Price unavailable"}
+          <span className="shrink-0 font-semibold text-gray-900 text-sm  bg-amber-300 px-2 py-1 rounded-lg">
+            Starting price {salon.priceLabel || "Price unavailable"}
           </span>
         </div>
       </div>

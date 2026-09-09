@@ -2,6 +2,7 @@ const cloudinary = require("../config/cloudinary");
 const Salon = require("../models/Salon");
 const Service = require("../models/Service");
 const WorkingHours = require("../models/WorkingHours");
+const Review = require("../models/Review");
 
 // ========================================
 // CALCULATE CURRENT SALON OPEN/CLOSED STATUS
@@ -452,6 +453,20 @@ const getPublicSalonDetails = async (req, res) => {
         ? Math.min(...services.map((service) => service.price))
         : null;
 
+    const reviews = await Review.find({
+      salon: salon._id,
+    }).select("rating");
+
+    const totalReviews = reviews.length;
+
+    const totalRating = reviews.reduce(
+      (total, review) => total + review.rating,
+      0,
+    );
+
+    const averageRating =
+      totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(1)) : null;
+
     res.status(200).json({
       success: true,
       salon: {
@@ -465,6 +480,8 @@ const getPublicSalonDetails = async (req, res) => {
         isListed: salon.isListed,
         isOpen: currentIsOpen,
         approvalStatus: salon.approvalStatus,
+        rating: averageRating,
+        reviews: totalReviews,
 
         services,
 

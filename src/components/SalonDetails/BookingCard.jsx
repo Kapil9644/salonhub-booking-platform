@@ -82,7 +82,7 @@ export default function BookingCard({ salon, selectedServices = [] }) {
           </>
         ) : (
           <>
-            <p className="text-4xl font-bold text-purple-600">
+            <p className="text-xl font-bold text-purple-600">
               {salon.priceLabel || "Price unavailable"}
             </p>
 

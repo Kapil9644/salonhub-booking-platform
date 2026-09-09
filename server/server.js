@@ -11,6 +11,8 @@ const serviceRoutes = require("./routes/serviceRoutes");
 const workingHoursRoutes = require("./routes/workingHoursRoutes");
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
 const salonOwnerBookingRoutes = require("./routes/salonOwnerBookingRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const favoriteRoutes = require("./routes/favoriteRoutes");
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use("/api/salons", salonRoutes);
 app.use("/api/admin/salons", adminSalonRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/working-hours", workingHoursRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

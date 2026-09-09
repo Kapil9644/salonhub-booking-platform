@@ -9,6 +9,11 @@ import BookingCard from "../../components/SalonDetails/BookingCard";
 import ServicesSection from "../../components/SalonDetails/ServicesSection";
 import { calculateDistance } from "../../utils/distance";
 import { getPublicSalonDetails } from "../../services/salonService";
+import ReviewsSection from "../../components/SalonDetails/ReviewsSection";
+import ContactSection from "../../components/SalonDetails/ContactSection";
+import PoliciesSection from "../../components/SalonDetails/PoliciesSection";
+import MapSection from "../../components/SalonDetails/MapSection";
+import SimilarSalons from "../../components/SalonDetails/SimilarSalons";
 
 export default function SalonDetails() {
   const { id } = useParams();
@@ -115,6 +120,11 @@ export default function SalonDetails() {
           />
 
           <WorkingHours workingHours={salon.workingHours} />
+          <ReviewsSection salonId={salon._id} />
+          <PoliciesSection />
+          <MapSection salon={salon} />
+          <ContactSection salon={salon} />
+          <SimilarSalons salon={salon} />
         </div>
 
         <div>
