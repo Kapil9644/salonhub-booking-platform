@@ -15,16 +15,25 @@ export default function SearchBar() {
 
   const locationText =
     locationStatus === "success" && location
-      ? `${location.city || "Current location"}${
-          location.state ? `, ${location.state}` : ""
-        }`
+      ? [location.area, location.city, location.state]
+          .filter(Boolean)
+          .join(", ") || "Current location"
       : "Use my location";
+
+  const locationPincode =
+    locationStatus === "success" && location
+      ? location.pincode || location.postcode || ""
+      : "";
 
   const handleFindSalons = () => {
     const params = new URLSearchParams();
 
     if (locationText && locationText !== "Use my location") {
       params.set("location", locationText);
+    }
+
+    if (locationPincode) {
+      params.set("pincode", locationPincode);
     }
 
     if (searchText.trim()) {

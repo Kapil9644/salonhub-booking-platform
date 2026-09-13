@@ -120,10 +120,15 @@ export default function SalonDetails() {
           />
 
           <WorkingHours workingHours={salon.workingHours} />
-          <ReviewsSection salonId={salon._id} />
-          <PoliciesSection />
-          <MapSection salon={salon} />
+
           <ContactSection salon={salon} />
+
+          <MapSection salon={salon} />
+
+          <PoliciesSection />
+
+          <ReviewsSection salonId={salon._id} />
+
           <SimilarSalons salon={salon} />
         </div>
 

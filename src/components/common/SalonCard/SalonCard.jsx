@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
 import { Heart, MapPin, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  getFavoriteSalons,
+  toggleFavoriteSalon,
+} from "../../../services/favoriteService";
 
 export default function SalonCard({
   id,
@@ -14,6 +19,53 @@ export default function SalonCard({
   priceLabel,
   isOpen,
 }) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token || !id) return;
+
+      try {
+        const data = await getFavoriteSalons();
+
+        const favorite = (data.salons || []).some(
+          (salon) => String(salon._id) === String(id),
+        );
+
+        setIsFavorite(favorite);
+      } catch (error) {
+        console.error("Failed to load favorite status:", error);
+      }
+    };
+
+    loadFavoriteStatus();
+  }, [id]);
+
+  const handleFavorite = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const token = localStorage.getItem("token");
+
+    if (!token || favoriteLoading) return;
+
+    try {
+      setFavoriteLoading(true);
+
+      const data = await toggleFavoriteSalon(id);
+
+      if (data.success) {
+        setIsFavorite(data.isFavorite);
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
   const visibleServices = services.slice(0, 3);
   const remainingServices = Math.max(services.length - 3, 0);
 
@@ -31,11 +83,21 @@ export default function SalonCard({
           {/* Favourite */}
           <button
             type="button"
-            onClick={(e) => e.preventDefault()}
-            className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 shadow-sm transition hover:bg-white"
-            aria-label="Add to favourites"
+            onClick={handleFavorite}
+            disabled={favoriteLoading}
+            className={`absolute right-2 top-2 rounded-full bg-white/90 p-1.5 shadow-sm transition hover:bg-white ${
+              favoriteLoading ? "cursor-wait opacity-60" : ""
+            }`}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
           >
-            <Heart size={15} className="text-gray-600" />
+            <Heart
+              size={15}
+              fill={isFavorite ? "#ef4444" : "none"}
+              stroke={isFavorite ? "#ef4444" : "currentColor"}
+            />
           </button>
 
           {/* Open Badge */}

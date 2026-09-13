@@ -6,6 +6,13 @@ import {
   updateProfile,
   uploadProfileImage,
 } from "../../services/authService";
+import { Heart, MapPin, Star, Trash2 } from "lucide-react";
+import {
+  getFavoriteSalons,
+  toggleFavoriteSalon,
+} from "../../services/favoriteService";
+import { calculateDistance } from "../../utils/distance";
+import { useLocation } from "../../context/LocationContext";
 
 const compressProfileImage = (file) => {
   return new Promise((resolve, reject) => {
@@ -72,6 +79,11 @@ const compressProfileImage = (file) => {
 const Profile = () => {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const { location: userLocation } = useLocation();
+
+  const [favoriteSalons, setFavoriteSalons] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [favoriteRemoving, setFavoriteRemoving] = useState("");
   const [profile, setProfile] = useState(user);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -169,6 +181,44 @@ const Profile = () => {
 
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchFavoriteSalons = async () => {
+      try {
+        setFavoritesLoading(true);
+
+        const data = await getFavoriteSalons();
+
+        setFavoriteSalons(data.salons || []);
+      } catch (error) {
+        console.error("Failed to fetch favorite salons:", error);
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
+    fetchFavoriteSalons();
+  }, []);
+
+  const handleRemoveFavorite = async (salonId) => {
+    try {
+      setFavoriteRemoving(salonId);
+
+      const data = await toggleFavoriteSalon(salonId);
+
+      if (data.success && !data.isFavorite) {
+        setFavoriteSalons((currentSalons) =>
+          currentSalons.filter(
+            (salon) => String(salon._id) !== String(salonId),
+          ),
+        );
+      }
+    } catch (error) {
+      console.error("Failed to remove favorite salon:", error);
+    } finally {
+      setFavoriteRemoving("");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");

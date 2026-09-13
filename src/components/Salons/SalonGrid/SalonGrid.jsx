@@ -9,6 +9,7 @@ export default function SalonGrid({
   sortBy = "Recommended",
   searchText = "",
   selectedLocation = "",
+  selectedPincode = "",
   userLocation = null,
   setTotalSalons,
   onResetFilters,
@@ -38,57 +39,122 @@ export default function SalonGrid({
       };
     });
   }
+
+  // Search Filter
   // Search Filter
   if (searchText.trim()) {
-    const search = searchText.trim().toLowerCase();
+    const searchTerms = searchText
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
 
     filteredSalons = filteredSalons.filter((salon) => {
-      const matchesSalonName = salon.name.toLowerCase().includes(search);
+      const location = salon.location || {};
 
-      const matchesLocation = salon.location.toLowerCase().includes(search);
+      const searchableText = [
+        salon.name,
+        location.address,
+        location.area,
+        location.city,
+        location.state,
+        location.pincode,
+        location.postcode,
+        ...(salon.services || []).map((service) => service.name),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-      const matchesService = salon.services.some((service) =>
-        service.name.toLowerCase().includes(search),
-      );
-
-      return matchesSalonName || matchesLocation || matchesService;
+      return searchTerms.some((term) => searchableText.includes(term));
     });
   }
 
   // Location Filter
-
   if (selectedLocation.trim()) {
     const normalizedLocation = selectedLocation
       .replace("Current location,", "")
       .trim()
       .toLowerCase();
 
-    const exactLocationMatches = filteredSalons.filter((salon) => {
-      const area = salon.area?.toLowerCase() || "";
-      const city = salon.city?.toLowerCase() || "";
-      const state = salon.state?.toLowerCase() || "";
-      const location = salon.location?.toLowerCase() || "";
+    const locationParts = normalizedLocation
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    const selectedArea = locationParts[0] || "";
+    const selectedCity = locationParts[1] || "";
+    const selectedState = locationParts[2] || "";
+
+    // 1. Exact Area match
+    let locationMatches = filteredSalons.filter((salon) => {
+      const salonLocation = salon.location || {};
+
+      const area = (salonLocation.area || "").trim().toLowerCase();
+      const city = (salonLocation.city || "").trim().toLowerCase();
+      const state = (salonLocation.state || "").trim().toLowerCase();
 
       return (
-        normalizedLocation.includes(area) ||
-        normalizedLocation.includes(city) ||
-        normalizedLocation.includes(state) ||
-        location.includes(normalizedLocation)
+        selectedArea &&
+        area &&
+        area === selectedArea &&
+        (!selectedCity || city === selectedCity) &&
+        (!selectedState || state === selectedState)
       );
     });
 
-    if (exactLocationMatches.length > 0) {
-      filteredSalons = exactLocationMatches;
-    } else {
-      // If the selected area is not present,
-      // fall back to the city.
-      const cityMatches = filteredSalons.filter((salon) =>
-        normalizedLocation.includes(salon.city?.toLowerCase() || ""),
-      );
+    // 2. If no area match, try City
+    if (locationMatches.length === 0) {
+      locationMatches = filteredSalons.filter((salon) => {
+        const salonLocation = salon.location || {};
 
-      if (cityMatches.length > 0) {
-        filteredSalons = cityMatches;
-      }
+        const city = (salonLocation.city || "").trim().toLowerCase();
+        const state = (salonLocation.state || "").trim().toLowerCase();
+
+        return (
+          selectedCity &&
+          city === selectedCity &&
+          (!selectedState || state === selectedState)
+        );
+      });
+    }
+
+    // 3. If no city match, try State
+    if (locationMatches.length === 0) {
+      locationMatches = filteredSalons.filter((salon) => {
+        const salonLocation = salon.location || {};
+
+        const state = (salonLocation.state || "").trim().toLowerCase();
+
+        return selectedState && state === selectedState;
+      });
+    }
+
+    // Only replace the results when a location match exists.
+    // This prevents the page from becoming empty unnecessarily.
+    if (locationMatches.length > 0) {
+      filteredSalons = locationMatches;
+    }
+  }
+
+  // Pincode Filter
+  if (selectedPincode.trim()) {
+    const normalizedPincode = selectedPincode.trim().toLowerCase();
+
+    const pincodeMatches = filteredSalons.filter((salon) => {
+      const pincode = String(salon.location?.pincode || "")
+        .trim()
+        .toLowerCase();
+
+      const postcode = String(salon.location?.postcode || "")
+        .trim()
+        .toLowerCase();
+
+      return pincode === normalizedPincode || postcode === normalizedPincode;
+    });
+
+    if (pincodeMatches.length > 0) {
+      filteredSalons = pincodeMatches;
     }
   }
 

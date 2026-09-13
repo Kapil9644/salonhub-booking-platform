@@ -42,6 +42,7 @@ import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
 import SalonOwnerSettings from "../pages/SalonOwner/Settings";
 import Testimonials from "../pages/Testimonials/Testimonials";
+import Favorites from "../pages/Favorites/Favorites";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -109,6 +110,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <MyBookings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
             </ProtectedRoute>
           }
         />

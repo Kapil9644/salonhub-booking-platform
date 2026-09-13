@@ -6,10 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import {
   X,
   UserRound,
+  CalendarDays,
+  CreditCard,
+  Bell,
   ChevronDown,
   ChevronUp,
   Compass,
   Handshake,
+  Heart,
 } from "lucide-react";
 
 export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
@@ -140,16 +144,42 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
 
             {activeSection === "account" && (
               <div className="mt-2 space-y-1">
-                {navigation.account.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {navigation.account.map((item) => {
+                  const Icon =
+                    item.label === "My Account"
+                      ? UserRound
+                      : item.label === "My Bookings"
+                        ? CalendarDays
+                        : item.label === "Payment"
+                          ? CreditCard
+                          : item.label === "Notifications"
+                            ? Bell
+                            : null;
+
+                  return (
+                    <div key={item.id}>
+                      <Link
+                        to={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+                      >
+                        {Icon && <Icon size={17} strokeWidth={2} />}
+                        {item.label}
+                      </Link>
+
+                      {item.label === "My Bookings" && (
+                        <Link
+                          to="/favorites"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+                        >
+                          <Heart size={17} strokeWidth={2} />
+                          Favorite Salons
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -19,6 +19,7 @@ export default function Salons() {
   const [error, setError] = useState("");
   const searchText = searchParams.get("search") || "";
   const selectedLocation = searchParams.get("location") || "";
+  const selectedPincode = searchParams.get("pincode") || "";
   const [totalSalons, setTotalSalons] = useState(0);
 
   const [selectedServices, setSelectedServices] = useState(() => {
@@ -205,6 +206,7 @@ export default function Salons() {
                 searchText={searchText}
                 selectedLocation={selectedLocation}
                 userLocation={location}
+                selectedPincode={selectedPincode}
                 setTotalSalons={setTotalSalons}
                 onResetFilters={resetFilters}
                 onStartNewSearch={startNewSearch}
