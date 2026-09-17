@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LockKeyhole, LogIn, ShieldCheck, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
 import { useAdminAuth } from "../../../context/useAdminAuth";
 
@@ -81,7 +81,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-2 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -164,6 +164,15 @@ export default function AdminLogin() {
                   className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
                 />
               </div>
+            </div>
+
+            <div className="text-right">
+              <Link
+                to="/admin/forgot-password"
+                className="text-sm font-medium text-purple-600 hover:text-purple-700"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             {/* Submit */}

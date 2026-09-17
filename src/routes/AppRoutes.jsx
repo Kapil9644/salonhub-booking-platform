@@ -37,6 +37,7 @@ import SalonOwnerPublicRoute from "../components/common/SalonOwnerPublicRoute/Sa
 import SalonOwnerProfile from "../pages/SalonOwner/SalonOwnerProfile/SalonOwnerProfile";
 import AdminRoute from "../components/common/AdminRoute/AdminRoute";
 import AdminLogin from "../pages/Admin/Login/AdminLogin";
+import AdminForgotPassword from "../pages/Admin/ForgotPassword/AdminForgotPassword";
 import AdminPublicRoute from "../components/common/AdminPublicRoute/AdminPublicRoute";
 import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
@@ -187,6 +188,10 @@ export default function AppRoutes() {
       <Route element={<AdminPublicLayout />}>
         <Route element={<AdminPublicRoute />}>
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin/forgot-password"
+            element={<AdminForgotPassword />}
+          />
         </Route>
       </Route>
 

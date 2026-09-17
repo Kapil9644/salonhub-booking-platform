@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function ServiceCard({ title, description, icon: Icon }) {
   return (
     <div className="group flex h-[140px] flex-col rounded-xl border border-gray-200 bg-white p-2.5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-1 hover:border-purple-500 hover:shadow-md active:border-purple-500 active:ring-1 active:ring-purple-500 sm:h-[145px] sm:p-3">
@@ -16,9 +18,12 @@ export default function ServiceCard({ title, description, icon: Icon }) {
         {description}
       </p>
 
-      <button className="mt-auto pt-1 text-[11px] font-semibold leading-4 text-purple-600 transition hover:translate-x-0.5">
+      <Link
+        to="/services"
+        className="mt-auto pt-1 text-[11px] font-semibold leading-4 text-purple-600 transition hover:translate-x-0.5 hover:text-purple-800 active:text-purple-800"
+      >
         Learn More →
-      </button>
+      </Link>
     </div>
   );
 }

@@ -142,7 +142,11 @@ export default function Salons() {
   return (
     <Container>
       <div className="py-3 sm:py-4 lg:py-5">
-        <PageHeader />
+        <PageHeader
+          searchText={searchText}
+          selectedLocation={selectedLocation}
+          selectedPincode={selectedPincode}
+        />
 
         <div className="grid grid-cols-1 items-start gap-4 sm:gap-5 lg:grid-cols-12 lg:gap-6">
           {/* Mobile + Tablet Sticky Controls */}

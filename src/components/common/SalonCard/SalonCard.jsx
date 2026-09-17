@@ -166,11 +166,25 @@ export default function SalonCard({
           </div>
 
           {/* Bottom */}
-          <div className="mt-auto flex min-w-0 items-end justify-between gap-2 border-t border-gray-100 pt-2.5 sm:pt-3">
+          <div className="mt-auto flex min-w-0 items-center justify-between gap-2 border-t border-gray-100 pt-2.5 sm:pt-3">
             {/* Price */}
-            <span className="min-w-0 flex-1 truncate text-sm font-bold leading-4 text-purple-600 sm:text-base sm:leading-5">
-              {priceLabel || "Price unavailable"}
-            </span>
+            <div className="min-w-0 flex-1 leading-tight">
+              {priceLabel ? (
+                <div className="flex flex-col">
+                  <span className="truncate text-base font-extrabold leading-5 text-purple-600 sm:text-lg sm:leading-6">
+                    {priceLabel.replace(/\s*Onwards\s*$/i, "")}
+                  </span>
+
+                  <span className="text-[10px] font-medium leading-4 text-gray-500 sm:text-xs">
+                    Onwards
+                  </span>
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-gray-500">
+                  Price unavailable
+                </span>
+              )}
+            </div>
 
             {/* Book Now */}
             <span className="shrink-0 rounded-lg bg-purple-600 px-2.5 py-1.5 text-[10px] font-semibold leading-4 whitespace-nowrap text-white transition group-hover:bg-purple-700 sm:px-3 sm:text-xs">

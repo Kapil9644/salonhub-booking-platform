@@ -69,7 +69,7 @@ export default function SearchBar() {
       <div className="hidden h-7 w-px bg-gray-200 md:block"></div>
 
       {/* Search */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 px-2.5 md:px-3">
+      <div className="relative flex min-w-0 flex-1 items-center gap-2 px-2.5 md:px-3">
         <Search className="shrink-0 text-gray-400" size={18} />
 
         <input
@@ -82,15 +82,27 @@ export default function SearchBar() {
             }
           }}
           placeholder="Search salon or service"
-          className="w-full min-w-0 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
+          className="w-full min-w-0 bg-transparent pr-10 text-sm text-gray-700 outline-none placeholder:text-gray-400"
         />
+
+        {/* Clear Search */}
+        {searchText && (
+          <button
+            type="button"
+            onClick={() => setSearchText("")}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-base  leading-none text-black transition"
+          >
+            x
+          </button>
+        )}
       </div>
 
       {/* Button */}
       <button
         type="button"
         onClick={handleFindSalons}
-        className="w-full rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold whitespace-nowrap text-white transition hover:bg-purple-700 md:w-auto md:min-w-[130px] md:px-5"
+        className="w-full rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold whitespace-nowrap text-white transition hover:bg-purple-700 md:ml-2 md:w-auto md:min-w-[130px] md:px-5"
       >
         Find Salons
       </button>

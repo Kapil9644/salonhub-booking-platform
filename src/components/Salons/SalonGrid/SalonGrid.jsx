@@ -234,29 +234,58 @@ export default function SalonGrid({
   }
 
   if (filteredSalons.length === 0) {
+    const hasSearch = searchText.trim();
+    const hasLocation = selectedLocation.trim();
+    const hasPincode = selectedPincode.trim();
+    const hasFilters =
+      selectedServices.length > 0 ||
+      minimumRating > 0 ||
+      priceRange !== "Any Price";
+
+    let emptyTitle = "No salons found";
+    let emptyMessage =
+      "We couldn't find any salons matching your current search, location, or filters.";
+
+    if (hasSearch && hasLocation) {
+      emptyTitle = "No matching salons found";
+      emptyMessage = `We couldn't find any salons matching "${searchText.trim()}" in ${selectedLocation.trim()}.`;
+    } else if (hasSearch) {
+      emptyTitle = "No matching salons found";
+      emptyMessage = `We couldn't find any salon or service matching "${searchText.trim()}".`;
+    } else if (hasPincode) {
+      emptyTitle = "No salons in this pincode";
+      emptyMessage = `We couldn't find any salons available in pincode ${selectedPincode.trim()}.`;
+    } else if (hasLocation) {
+      emptyTitle = "No salons in this location";
+      emptyMessage = `We couldn't find any salons in ${selectedLocation.trim()}.`;
+    } else if (hasFilters) {
+      emptyTitle = "No salons match your filters";
+      emptyMessage =
+        "Try changing or clearing some filters to discover more salons.";
+    }
+
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-20 text-center">
+      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center sm:py-20">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-3xl">
           😔
         </div>
 
-        <h2 className="mt-5 text-2xl font-bold text-slate-900">
-          No salons found
-        </h2>
+        <h2 className="mt-5 text-2xl font-bold text-slate-900">{emptyTitle}</h2>
 
-        <p className="mt-3 max-w-md text-gray-500">
-          We couldn't find any salons matching your current search, location, or
-          filters.
+        <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-base">
+          {emptyMessage}
         </p>
 
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="rounded-xl border border-purple-200 bg-white px-6 py-3 font-semibold text-purple-700 transition hover:bg-purple-50"
-          >
-            Clear Filters
-          </button>
+        <div className="mt-7 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={onResetFilters}
+              className="rounded-xl border border-purple-200 bg-white px-6 py-3 font-semibold text-purple-700 transition hover:bg-purple-50"
+            >
+              Clear Filters
+            </button>
+          )}
 
           <button
             type="button"

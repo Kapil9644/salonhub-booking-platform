@@ -4,7 +4,14 @@ export default function SortDropdown({
   totalSalons = 0,
   selectedLocation = "",
   searchText = "",
+  selectedServices = [],
+  minimumRating = 0,
+  priceRange = "Any Price",
 }) {
+  const activeFilterCount =
+    selectedServices.length +
+    (minimumRating > 0 ? 1 : 0) +
+    (priceRange !== "Any Price" ? 1 : 0);
   return (
     <div className="mb-1 flex flex-col gap-2 sm:mb-1 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
@@ -34,8 +41,17 @@ export default function SortDropdown({
           </div>
         )}
 
-        <p className="mt-0.5 text-xs text-gray-500 sm:text-sm ml-1.5">
+        <p className="mt-0.5 ml-1.5 text-xs text-gray-500 sm:text-sm">
           Showing {totalSalons} {totalSalons === 1 ? "salon" : "salons"}
+          {activeFilterCount > 0 && (
+            <>
+              {" "}
+              <span className="font-medium text-purple-600">
+                • {activeFilterCount}{" "}
+                {activeFilterCount === 1 ? "filter" : "filters"} applied
+              </span>
+            </>
+          )}
         </p>
       </div>
 
