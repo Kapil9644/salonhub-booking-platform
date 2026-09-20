@@ -423,18 +423,6 @@ export default function SalonOwnerDashboard() {
                   {salon.isOpen ? "Open" : "Closed"}
                 </p>
               </div>
-
-              <div className="text-right">
-                <span
-                  className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${
-                    salon.isOpen
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {salon.isOpen ? "Open Now" : "Closed"}
-                </span>
-              </div>
             </div>
           </div>
 

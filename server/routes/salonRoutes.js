@@ -17,30 +17,30 @@ const {
   getPublicSalonDetails,
 } = require("../controllers/salonController");
 
-const protect = require("../middleware/authMiddleware");
+const salonOwnerProtect = require("../middleware/salonOwnerAuthMiddleware");
 
 // Get salons visible to customers
 router.get("/", getPublicSalons);
 
 // Get logged-in owner's salon
-router.get("/my", protect, getMySalon);
+router.get("/my", salonOwnerProtect, getMySalon);
 
 // Create salon profile
-router.post("/", protect, createSalon);
+router.post("/", salonOwnerProtect, createSalon);
 
 // Update salon profile
-router.put("/my", protect, updateSalon);
+router.put("/my", salonOwnerProtect, updateSalon);
 
 // Toggle salon visibility
-router.patch("/my/visibility", protect, toggleSalonVisibility);
+router.patch("/my/visibility", salonOwnerProtect, toggleSalonVisibility);
 
 // Toggle open/closed status
-router.patch("/my/status", protect, toggleSalonStatus);
+router.patch("/my/status", salonOwnerProtect, toggleSalonStatus);
 
 // Upload salon profile image
 router.post(
   "/my/profile-image",
-  protect,
+  salonOwnerProtect,
   upload.single("profileImage"),
   uploadSalonProfileImage,
 );

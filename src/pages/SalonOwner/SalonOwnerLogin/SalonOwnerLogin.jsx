@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Store } from "lucide-react";
 
-import { loginUser } from "../../../services/authService";
+import { loginSalonOwner as loginSalonOwnerApi } from "../../../services/authService";
 import { useSalonOwnerAuth } from "../../../context/SalonOwnerAuthContext";
 
 export default function SalonOwnerLogin() {
@@ -30,14 +30,7 @@ export default function SalonOwnerLogin() {
     try {
       setLoading(true);
 
-      const data = await loginUser(formData);
-
-      // Make sure this account is a salon owner
-      if (data.user?.role !== "salon") {
-        alert("This account is not registered as a Salon Owner.");
-        return;
-      }
-
+      const data = await loginSalonOwnerApi(formData);
       loginSalonOwner(data.user, data.token);
 
       alert("Salon Owner Login Successful 🎉");

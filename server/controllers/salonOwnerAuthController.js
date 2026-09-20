@@ -1,12 +1,12 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 const User = require("../models/User");
 const PasswordReset = require("../models/PasswordReset");
 const cloudinary = require("../config/cloudinary");
 
-// Register User
-const register = async (req, res) => {
+// ==================== SALON OWNER REGISTER ====================
+
+const salonOwnerRegister = async (req, res) => {
   try {
     const { fullName, phone, email, password } = req.body;
 
@@ -31,20 +31,20 @@ const register = async (req, res) => {
     // Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create User
+    // Create Salon Owner
     const user = await User.create({
       fullName,
       phone,
       email,
       password: hashedPassword,
-      role: "customer",
+      role: "salon",
     });
 
     // Generate JWT
     const token = jwt.sign(
       {
         id: user._id,
-        role: user.role,
+        role: "salon",
       },
       process.env.JWT_SECRET,
       {
@@ -54,7 +54,7 @@ const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Registration Successful",
+      message: "Salon Owner Registration Successful",
       token,
       user: {
         id: user._id,
@@ -75,8 +75,9 @@ const register = async (req, res) => {
   }
 };
 
-// Login User
-const login = async (req, res) => {
+// ==================== SALON OWNER LOGIN ====================
+
+const salonOwnerLogin = async (req, res) => {
   try {
     const { phone, password } = req.body;
 
@@ -88,13 +89,16 @@ const login = async (req, res) => {
       });
     }
 
-    // Find User
-    const user = await User.findOne({ phone });
+    // Find Salon Owner only
+    const user = await User.findOne({
+      phone: phone.trim(),
+      role: "salon",
+    });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid phone number or password.",
+        message: "Invalid Salon Owner phone number or password.",
       });
     }
 
@@ -104,7 +108,7 @@ const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid phone number or password.",
+        message: "Invalid Salon Owner phone number or password.",
       });
     }
 
@@ -112,7 +116,7 @@ const login = async (req, res) => {
     const token = jwt.sign(
       {
         id: user._id,
-        role: user.role,
+        role: "salon",
       },
       process.env.JWT_SECRET,
       {
@@ -122,7 +126,7 @@ const login = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Login Successful",
+      message: "Salon Owner Login Successful",
       token,
       user: {
         id: user._id,
@@ -143,8 +147,7 @@ const login = async (req, res) => {
   }
 };
 
-// Forgot Password
-const forgotPassword = async (req, res) => {
+const salonOwnerForgotPassword = async (req, res) => {
   try {
     const { phone } = req.body;
 
@@ -156,13 +159,16 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Find User
-    const user = await User.findOne({ phone });
+    // Find Salon Owner only
+    const salonOwner = await User.findOne({
+      phone: phone.trim(),
+      role: "salon",
+    });
 
-    if (!user) {
+    if (!salonOwner) {
       return res.status(404).json({
         success: false,
-        message: "No account found with this phone number.",
+        message: "Salon Owner account not found.",
       });
     }
 
@@ -172,21 +178,28 @@ const forgotPassword = async (req, res) => {
     // Hash OTP
     const otpHash = await bcrypt.hash(otp, 10);
 
-    // Remove previous reset records
-    await PasswordReset.deleteMany({ userId: user._id });
-
-    // Create reset record
-    await PasswordReset.create({
-      userId: user._id,
-      otpHash,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    // Remove previous reset request
+    await PasswordReset.deleteMany({
+      userId: salonOwner._id,
     });
 
-    console.log(`🔐 Development OTP for ${phone}: ${otp}`);
+    // OTP expires in 5 minutes
+    await PasswordReset.create({
+      userId: salonOwner._id,
+      otpHash,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      attempts: 0,
+      resetTokenHash: "",
+    });
+
+    // Development OTP
+    console.log(
+      `🔐 Salon Owner Development OTP for ${salonOwner.phone}: ${otp}`,
+    );
 
     res.status(200).json({
       success: true,
-      message: "OTP generated successfully.",
+      message: "OTP sent successfully.",
     });
   } catch (error) {
     console.error(error);
@@ -198,8 +211,7 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Verify OTP
-const verifyOtp = async (req, res) => {
+const salonOwnerVerifyOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
 
@@ -211,31 +223,36 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    // Find User
-    const user = await User.findOne({ phone });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    // Find Reset Record
-    const resetRecord = await PasswordReset.findOne({
-      userId: user._id,
+    // Find Salon Owner only
+    const salonOwner = await User.findOne({
+      phone: phone.trim(),
+      role: "salon",
     });
 
-    if (!resetRecord) {
-      return res.status(400).json({
+    if (!salonOwner) {
+      return res.status(404).json({
         success: false,
-        message: "No active password reset request found.",
+        message: "Salon Owner account not found.",
       });
     }
 
-    // Check OTP expiration
-    if (resetRecord.expiresAt < new Date()) {
-      await PasswordReset.deleteOne({ _id: resetRecord._id });
+    // Find password reset request
+    const resetRequest = await PasswordReset.findOne({
+      userId: salonOwner._id,
+    });
+
+    if (!resetRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP request not found. Please request a new OTP.",
+      });
+    }
+
+    // Check expiry
+    if (resetRequest.expiresAt < new Date()) {
+      await PasswordReset.deleteOne({
+        _id: resetRequest._id,
+      });
 
       return res.status(400).json({
         success: false,
@@ -243,22 +260,24 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    // Check attempts
-    if (resetRecord.attempts >= 5) {
-      await PasswordReset.deleteOne({ _id: resetRecord._id });
+    // Maximum attempts
+    if (resetRequest.attempts >= 5) {
+      await PasswordReset.deleteOne({
+        _id: resetRequest._id,
+      });
 
-      return res.status(429).json({
+      return res.status(400).json({
         success: false,
-        message: "Too many incorrect attempts. Please request a new OTP.",
+        message: "Too many invalid attempts. Please request a new OTP.",
       });
     }
 
     // Compare OTP
-    const isOtpValid = await bcrypt.compare(otp, resetRecord.otpHash);
+    const isMatch = await bcrypt.compare(otp.trim(), resetRequest.otpHash);
 
-    if (!isOtpValid) {
-      resetRecord.attempts += 1;
-      await resetRecord.save();
+    if (!isMatch) {
+      resetRequest.attempts += 1;
+      await resetRequest.save();
 
       return res.status(400).json({
         success: false,
@@ -266,11 +285,12 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    // Generate temporary reset token
+    // Generate password reset token
     const resetToken = jwt.sign(
       {
-        userId: user._id,
-        purpose: "password-reset",
+        userId: salonOwner._id,
+        role: "salon",
+        purpose: "salon-owner-password-reset",
       },
       process.env.JWT_SECRET,
       {
@@ -279,9 +299,10 @@ const verifyOtp = async (req, res) => {
     );
 
     // Store hashed reset token
-    resetRecord.resetTokenHash = await bcrypt.hash(resetToken, 10);
+    const resetTokenHash = await bcrypt.hash(resetToken, 10);
 
-    await resetRecord.save();
+    resetRequest.resetTokenHash = resetTokenHash;
+    await resetRequest.save();
 
     res.status(200).json({
       success: true,
@@ -298,8 +319,7 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-// Reset Password
-const resetPassword = async (req, res) => {
+const salonOwnerResetPassword = async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
 
@@ -311,42 +331,52 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      });
+    }
+
     // Verify reset token
     let decoded;
 
     try {
       decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     } catch (error) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
         message: "Invalid or expired reset token.",
       });
     }
 
-    // Make sure this JWT is specifically for password reset
-    if (decoded.purpose !== "password-reset") {
-      return res.status(401).json({
+    // Make sure token belongs to Salon Owner password reset
+    if (
+      decoded.role !== "salon" ||
+      decoded.purpose !== "salon-owner-password-reset"
+    ) {
+      return res.status(400).json({
         success: false,
         message: "Invalid reset token.",
       });
     }
 
-    // Find password reset record
-    const resetRecord = await PasswordReset.findOne({
+    // Find reset request
+    const resetRequest = await PasswordReset.findOne({
       userId: decoded.userId,
     });
 
-    if (!resetRecord) {
+    if (!resetRequest) {
       return res.status(400).json({
         success: false,
-        message: "Password reset request not found or already used.",
+        message: "Password reset request not found.",
       });
     }
 
-    // Check reset record expiration
-    if (resetRecord.expiresAt < new Date()) {
+    // Check reset token expiry
+    if (resetRequest.expiresAt < new Date()) {
       await PasswordReset.deleteOne({
-        _id: resetRecord._id,
+        _id: resetRequest._id,
       });
 
       return res.status(400).json({
@@ -355,26 +385,29 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Verify reset token against stored hash
-    const isTokenValid = await bcrypt.compare(
+    // Verify stored reset token
+    const isTokenMatch = await bcrypt.compare(
       resetToken,
-      resetRecord.resetTokenHash,
+      resetRequest.resetTokenHash,
     );
 
-    if (!isTokenValid) {
-      return res.status(401).json({
+    if (!isTokenMatch) {
+      return res.status(400).json({
         success: false,
         message: "Invalid reset token.",
       });
     }
 
-    // Find user
-    const user = await User.findById(decoded.userId);
+    // Find Salon Owner only
+    const salonOwner = await User.findOne({
+      _id: decoded.userId,
+      role: "salon",
+    });
 
-    if (!user) {
+    if (!salonOwner) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Salon Owner account not found.",
       });
     }
 
@@ -382,17 +415,17 @@ const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    user.password = hashedPassword;
-    await user.save();
+    salonOwner.password = hashedPassword;
+    await salonOwner.save();
 
-    // Delete reset record so token cannot be reused
+    // Remove password reset request
     await PasswordReset.deleteOne({
-      _id: resetRecord._id,
+      _id: resetRequest._id,
     });
 
     res.status(200).json({
       success: true,
-      message: "Password reset successful. Please login again.",
+      message: "Password reset successfully.",
     });
   } catch (error) {
     console.error(error);
@@ -404,14 +437,16 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const getProfile = async (req, res) => {
+// ==================== SALON OWNER PROFILE ====================
+
+const salonOwnerGetProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
 
-    if (!user) {
+    if (!user || user.role !== "salon") {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Salon Owner not found.",
       });
     }
 
@@ -420,7 +455,7 @@ const getProfile = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Salon Owner profile fetch error:", error);
 
     res.status(500).json({
       success: false,
@@ -429,7 +464,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-const updateProfile = async (req, res) => {
+const salonOwnerUpdateProfile = async (req, res) => {
   try {
     const { fullName, email } = req.body;
 
@@ -440,12 +475,15 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({
+      _id: req.user.id,
+      role: "salon",
+    });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Salon Owner not found.",
       });
     }
 
@@ -471,7 +509,7 @@ const updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Salon Owner profile update error:", error);
 
     res.status(500).json({
       success: false,
@@ -480,10 +518,9 @@ const updateProfile = async (req, res) => {
   }
 };
 
-const uploadProfileImage = async (req, res) => {
+const salonOwnerUploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
-      const { fullName, phone, email, password } = req.body;
       return res.status(400).json({
         success: false,
         message: "Profile image is required.",
@@ -508,12 +545,15 @@ const uploadProfileImage = async (req, res) => {
       stream.end(req.file.buffer);
     });
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({
+      _id: req.user.id,
+      role: "salon",
+    });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Salon Owner not found.",
       });
     }
 
@@ -535,7 +575,7 @@ const uploadProfileImage = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Profile image upload error:", error);
+    console.error("Salon Owner profile image upload error:", error);
 
     res.status(500).json({
       success: false,
@@ -545,12 +585,12 @@ const uploadProfileImage = async (req, res) => {
 };
 
 module.exports = {
-  register,
-  login,
-  forgotPassword,
-  verifyOtp,
-  resetPassword,
-  getProfile,
-  updateProfile,
-  uploadProfileImage,
+  salonOwnerRegister,
+  salonOwnerLogin,
+  salonOwnerForgotPassword,
+  salonOwnerVerifyOtp,
+  salonOwnerResetPassword,
+  salonOwnerGetProfile,
+  salonOwnerUpdateProfile,
+  salonOwnerUploadProfileImage,
 };

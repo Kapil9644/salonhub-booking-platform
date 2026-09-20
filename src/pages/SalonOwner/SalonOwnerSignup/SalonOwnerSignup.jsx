@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Scissors, Store } from "lucide-react";
-
-import { registerUser } from "../../../services/authService";
-import { useAuth } from "../../../context/AuthContext";
+import { registerSalonOwner } from "../../../services/authService";
+import { useSalonOwnerAuth } from "../../../context/SalonOwnerAuthContext";
 
 export default function SalonOwnerSignup() {
   const [formData, setFormData] = useState({
@@ -18,7 +17,7 @@ export default function SalonOwnerSignup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { login } = useAuth();
+  const { loginSalonOwner } = useSalonOwnerAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -46,13 +45,11 @@ export default function SalonOwnerSignup() {
         phone: formData.phone,
         email: formData.email,
         password: formData.password,
-        role: "salon",
       };
 
-      const data = await registerUser(registrationData);
+      const data = await registerSalonOwner(registrationData);
 
-      login(data.user, data.token);
-
+      loginSalonOwner(data.user, data.token);
       alert("Salon Partner Account Created Successfully 🎉");
 
       navigate("/salon-owner/dashboard", {

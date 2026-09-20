@@ -7,7 +7,7 @@ const {
   updateAppointmentStatus,
 } = require("../controllers/salonOwnerBookingController");
 
-const protect = require("../middleware/authMiddleware");
+const protect = require("../middleware/salonOwnerAuthMiddleware");
 
 // Get appointments for logged-in salon owner
 router.get("/", protect, getSalonOwnerAppointments);

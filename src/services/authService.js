@@ -59,3 +59,43 @@ export const uploadProfileImage = async (imageFile) => {
 
   return response.data;
 };
+
+// ==================== SALON OWNER AUTH ====================
+
+export const registerSalonOwner = async (userData) => {
+  const response = await api.post("/salon-owner-auth/register", userData);
+
+  return response.data;
+};
+
+export const loginSalonOwner = async (userData) => {
+  const response = await api.post("/salon-owner-auth/login", userData);
+
+  return response.data;
+};
+
+export const salonOwnerForgotPassword = async (phone) => {
+  const response = await api.post("/salon-owner-auth/forgot-password", {
+    phone,
+  });
+
+  return response.data;
+};
+
+export const salonOwnerVerifyOtp = async (phone, otp) => {
+  const response = await api.post("/salon-owner-auth/verify-otp", {
+    phone,
+    otp,
+  });
+
+  return response.data;
+};
+
+export const salonOwnerResetPassword = async (resetToken, newPassword) => {
+  const response = await api.post("/salon-owner-auth/reset-password", {
+    resetToken,
+    newPassword,
+  });
+
+  return response.data;
+};
