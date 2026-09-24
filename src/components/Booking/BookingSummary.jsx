@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { createBooking } from "../../services/bookingService";
+import { createPaymentOrder } from "../../services/paymentService";
+import { openCashfreeCheckout } from "../../services/cashfreeService";
 
 export default function BookingSummary({
   salon,
@@ -10,6 +13,7 @@ export default function BookingSummary({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [paymentMethod, setPaymentMethod] = useState("PAY_AFTER_SERVICE");
 
   const totalPrice = selectedServices.reduce(
     (total, service) => total + Number(service.price || 0),
@@ -61,10 +65,30 @@ export default function BookingSummary({
 
         totalPrice,
         totalDuration,
+        paymentMethod,
 
         date: selectedDate,
         time: selectedTime,
       };
+
+      if (paymentMethod === "PAY_NOW") {
+        const paymentOrderId = `RUPIVA_${Date.now()}`;
+        const paymentResponse = await createPaymentOrder({
+          orderId: paymentOrderId,
+          amount: totalPrice,
+          bookingData,
+        });
+
+        const paymentSessionId = paymentResponse?.data?.payment_session_id;
+
+        if (!paymentSessionId) {
+          throw new Error("Payment session could not be created.");
+        }
+
+        await openCashfreeCheckout(paymentSessionId);
+
+        return;
+      }
 
       const response = await createBooking(bookingData);
 
@@ -87,6 +111,11 @@ export default function BookingSummary({
       navigate("/booking-confirmation", {
         state: {
           booking: confirmedBooking,
+          paymentDetails: {
+            method: "PAY_AFTER_SERVICE",
+            status: "UNPAID",
+            amount: totalPrice,
+          },
         },
       });
     } catch (error) {
@@ -179,6 +208,65 @@ export default function BookingSummary({
         </div>
 
         <hr />
+
+        {/* Payment Method */}
+        <div>
+          <p className="mb-3 text-sm font-semibold text-slate-900">
+            Payment Method
+          </p>
+
+          <div className="space-y-2">
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
+                paymentMethod === "PAY_NOW"
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-200 bg-white hover:border-purple-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="PAY_NOW"
+                checked={paymentMethod === "PAY_NOW"}
+                onChange={(event) => setPaymentMethod(event.target.value)}
+                className="h-4 w-4 accent-purple-600"
+              />
+
+              <div>
+                <p className="font-semibold text-slate-900">Pay Now</p>
+                <p className="text-xs text-gray-500">
+                  Pay securely online with Cashfree
+                </p>
+              </div>
+            </label>
+
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
+                paymentMethod === "PAY_AFTER_SERVICE"
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-200 bg-white hover:border-purple-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="PAY_AFTER_SERVICE"
+                checked={paymentMethod === "PAY_AFTER_SERVICE"}
+                onChange={(event) => setPaymentMethod(event.target.value)}
+                className="h-4 w-4 accent-purple-600"
+              />
+
+              <div>
+                <p className="font-semibold text-slate-900">
+                  Pay After Service
+                </p>
+                <p className="text-xs text-gray-500">
+                  Pay at the salon after your service
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
 
         {/* Total */}
         <div className="flex items-center justify-between text-xl font-bold">

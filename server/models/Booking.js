@@ -116,6 +116,41 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
     },
 
+    paymentMethod: {
+      type: String,
+      enum: ["PAY_NOW", "PAY_AFTER_SERVICE"],
+      required: true,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "UNPAID", "PAID", "FAILED", "REFUNDED"],
+      default: "PENDING",
+    },
+
+    paymentOrderId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    cashfreeOrderId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    cashfreePaymentId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    cashfreePaymentDate: {
+      type: Date,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: ["Upcoming", "Completed", "Cancelled"],

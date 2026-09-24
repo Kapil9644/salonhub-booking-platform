@@ -14,7 +14,7 @@ const adminAuthRoutes = require("./routes/adminAuthRoutes");
 const salonOwnerBookingRoutes = require("./routes/salonOwnerBookingRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
-
+const paymentRoutes = require("./routes/paymentRoutes");
 const app = express();
 
 // Connect Database
@@ -35,6 +35,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/working-hours", workingHoursRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

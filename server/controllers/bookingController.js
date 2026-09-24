@@ -2,6 +2,7 @@ const Booking = require("../models/Booking");
 const Service = require("../models/Service");
 const Salon = require("../models/Salon");
 const WorkingHours = require("../models/WorkingHours");
+const PaymentTransaction = require("../models/PaymentTransaction");
 // ========================================
 
 // ========================================
@@ -209,7 +210,29 @@ const hasBookingTimeOverlap = async (
 // ========================================
 const createBooking = async (req, res) => {
   try {
-    const { salon, services, date, time } = req.body;
+    const { salon, services, date, time, paymentMethod } = req.body;
+
+    if (!paymentMethod) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method is required.",
+      });
+    }
+
+    if (!["PAY_NOW", "PAY_AFTER_SERVICE"].includes(paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method.",
+      });
+    }
+
+    if (paymentMethod === "PAY_NOW") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Online payment flow is not available yet. Please select Pay After Service.",
+      });
+    }
 
     if (!salon?.id || !services?.length || !date || !time) {
       return res.status(400).json({
@@ -325,6 +348,8 @@ const createBooking = async (req, res) => {
 
       totalPrice,
       totalDuration,
+      paymentMethod,
+      paymentStatus: "UNPAID",
 
       date,
       time,
@@ -341,6 +366,197 @@ const createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server Error",
+    });
+  }
+};
+
+const createPaidBooking = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment order ID is required.",
+      });
+    }
+
+    // Find the payment transaction belonging to this customer.
+    const paymentTransaction = await PaymentTransaction.findOne({
+      orderId: String(orderId),
+      user: req.user.id,
+    });
+
+    const existingBooking = await Booking.findOne({
+      paymentOrderId: String(orderId),
+      user: req.user.id,
+    });
+
+    if (existingBooking) {
+      return res.status(200).json({
+        success: true,
+        message: "Booking already created for this payment.",
+        booking: existingBooking,
+      });
+    }
+
+    if (!paymentTransaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment transaction not found.",
+      });
+    }
+
+    // Booking can only be created after successful payment.
+    if (paymentTransaction.paymentStatus !== "PAID") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment has not been completed successfully.",
+      });
+    }
+
+    const { bookingData } = paymentTransaction;
+
+    if (
+      !bookingData?.salon?.id ||
+      !bookingData?.services?.length ||
+      !bookingData?.date ||
+      !bookingData?.time
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking data in payment transaction.",
+      });
+    }
+
+    const salonId = bookingData.salon.id;
+
+    // Check salon.
+    const salon = await Salon.findById(salonId);
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found.",
+      });
+    }
+
+    if (salon.approvalStatus !== "Approved" || !salon.isListed) {
+      return res.status(400).json({
+        success: false,
+        message: "This salon is currently unavailable for booking.",
+      });
+    }
+
+    // Validate services again on the server.
+    const serviceIds = bookingData.services.map((service) => service.id);
+
+    const services = await Service.find({
+      _id: { $in: serviceIds },
+      salon: salonId,
+      isActive: true,
+    });
+
+    if (services.length !== serviceIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more selected services are no longer available.",
+      });
+    }
+
+    // Calculate totals again from the database.
+    const totalPrice = services.reduce(
+      (total, service) => total + Number(service.price || 0),
+      0,
+    );
+
+    const totalDuration = services.reduce(
+      (total, service) => total + Number(service.duration || 0),
+      0,
+    );
+
+    // Make sure the paid amount matches the current service total.
+    if (Number(paymentTransaction.amount) !== totalPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment amount does not match the current booking amount.",
+      });
+    }
+
+    // Re-check overlapping bookings before creating the paid booking.
+    const hasOverlap = await hasBookingTimeOverlap(
+      salonId,
+      bookingData.date,
+      bookingData.time,
+      totalDuration,
+    );
+
+    if (hasOverlap) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This time slot is no longer available. Your payment has been received, but the booking could not be created.",
+      });
+    }
+
+    // Re-check working hours using the existing booking validation.
+    const timeValidation = await validateBookingTime(
+      salonId,
+      bookingData.date,
+      bookingData.time,
+      totalDuration,
+    );
+
+    if (!timeValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: timeValidation.message,
+      });
+    }
+    // Create the booking only after all validations pass.
+    const booking = await Booking.create({
+      user: req.user.id,
+
+      salon: {
+        id: salon._id,
+        name: salon.name,
+        location: salon.location,
+      },
+
+      services: services.map((service) => ({
+        id: service._id,
+        name: service.name,
+        price: Number(service.price || 0),
+        duration: Number(service.duration || 0),
+      })),
+
+      totalPrice,
+      totalDuration,
+
+      paymentMethod: "PAY_NOW",
+      paymentStatus: "PAID",
+
+      paymentOrderId: paymentTransaction.orderId,
+      cashfreeOrderId: paymentTransaction.cashfreeOrderId,
+      cashfreePaymentId: paymentTransaction.cashfreePaymentId,
+      cashfreePaymentDate: paymentTransaction.cashfreePaymentDate,
+
+      date: bookingData.date,
+      time: bookingData.time,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Paid booking created successfully.",
+      booking,
+    });
+  } catch (error) {
+    console.error("Create Paid Booking Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create paid booking.",
+      error: error.message,
     });
   }
 };
@@ -624,6 +840,7 @@ const getBookedSlots = async (req, res) => {
 
 module.exports = {
   createBooking,
+  createPaidBooking,
   getMyBookings,
   updateBooking,
   cancelBooking,

@@ -44,6 +44,7 @@ import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
 import SalonOwnerSettings from "../pages/SalonOwner/Settings";
 import Testimonials from "../pages/Testimonials/Testimonials";
 import Favorites from "../pages/Favorites/Favorites";
+import PaymentStatus from "../pages/PaymentStatus/PaymentStatus";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -132,6 +133,7 @@ export default function AppRoutes() {
         <Route path="/help-support" element={<HelpSupport />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/payment-status" element={<PaymentStatus />} />
       </Route>
 
       {/* Salon Owner Public Portal */}

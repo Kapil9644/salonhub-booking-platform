@@ -1,5 +1,5 @@
 import { CalendarCheck, Clock, Home, MapPin, Receipt } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 
 export default function BookingConfirmation() {
@@ -7,6 +7,9 @@ export default function BookingConfirmation() {
   const { state } = useLocation();
 
   const booking = state?.booking;
+  const location = useLocation();
+
+  const paymentDetails = location.state?.paymentDetails;
 
   if (!booking) {
     return (
@@ -177,6 +180,91 @@ export default function BookingConfirmation() {
               </div>
             </div>
           </div>
+
+          {/* Payment Details */}
+          {paymentDetails && (
+            <div className="mt-5 border-t border-gray-200 pt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-bold text-slate-900">
+                  Payment Details
+                </h3>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    paymentDetails.status === "PAID"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {paymentDetails.status === "PAID" ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 rounded-xl bg-white">
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-gray-500">Payment Method</span>
+
+                  <span className="font-semibold text-slate-800">
+                    {paymentDetails.method === "PAY_NOW"
+                      ? "Pay Now"
+                      : "Pay After Service"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-gray-500">
+                    {paymentDetails.status === "PAID"
+                      ? "Amount Paid"
+                      : "Amount Due"}
+                  </span>
+
+                  <span className="font-bold text-purple-600">
+                    ₹{paymentDetails.amount}
+                  </span>
+                </div>
+
+                {paymentDetails.orderId && (
+                  <div className="flex items-start justify-between gap-4 text-sm">
+                    <span className="text-gray-500">Payment Order ID</span>
+
+                    <span className="max-w-[60%] break-all text-right font-semibold text-slate-700">
+                      {paymentDetails.orderId}
+                    </span>
+                  </div>
+                )}
+
+                {paymentDetails.transactionId && (
+                  <div className="flex items-start justify-between gap-4 text-sm">
+                    <span className="text-gray-500">Transaction ID</span>
+
+                    <span className="max-w-[60%] break-all text-right font-semibold text-slate-700">
+                      {paymentDetails.transactionId}
+                    </span>
+                  </div>
+                )}
+
+                {paymentDetails.paymentDate && (
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-gray-500">Payment Date & Time</span>
+
+                    <span className="text-right font-semibold text-slate-700">
+                      {new Date(paymentDetails.paymentDate).toLocaleString(
+                        "en-IN",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        },
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

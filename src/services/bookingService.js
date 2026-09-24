@@ -34,3 +34,11 @@ export const cancelBooking = async (bookingId) => {
 
   return response.data;
 };
+
+export const createPaidBooking = async (orderId) => {
+  const response = await api.post("/bookings/paid", {
+    orderId,
+  });
+
+  return response.data;
+};

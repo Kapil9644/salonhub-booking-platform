@@ -4,6 +4,7 @@ const router = express.Router();
 
 const {
   createBooking,
+  createPaidBooking,
   getMyBookings,
   updateBooking,
   cancelBooking,
@@ -14,6 +15,9 @@ const protect = require("../middleware/authMiddleware");
 
 // Create booking
 router.post("/", protect, createBooking);
+
+// Create booking after successful online payment
+router.post("/paid", protect, createPaidBooking);
 
 // Get logged-in user's bookings
 router.get("/my", protect, getMyBookings);
