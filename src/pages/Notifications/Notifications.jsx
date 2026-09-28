@@ -9,76 +9,126 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  getMyNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../../services/notificationService";
+
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case "BOOKING_CONFIRMED":
+    case "NEW_BOOKING":
+      return CalendarCheck;
+
+    case "BOOKING_REMINDER":
+      return Clock3;
+
+    case "PAYMENT_SUCCESS":
+    case "PAYMENT_UPDATE":
+    case "PAYOUT_UPDATE":
+      return Gift;
+
+    case "REVIEW_REMINDER":
+    case "NEW_REVIEW":
+      return Sparkles;
+
+    case "BOOKING_CANCELLED":
+      return Info;
+
+    default:
+      return Bell;
+  }
+};
+
+const getNotificationTime = (createdAt) => {
+  if (!createdAt) return "";
+
+  const createdDate = new Date(createdAt);
+
+  if (Number.isNaN(createdDate.getTime())) return "";
+
+  return createdDate.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: "booking",
-      title: "Booking Confirmed",
-      message: "Your salon appointment has been successfully confirmed.",
-      time: "10 minutes ago",
-      unread: true,
-      icon: CalendarCheck,
-    },
-    {
-      id: 2,
-      type: "reminder",
-      title: "Appointment Reminder",
-      message: "Your upcoming salon appointment is scheduled for tomorrow.",
-      time: "2 hours ago",
-      unread: true,
-      icon: Clock3,
-    },
-    {
-      id: 3,
-      type: "offer",
-      title: "New Offer Available",
-      message:
-        "A new beauty offer is waiting for you. Check out the latest Rupiva deals.",
-      time: "Yesterday",
-      unread: false,
-      icon: Gift,
-    },
-    {
-      id: 4,
-      type: "info",
-      title: "Welcome to Rupiva",
-      message:
-        "Discover salons, choose your services and book your preferred time slot.",
-      time: "2 days ago",
-      unread: false,
-      icon: Sparkles,
-    },
-  ]);
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const data = await getMyNotifications();
+
+        setNotifications(
+          (data.notifications || []).map((notification) => ({
+            ...notification,
+            unread: !notification.isRead,
+          })),
+        );
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, []);
 
   const unreadCount = notifications.filter(
     (notification) => notification.unread,
   ).length;
 
-  const markAsRead = (id) => {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id
-          ? { ...notification, unread: false }
-          : notification,
-      ),
-    );
+  const markAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification._id === id
+            ? {
+                ...notification,
+                unread: false,
+                isRead: true,
+              }
+            : notification,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((current) =>
-      current.map((notification) => ({
-        ...notification,
-        unread: false,
-      })),
-    );
+  const markAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+
+      setNotifications((current) =>
+        current.map((notification) => ({
+          ...notification,
+          unread: false,
+          isRead: true,
+        })),
+      );
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
   };
 
   const removeNotification = (id) => {
     setNotifications((current) =>
-      current.filter((notification) => notification.id !== id),
+      current.filter((notification) => notification._id !== id),
     );
   };
 
@@ -142,7 +192,15 @@ const Notifications = () => {
       {/* Notification List */}
       <section>
         <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          {notifications.length > 0 ? (
+          {loading ? (
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600" />
+
+              <p className="mt-4 text-sm font-semibold text-slate-600">
+                Loading notifications...
+              </p>
+            </div>
+          ) : notifications.length > 0 ? (
             <>
               {/* Summary */}
               <div className="mb-4 flex items-center justify-between">
@@ -162,11 +220,11 @@ const Notifications = () => {
 
               <div className="space-y-3">
                 {notifications.map((notification) => {
-                  const Icon = notification.icon;
+                  const Icon = getNotificationIcon(notification.type);
 
                   return (
                     <article
-                      key={notification.id}
+                      key={notification._id}
                       className={`relative overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
                         notification.unread
                           ? "border-purple-200"
@@ -193,11 +251,27 @@ const Notifications = () => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-nowrap items-center gap-2">
                                 <h2 className="text-sm font-bold text-slate-900 sm:text-base">
                                   {notification.title}
                                 </h2>
 
+                                {(notification.type === "BOOKING_CONFIRMED" ||
+                                  notification.type === "BOOKING_CANCELLED" ||
+                                  notification.type === "BOOKING_REMINDER") &&
+                                  notification.relatedBooking && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        navigate(
+                                          `/my-bookings?booking=${notification.relatedBooking}`,
+                                        )
+                                      }
+                                      className="inline-flex shrink-0 items-center rounded-full border border-purple-200 bg-purple-50 px-2.5 py-1 text-[8px] font-bold text-purple-700 transition hover:bg-purple-100 sm:text-xs"
+                                    >
+                                      View Booking
+                                    </button>
+                                  )}
                                 {notification.unread && (
                                   <span className="h-2 w-2 shrink-0 rounded-full bg-purple-600" />
                                 )}
@@ -209,14 +283,14 @@ const Notifications = () => {
 
                               <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                                 <Clock3 size={13} />
-                                {notification.time}
+                                {getNotificationTime(notification.createdAt)}
                               </div>
                             </div>
 
                             <button
                               type="button"
                               onClick={() =>
-                                removeNotification(notification.id)
+                                removeNotification(notification._id)
                               }
                               className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500"
                               aria-label="Remove notification"
@@ -228,7 +302,7 @@ const Notifications = () => {
                           {notification.unread && (
                             <button
                               type="button"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => markAsRead(notification._id)}
                               className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 transition hover:bg-purple-100"
                             >
                               <Check size={14} />

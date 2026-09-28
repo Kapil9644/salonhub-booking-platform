@@ -3,6 +3,7 @@ const Service = require("../models/Service");
 const Salon = require("../models/Salon");
 const WorkingHours = require("../models/WorkingHours");
 const PaymentTransaction = require("../models/PaymentTransaction");
+const { createNotification } = require("../utils/notificationService");
 // ========================================
 
 // ========================================
@@ -355,6 +356,22 @@ const createBooking = async (req, res) => {
       time,
     });
 
+    await createNotification({
+      recipient: req.user.id,
+      type: "BOOKING_CONFIRMED",
+      title: "Booking Confirmed",
+      message: `Your booking at ${salonData.name} has been confirmed.`,
+      relatedBooking: booking._id,
+    });
+
+    await createNotification({
+      recipient: salonData.owner,
+      type: "NEW_BOOKING",
+      title: "New Booking",
+      message: `A new booking has been received for ${salonData.name} on ${booking.time}.`,
+      relatedBooking: booking._id,
+    });
+
     res.status(201).json({
       success: true,
       message: "Booking created successfully.",
@@ -543,6 +560,30 @@ const createPaidBooking = async (req, res) => {
 
       date: bookingData.date,
       time: bookingData.time,
+    });
+
+    await createNotification({
+      recipient: req.user.id,
+      type: "PAYMENT_SUCCESS",
+      title: "Payment Successful",
+      message: `Your payment of ₹${totalPrice} for ${salon.name} was successful.`,
+      relatedBooking: booking._id,
+    });
+
+    await createNotification({
+      recipient: req.user.id,
+      type: "BOOKING_CONFIRMED",
+      title: "Booking Confirmed",
+      message: `Your booking at ${salon.name} has been confirmed.`,
+      relatedBooking: booking._id,
+    });
+
+    await createNotification({
+      recipient: salon.owner,
+      type: "NEW_BOOKING",
+      title: "New Booking",
+      message: `A new booking has been received for ${salon.name} on ${booking.time}.`,
+      relatedBooking: booking._id,
     });
 
     return res.status(201).json({
@@ -764,9 +805,37 @@ const cancelBooking = async (req, res) => {
       });
     }
 
+    const salon = await Salon.findById(booking.salon.id);
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found.",
+      });
+    }
+
+    const salonOwnerId = salon.owner;
+
     booking.status = "Cancelled";
+    booking.cancelledAt = new Date();
 
     await booking.save();
+
+    await createNotification({
+      recipient: req.user.id,
+      type: "BOOKING_CANCELLED",
+      title: "Booking Cancelled",
+      message: `Your booking at ${booking.salon.name} has been cancelled.`,
+      relatedBooking: booking._id,
+    });
+
+    await createNotification({
+      recipient: salonOwnerId,
+      type: "BOOKING_CANCELLED",
+      title: "Booking Cancelled",
+      message: `A booking at ${booking.salon.name} has been cancelled.`,
+      relatedBooking: booking._id,
+    });
 
     res.status(200).json({
       success: true,

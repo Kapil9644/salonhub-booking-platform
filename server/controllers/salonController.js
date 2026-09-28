@@ -375,6 +375,22 @@ const getPublicSalons = async (req, res) => {
 
         const currentIsOpen = calculateSalonOpenStatus(salon, workingHours);
 
+        const reviews = await Review.find({
+          salon: salon._id,
+        }).select("rating");
+
+        const totalReviews = reviews.length;
+
+        const totalRating = reviews.reduce(
+          (total, review) => total + review.rating,
+          0,
+        );
+
+        const averageRating =
+          totalReviews > 0
+            ? Number((totalRating / totalReviews).toFixed(1))
+            : null;
+
         const lowestPrice =
           services.length > 0
             ? Math.min(...services.map((service) => service.price))
@@ -390,6 +406,8 @@ const getPublicSalons = async (req, res) => {
           email: salon.email,
           isListed: salon.isListed,
           isOpen: currentIsOpen,
+          rating: averageRating,
+          reviews: totalReviews,
           approvalStatus: salon.approvalStatus,
           services,
           price: lowestPrice,

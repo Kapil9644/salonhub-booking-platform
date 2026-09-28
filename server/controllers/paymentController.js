@@ -40,7 +40,7 @@ const createPaymentOrder = async (req, res) => {
         customer_email: customer.email || "customer@rupiva.com",
       },
       order_meta: {
-        return_url: `http://localhost:5173/payment-status?order_id={order_id}`,
+        return_url: `${req.get("origin") || "http://localhost:5173"}/payment-status?order_id={order_id}`,
       },
     };
 

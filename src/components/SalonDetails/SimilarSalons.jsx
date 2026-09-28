@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getPublicSalons } from "../../services/salonService";
 import { useLocation } from "../../context/LocationContext";
 import { calculateDistance } from "../../utils/distance";
@@ -6,8 +6,12 @@ import SalonCard from "../common/SalonCard/SalonCard";
 
 export default function SimilarSalons({ salon }) {
   const { location: userLocation } = useLocation();
+
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(0);
+
+  const triggerRef = useRef(null);
 
   useEffect(() => {
     const fetchSalons = async () => {
@@ -83,13 +87,82 @@ export default function SimilarSalons({ salon }) {
         if (b.calculatedDistance !== null) return 1;
 
         return 0;
-      })
-      .slice(0, 4);
+      });
   }, [salon, salons, userLocation]);
+
+  /*
+   * Determine how many salons belong to one row.
+   *
+   * Mobile:  2 salons per row
+   * iPad/Desktop: 3 salons per row
+   */
+  const getSalonsPerRow = () => {
+    return window.innerWidth < 640 ? 2 : 3;
+  };
+
+  /*
+   * Set the initial visible salons after the sorted list is ready.
+   * This means the first visible batch is exactly one row.
+   */
+  useEffect(() => {
+    if (similarSalons.length === 0) {
+      setVisibleCount(0);
+      return;
+    }
+
+    const salonsPerRow = getSalonsPerRow();
+
+    setVisibleCount((currentCount) => {
+      if (currentCount > 0) return currentCount;
+
+      return Math.min(salonsPerRow, similarSalons.length);
+    });
+  }, [similarSalons.length]);
+
+  /*
+   * Infinite scroll trigger.
+   *
+   * Every trigger loads exactly ONE additional row:
+   * Mobile       -> +2 salons
+   * iPad/Desktop -> +3 salons
+   */
+  useEffect(() => {
+    const trigger = triggerRef.current;
+
+    if (!trigger) return;
+    if (visibleCount >= similarSalons.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+
+        if (!entry.isIntersecting) return;
+
+        const salonsPerRow = getSalonsPerRow();
+
+        setVisibleCount((currentCount) =>
+          Math.min(currentCount + salonsPerRow, similarSalons.length),
+        );
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(trigger);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [visibleCount, similarSalons.length]);
 
   if (loading || similarSalons.length === 0) {
     return null;
   }
+
+  const visibleSalons = similarSalons.slice(0, visibleCount);
 
   return (
     <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:mt-7 sm:rounded-3xl sm:p-5">
@@ -103,8 +176,8 @@ export default function SimilarSalons({ salon }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {similarSalons.map((item) => (
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {visibleSalons.map((item) => (
           <SalonCard
             key={item._id}
             {...item}
@@ -118,6 +191,11 @@ export default function SimilarSalons({ salon }) {
           />
         ))}
       </div>
+
+      {/* Infinite scroll trigger */}
+      {visibleCount < similarSalons.length && (
+        <div ref={triggerRef} className="h-10 w-full" aria-hidden="true" />
+      )}
     </section>
   );
 }

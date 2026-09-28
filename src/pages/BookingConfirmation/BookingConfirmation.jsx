@@ -48,19 +48,19 @@ export default function BookingConfirmation() {
 
   return (
     <Container>
-      <div className="flex min-h-[75vh] items-center justify-center py-16">
-        <div className="w-full max-w-xl rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-xl sm:p-10">
+      <div className="flex min-h-[75vh] items-center justify-center py-1">
+        <div className="w-full max-w-xl rounded-3xl border border-gray-200 bg-white p-3 text-center shadow-xl sm:p-5">
           {/* Success Icon */}
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
             <CalendarCheck
-              size={42}
+              size={30}
               strokeWidth={2.5}
               className="text-green-600"
             />
           </div>
 
           {/* Heading */}
-          <h1 className="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+          <h1 className="mt-4 text-2xl font-extrabold text-slate-900 sm:text-3xl">
             Booking Confirmed! 🎉
           </h1>
 
@@ -69,7 +69,7 @@ export default function BookingConfirmation() {
           </p>
 
           {/* Booking Details */}
-          <div className="mt-8 rounded-2xl bg-gray-50 p-6 text-left">
+          <div className="mt-5 rounded-2xl bg-gray-50 p-4 text-left">
             {/* Booking ID */}
             <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-purple-100 bg-purple-50 px-4 py-0">
               <span className="text-sm font-medium text-gray-500">
@@ -117,7 +117,7 @@ export default function BookingConfirmation() {
                         key={service.id || service._id}
                         className="mb-2 last:mb-0"
                       >
-                        <p className="font-semibold text-slate-900">
+                        <p className="text-[14px] font-semibold text-slate-900">
                           {service.name}
                         </p>
 
@@ -141,7 +141,7 @@ export default function BookingConfirmation() {
                   <span className="text-gray-500">Date</span>
                 </div>
 
-                <span className="font-semibold text-slate-900">
+                <span className="text-[14px] font-semibold text-slate-900">
                   {formattedDate}
                 </span>
               </div>
@@ -153,7 +153,7 @@ export default function BookingConfirmation() {
                   <span className="text-gray-500">Time</span>
                 </div>
 
-                <span className="font-semibold text-slate-900">
+                <span className="text-[14px] font-semibold text-slate-900">
                   {booking.time || "--"}
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function BookingConfirmation() {
                     Total
                   </span>
 
-                  <span className="text-2xl font-bold text-purple-600">
+                  <span className="text-[14px] font-bold text-purple-600">
                     ₹{booking.totalPrice ?? 0}
                   </span>
                 </div>
@@ -173,7 +173,7 @@ export default function BookingConfirmation() {
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-sm text-gray-500">Total Duration</span>
 
-                  <span className="font-semibold text-slate-900">
+                  <span className="text-[14px] font-semibold text-slate-900">
                     {booking.totalDuration ?? 0} min
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export default function BookingConfirmation() {
                 </h3>
 
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
                     paymentDetails.status === "PAID"
                       ? "bg-green-100 text-green-700"
                       : "bg-amber-100 text-amber-700"
@@ -204,7 +204,7 @@ export default function BookingConfirmation() {
                 <div className="flex items-center justify-between gap-4 text-sm">
                   <span className="text-gray-500">Payment Method</span>
 
-                  <span className="font-semibold text-slate-800">
+                  <span className="text-[12px] font-semibold text-slate-800">
                     {paymentDetails.method === "PAY_NOW"
                       ? "Pay Now"
                       : "Pay After Service"}
@@ -218,7 +218,7 @@ export default function BookingConfirmation() {
                       : "Amount Due"}
                   </span>
 
-                  <span className="font-bold text-purple-600">
+                  <span className="text-[12px] font-bold text-purple-600">
                     ₹{paymentDetails.amount}
                   </span>
                 </div>
@@ -227,7 +227,7 @@ export default function BookingConfirmation() {
                   <div className="flex items-start justify-between gap-4 text-sm">
                     <span className="text-gray-500">Payment Order ID</span>
 
-                    <span className="max-w-[60%] break-all text-right font-semibold text-slate-700">
+                    <span className="max-w-[60%] break-all text-right text-[12px] font-semibold text-slate-700">
                       {paymentDetails.orderId}
                     </span>
                   </div>
@@ -237,7 +237,7 @@ export default function BookingConfirmation() {
                   <div className="flex items-start justify-between gap-4 text-sm">
                     <span className="text-gray-500">Transaction ID</span>
 
-                    <span className="max-w-[60%] break-all text-right font-semibold text-slate-700">
+                    <span className="max-w-[60%] break-all text-right text-[12px] font-semibold text-slate-700">
                       {paymentDetails.transactionId}
                     </span>
                   </div>
@@ -247,7 +247,7 @@ export default function BookingConfirmation() {
                   <div className="flex items-center justify-between gap-4 text-sm">
                     <span className="text-gray-500">Payment Date & Time</span>
 
-                    <span className="text-right font-semibold text-slate-700">
+                    <span className="text-[12px] text-right font-semibold text-slate-700">
                       {new Date(paymentDetails.paymentDate).toLocaleString(
                         "en-IN",
                         {

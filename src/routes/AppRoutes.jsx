@@ -42,6 +42,7 @@ import AdminPublicRoute from "../components/common/AdminPublicRoute/AdminPublicR
 import AdminPublicLayout from "../layouts/AdminPublicLayout/AdminPublicLayout";
 import SalonOwnerAppointments from "../pages/SalonOwner/Appointments";
 import SalonOwnerSettings from "../pages/SalonOwner/Settings";
+import SalonOwnerNotifications from "../pages/SalonOwner/Notifications/SalonOwnerNotifications";
 import Testimonials from "../pages/Testimonials/Testimonials";
 import Favorites from "../pages/Favorites/Favorites";
 import PaymentStatus from "../pages/PaymentStatus/PaymentStatus";
@@ -180,6 +181,10 @@ export default function AppRoutes() {
           <Route
             path="/salon-owner/appointments"
             element={<SalonOwnerAppointments />}
+          />
+          <Route
+            path="/salon-owner/notifications"
+            element={<SalonOwnerNotifications />}
           />
         </Route>
       </Route>

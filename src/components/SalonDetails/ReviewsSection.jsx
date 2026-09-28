@@ -73,7 +73,7 @@ export default function ReviewsSection({ salonId }) {
           </p>
         </div>
       ) : (
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 max-h-[420px] space-y-3 overflow-y-auto pr-1 sm:max-h-[460px]">
           {reviews.map((review) => (
             <article
               key={review._id}
@@ -100,10 +100,13 @@ export default function ReviewsSection({ salonId }) {
                     </h3>
 
                     <p className="text-[11px] text-gray-500">
-                      {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                      {new Date(review.createdAt).toLocaleString("en-IN", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
                       })}
                     </p>
                   </div>

@@ -1,242 +1,323 @@
+import { useMemo, useState } from "react";
+import { ChevronDown, Filter, RotateCcw, X } from "lucide-react";
 import { filterOptions } from "../../../data/filterOptions";
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
 
 export default function Filters({
-  selectedServices,
+  availableServices = [],
+  selectedServices = [],
   setSelectedServices,
-  minimumRating,
+  openNow = false,
+  setOpenNow,
+  minimumRating = 0,
   setMinimumRating,
-  priceRange,
+  priceRange = "Any Price",
   setPriceRange,
-  setSortBy,
 }) {
-  const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const [serviceSearch, setServiceSearch] = useState("");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const servicesDropdownRef = useRef(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        servicesDropdownRef.current &&
-        !servicesDropdownRef.current.contains(event.target)
-      ) {
-        setIsServicesOpen(false);
-      }
-    };
+  const [serviceSearch, setServiceSearch] = useState("");
 
-    document.addEventListener("mousedown", handleClickOutside);
+  const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // ==================================================
+  // SERVICE SEARCH
+  // ==================================================
 
-  const filteredServices = filterOptions.services.filter((service) =>
-    service.toLowerCase().includes(serviceSearch.toLowerCase()),
-  );
+  const filteredServices = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase();
+
+    if (!query) {
+      return availableServices;
+    }
+
+    return availableServices.filter((service) =>
+      service.toLowerCase().includes(query),
+    );
+  }, [availableServices, serviceSearch]);
+
+  // ==================================================
+  // TOGGLE SERVICE
+  // ==================================================
 
   const toggleService = (service) => {
-    if (selectedServices.includes(service)) {
-      setSelectedServices(selectedServices.filter((item) => item !== service));
+    const exists = selectedServices.some(
+      (selected) => selected.toLowerCase() === service.toLowerCase(),
+    );
+
+    if (exists) {
+      setSelectedServices(
+        selectedServices.filter(
+          (selected) => selected.toLowerCase() !== service.toLowerCase(),
+        ),
+      );
     } else {
       setSelectedServices([...selectedServices, service]);
     }
   };
+
+  // ==================================================
+  // RESET
+  // ==================================================
+
+  const resetFilters = () => {
+    setSelectedServices([]);
+    setOpenNow(false);
+    setMinimumRating(0);
+    setPriceRange("Any Price");
+  };
+
+  // ==================================================
+  // ACTIVE FILTER COUNT
+  // ==================================================
+
+  const activeFilterCount =
+    selectedServices.length +
+    (openNow ? 1 : 0) +
+    (minimumRating > 0 ? 1 : 0) +
+    (priceRange !== "Any Price" ? 1 : 0);
+
   return (
-    <aside className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm sm:p-2.5 lg:p-4">
-      <div className="flex items-center justify-between lg:block">
-        <h2 className="text-lg font-bold leading-5 text-slate-900 sm:text-xl ml-1">
-          Filters
-        </h2>
+    <div className="w-full rounded-2xl border border-gray-200 bg-white shadow-sm">
+      {/* ==============================================
+          MOBILE / TABLET HEADER
+          ============================================== */}
 
-        <button
-          type="button"
-          onClick={() => setIsFiltersOpen((previous) => !previous)}
-          className="rounded-md border border-purple-200 bg-purple-50 px-2.5 mr-1 py-1 text-xs font-semibold leading-4 text-purple-700 transition hover:bg-purple-100 lg:hidden"
-        >
-          {isFiltersOpen ? "Hide" : "Show"}
-        </button>
-      </div>
-
-      <div
-        className={`${
-          isFiltersOpen ? "mt-3 block" : "hidden"
-        } lg:mt-4 lg:block`}
+      <button
+        type="button"
+        onClick={() => setIsFiltersOpen((previous) => !previous)}
+        className="flex w-full items-center justify-between px-4 py-3 lg:hidden"
       >
-        {/* Services */}
-        <div className="mb-5">
-          <h3 className="mb-2 text-base font-semibold text-slate-800">
-            Services
-          </h3>
-          <div ref={servicesDropdownRef} className="relative">
-            {/* Selected Services / Dropdown Trigger */}
-            <button
-              type="button"
-              onClick={() => setIsServicesOpen((previous) => !previous)}
-              className="flex min-h-[42px] w-full items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm outline-none transition hover:border-purple-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
-            >
-              <span
-                className={
-                  selectedServices.length > 0
-                    ? "text-gray-800"
-                    : "text-gray-500"
-                }
+        <div className="flex items-center gap-2">
+          <Filter size={18} className="text-purple-600" />
+
+          <span className="text-sm font-semibold text-gray-800">Filters</span>
+
+          {activeFilterCount > 0 && (
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">
+              {activeFilterCount}
+            </span>
+          )}
+        </div>
+
+        <ChevronDown
+          size={18}
+          className={`transition-transform ${
+            isFiltersOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {/* ==============================================
+          FILTER CONTENT
+          ============================================== */}
+
+      <div className={`${isFiltersOpen ? "block" : "hidden"} lg:block`}>
+        <div className="border-t border-gray-100 p-4 lg:border-t-0">
+          {/* ==========================================
+              HEADER
+              ========================================== */}
+
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-900">Filters</h3>
+
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700"
               >
-                {selectedServices.length === 0
-                  ? "Select Services"
-                  : `${selectedServices.length} service${
-                      selectedServices.length > 1 ? "s" : ""
-                    } selected`}
-              </span>
-
-              <ChevronDown
-                size={18}
-                className={`shrink-0 text-gray-500 transition-transform ${
-                  isServicesOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Selected Service Chips */}
-            {selectedServices.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {selectedServices.map((service) => (
-                  <span
-                    key={service}
-                    className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700"
-                  >
-                    {service}
-
-                    <button
-                      type="button"
-                      onClick={() => toggleService(service)}
-                      className="rounded-full p-0.5 transition hover:bg-purple-200"
-                      aria-label={`Remove ${service}`}
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
+                <RotateCcw size={13} />
+                Reset
+              </button>
             )}
+          </div>
 
-            {/* Dropdown */}
-            {isServicesOpen && (
-              <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                {/* Search */}
-                <div className="border-b border-gray-100 p-2">
-                  <div className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 focus-within:border-purple-500">
-                    <Search size={16} className="shrink-0 text-gray-400" />
+          {/* ==========================================
+              SERVICES
+              ========================================== */}
 
+          <div className="border-b border-gray-100 pb-4">
+            <label className="mb-2 block text-sm font-semibold text-gray-800">
+              Services
+            </label>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() =>
+                  setIsServiceDropdownOpen((previous) => !previous)
+                }
+                className="flex min-h-10 w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-700 transition hover:border-purple-300"
+              >
+                <span className="truncate">
+                  {selectedServices.length > 0
+                    ? `${selectedServices.length} service${
+                        selectedServices.length > 1 ? "s" : ""
+                      } selected`
+                    : "Select services"}
+                </span>
+
+                <ChevronDown
+                  size={16}
+                  className={`shrink-0 transition-transform ${
+                    isServiceDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isServiceDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                  {/* Service Search */}
+                  <div className="border-b border-gray-100 p-2">
                     <input
                       type="text"
                       value={serviceSearch}
-                      onChange={(e) => setServiceSearch(e.target.value)}
+                      onChange={(event) => setServiceSearch(event.target.value)}
                       placeholder="Search services..."
-                      className="min-w-0 flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-400"
                     />
                   </div>
-                </div>
 
-                {/* Service Options */}
-                <div className="max-h-52 overflow-y-auto p-2">
-                  {filteredServices.length > 0 ? (
-                    filteredServices.map((service) => {
-                      const isSelected = selectedServices.includes(service);
+                  {/* Service List */}
+                  <div className="max-h-56 overflow-y-auto p-2">
+                    {filteredServices.length === 0 ? (
+                      <p className="px-2 py-4 text-center text-xs text-gray-500">
+                        No services found.
+                      </p>
+                    ) : (
+                      filteredServices.map((service) => {
+                        const checked = selectedServices.some(
+                          (selected) =>
+                            selected.toLowerCase() === service.toLowerCase(),
+                        );
 
-                      return (
-                        <button
-                          key={service}
-                          type="button"
-                          onClick={() => toggleService(service)}
-                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                            isSelected
-                              ? "bg-purple-50 text-purple-700"
-                              : "text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          <span>{service}</span>
-
-                          <span
-                            className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] ${
-                              isSelected
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 bg-white"
-                            }`}
+                        return (
+                          <label
+                            key={service}
+                            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-purple-50"
                           >
-                            {isSelected ? "✓" : ""}
-                          </span>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <p className="px-3 py-4 text-center text-sm text-gray-500">
-                      No services found
-                    </p>
-                  )}
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleService(service)}
+                              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            />
+
+                            <span className="text-gray-700">{service}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Selected Service Chips */}
+            {selectedServices.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedServices.map((service) => (
+                  <button
+                    key={service}
+                    type="button"
+                    onClick={() => toggleService(service)}
+                    className="flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700"
+                  >
+                    {service}
+
+                    <X size={12} />
+                  </button>
+                ))}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Rating */}
-        <div className="mb-5">
-          <h3 className="mb-2 text-base font-semibold text-slate-800">
-            Minimum Rating
-          </h3>
+          {/* ==========================================
+              OPEN NOW
+              ========================================== */}
 
-          <select
-            value={minimumRating}
-            onChange={(e) => setMinimumRating(Number(e.target.value))}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
-          >
-            <option value={0}>All Ratings</option>
+          <div className="border-b border-gray-100 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Open Now
+                </label>
 
-            {filterOptions.ratings.map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}+ Stars
-              </option>
-            ))}
-          </select>
-        </div>
+                <p className="mt-1 text-[11px] leading-4 text-gray-500">
+                  Show salons that are currently open
+                </p>
+              </div>
 
-        {/* Price */}
-        <div>
-          <h3 className="mb-2 text-base font-semibold text-slate-800">
-            Price Range
-          </h3>
+              <button
+                type="button"
+                onClick={() => setOpenNow(!openNow)}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                  openNow ? "bg-purple-600" : "bg-gray-300"
+                }`}
+                aria-pressed={openNow}
+                aria-label="Toggle Open Now filter"
+              >
+                <span
+                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
+                    openNow ? "left-6" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
 
-          <select
-            value={priceRange}
-            onChange={(e) => setPriceRange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-purple-600"
-          >
-            {filterOptions.priceRanges.map((price) => (
-              <option key={price} value={price}>
-                {price}
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* ==========================================
+              RATING
+              ========================================== */}
 
-        {/* Reset Button */}
-        <div className="mt-5">
-          <button
-            onClick={() => {
-              setSelectedServices([]);
-              setMinimumRating(0);
-              setPriceRange("Any Price");
-              setSortBy("Nearest");
-            }}
-            className="w-full rounded-xl border border-purple-600 py-2 font-semibold text-purple-600 transition hover:bg-purple-600 hover:text-white"
-          >
-            Reset Filters
-          </button>
+          <div className="border-b border-gray-100 py-4">
+            <label className="mb-2 block text-sm font-semibold text-gray-800">
+              Minimum Rating
+            </label>
+
+            <select
+              value={minimumRating}
+              onChange={(event) => setMinimumRating(Number(event.target.value))}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-purple-400"
+            >
+              <option value={0}>Any Rating</option>
+
+              {filterOptions.ratings.map((rating) => (
+                <option key={rating} value={rating}>
+                  {rating}+ ⭐
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ==========================================
+              PRICE
+              ========================================== */}
+
+          <div className="pt-4">
+            <label className="mb-2 block text-sm font-semibold text-gray-800">
+              Service Price
+            </label>
+
+            <select
+              value={priceRange}
+              onChange={(event) => setPriceRange(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-purple-400"
+            >
+              {filterOptions.priceRanges.map((range) => (
+                <option key={range} value={range}>
+                  {range}
+                </option>
+              ))}
+            </select>
+
+            <p className="mt-2 text-[11px] leading-4 text-gray-500">
+              Price is checked against actual salon services, not the salon's
+              starting price.
+            </p>
+          </div>
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

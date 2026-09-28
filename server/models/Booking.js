@@ -156,6 +156,10 @@ const bookingSchema = new mongoose.Schema(
       enum: ["Upcoming", "Completed", "Cancelled"],
       default: "Upcoming",
     },
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

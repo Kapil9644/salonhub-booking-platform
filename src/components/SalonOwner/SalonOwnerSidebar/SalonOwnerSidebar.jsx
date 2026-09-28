@@ -64,7 +64,7 @@ export default function SalonOwnerSidebar({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden min-h-[calc(100vh-64px)] w-64 shrink-0 border-r border-gray-200 bg-white lg:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-64px)] w-64 shrink-0 self-start border-r border-gray-200 bg-white lg:block">
         <div className="flex h-full flex-col p-4">
           <nav className="space-y-1">
             {menuItems.map((item) => {

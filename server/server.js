@@ -16,6 +16,9 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const app = express();
+const notificationRoutes = require("./routes/notificationRoutes");
+const salonOwnerNotificationRoutes = require("./routes/salonOwnerNotificationRoutes");
+const { startBookingReminderJob } = require("./jobs/bookingReminderJob");
 
 // Connect Database
 connectDB();
@@ -36,6 +39,8 @@ app.use("/api/working-hours", workingHoursRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/salon-owner/notifications", salonOwnerNotificationRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -50,4 +55,5 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
+  startBookingReminderJob();
 });

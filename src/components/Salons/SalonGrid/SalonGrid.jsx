@@ -1,12 +1,37 @@
-import SalonCard from "../../common/SalonCard/SalonCard";
+import { useEffect, useMemo, useState } from "react";
+import SalonCard from "../../common/SalonCard/SalonCard.jsx";
 import { calculateDistance } from "../../../utils/distance";
+import {
+  getSalonSearchScore,
+  normalizeText,
+  salonMatchesPriceRange,
+} from "../../../utils/salonFilters";
+
+const getSalonDistance = (salon, userLocation) => {
+  if (
+    userLocation?.latitude == null ||
+    userLocation?.longitude == null ||
+    salon?.location?.latitude == null ||
+    salon?.location?.longitude == null
+  ) {
+    return null;
+  }
+
+  return calculateDistance(
+    userLocation.latitude,
+    userLocation.longitude,
+    salon.location.latitude,
+    salon.location.longitude,
+  );
+};
 
 export default function SalonGrid({
   salons = [],
   selectedServices = [],
+  openNow = false,
   minimumRating = 0,
   priceRange = "Any Price",
-  sortBy = "Recommended",
+  sortBy = "Nearest",
   searchText = "",
   selectedLocation = "",
   selectedPincode = "",
@@ -15,305 +40,486 @@ export default function SalonGrid({
   onResetFilters,
   onStartNewSearch,
 }) {
-  let filteredSalons = [...salons];
+  /*
+   * Mobile:
+   *   2 salons per row
+   *
+   * iPad/Desktop:
+   *   3 salons per row
+   *
+   * We use this only for the amount loaded at a time.
+   */
+  const getRowSize = () => {
+    if (typeof window === "undefined") {
+      return 3;
+    }
 
-  if (userLocation?.latitude != null && userLocation?.longitude != null) {
-    filteredSalons = filteredSalons.map((salon) => {
-      const salonLatitude = salon.location?.latitude;
-      const salonLongitude = salon.location?.longitude;
+    return window.innerWidth < 640 ? 2 : 3;
+  };
 
-      if (salonLatitude == null || salonLongitude == null) {
-        return salon;
-      }
+  const [rowSize, setRowSize] = useState(getRowSize);
 
-      const distance = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        salonLatitude,
-        salonLongitude,
-      );
+  /*
+   * loadState remembers:
+   * - which filter/search state was active
+   * - how many salons have been loaded for that state
+   *
+   * This allows us to reset the visible results without
+   * calling setState synchronously inside useEffect.
+   */
+  const [loadState, setLoadState] = useState(() => ({
+    key: "",
+    count: getRowSize(),
+  }));
 
-      return {
-        ...salon,
-        calculatedDistance: distance,
-      };
+  /*
+   * Detect mobile/tablet/desktop resize.
+   */
+  useEffect(() => {
+    const handleResize = () => {
+      const nextRowSize = getRowSize();
+
+      setRowSize((currentRowSize) => {
+        if (currentRowSize === nextRowSize) {
+          return currentRowSize;
+        }
+
+        return nextRowSize;
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  /*
+   * One key representing the current search/filter/sort/location state.
+   *
+   * When this changes, visibleCount below automatically becomes
+   * the first row again.
+   */
+  const filterKey = useMemo(() => {
+    return JSON.stringify({
+      searchText: searchText.trim(),
+      selectedLocation: selectedLocation.trim(),
+      selectedPincode: selectedPincode.trim(),
+      selectedServices: [...selectedServices]
+        .map((service) => normalizeText(service))
+        .sort(),
+      minimumRating,
+      priceRange,
+      openNow,
+      sortBy,
+      latitude: userLocation?.latitude ?? null,
+      longitude: userLocation?.longitude ?? null,
     });
-  }
+  }, [
+    searchText,
+    selectedLocation,
+    selectedPincode,
+    selectedServices,
+    minimumRating,
+    priceRange,
+    openNow,
+    sortBy,
+    userLocation?.latitude,
+    userLocation?.longitude,
+  ]);
 
-  // Search Filter
-  // Search Filter
-  if (searchText.trim()) {
-    const searchTerms = searchText
-      .trim()
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean);
+  const processedSalons = useMemo(() => {
+    let results = salons.map((salon) => ({
+      ...salon,
+      calculatedDistance: getSalonDistance(salon, userLocation),
+      searchScore: getSalonSearchScore(salon, searchText),
+    }));
 
-    filteredSalons = filteredSalons.filter((salon) => {
-      const location = salon.location || {};
+    // ==================================================
+    // SEARCH
+    // ==================================================
 
-      const searchableText = [
-        salon.name,
-        location.address,
-        location.area,
-        location.city,
-        location.state,
-        location.pincode,
-        location.postcode,
-        ...(salon.services || []).map((service) => service.name),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+    if (searchText.trim()) {
+      results = results.filter((salon) => salon.searchScore >= 0);
+    }
 
-      return searchTerms.some((term) => searchableText.includes(term));
-    });
-  }
+    // ==================================================
+    // LOCATION
+    // ==================================================
 
-  // Location Filter
-  if (selectedLocation.trim()) {
-    const normalizedLocation = selectedLocation
-      .replace("Current location,", "")
-      .trim()
-      .toLowerCase();
+    const normalizedSelectedLocation = normalizeText(selectedLocation);
 
-    const locationParts = normalizedLocation
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean);
+    const normalizedSelectedPincode = normalizeText(selectedPincode);
 
-    const selectedArea = locationParts[0] || "";
-    const selectedCity = locationParts[1] || "";
-    const selectedState = locationParts[2] || "";
+    if (normalizedSelectedLocation || normalizedSelectedPincode) {
+      results = results.filter((salon) => {
+        const location = salon?.location || {};
 
-    // 1. Exact Area match
-    let locationMatches = filteredSalons.filter((salon) => {
-      const salonLocation = salon.location || {};
+        const locationParts = [
+          location.address,
+          location.area,
+          location.city,
+          location.state,
+        ]
+          .filter(Boolean)
+          .map(normalizeText);
 
-      const area = (salonLocation.area || "").trim().toLowerCase();
-      const city = (salonLocation.city || "").trim().toLowerCase();
-      const state = (salonLocation.state || "").trim().toLowerCase();
+        const pincode = normalizeText(
+          location.pincode || location.postcode || "",
+        );
 
-      return (
-        selectedArea &&
-        area &&
-        area === selectedArea &&
-        (!selectedCity || city === selectedCity) &&
-        (!selectedState || state === selectedState)
-      );
-    });
+        /*
+         * Location can be:
+         *
+         * "MP Nagar"
+         * "Bhopal"
+         * "Madhya Pradesh"
+         *
+         * We support both complete and multi-word matching.
+         */
+        const locationTerms = normalizedSelectedLocation
+          .split(/\s+/)
+          .filter(Boolean);
 
-    // 2. If no area match, try City
-    if (locationMatches.length === 0) {
-      locationMatches = filteredSalons.filter((salon) => {
-        const salonLocation = salon.location || {};
+        const locationMatches =
+          !normalizedSelectedLocation ||
+          locationParts.some((part) =>
+            part.includes(normalizedSelectedLocation),
+          ) ||
+          locationTerms.every((term) =>
+            locationParts.some((part) => part.includes(term)),
+          );
 
-        const city = (salonLocation.city || "").trim().toLowerCase();
-        const state = (salonLocation.state || "").trim().toLowerCase();
+        const pincodeMatches =
+          !normalizedSelectedPincode || pincode === normalizedSelectedPincode;
 
-        return (
-          selectedCity &&
-          city === selectedCity &&
-          (!selectedState || state === selectedState)
+        return locationMatches && pincodeMatches;
+      });
+    }
+
+    // ==================================================
+    // SERVICES
+    // ==================================================
+
+    if (selectedServices.length > 0) {
+      const normalizedSelectedServices = selectedServices.map(normalizeText);
+
+      results = results.filter((salon) => {
+        const salonServices = Array.isArray(salon.services)
+          ? salon.services
+          : [];
+
+        /*
+         * OR behaviour:
+         *
+         * Hair Spa OR Facial
+         *
+         * Salon having either selected service is shown.
+         */
+        return normalizedSelectedServices.some((selectedService) =>
+          salonServices.some(
+            (service) => normalizeText(service?.name) === selectedService,
+          ),
         );
       });
     }
 
-    // 3. If no city match, try State
-    if (locationMatches.length === 0) {
-      locationMatches = filteredSalons.filter((salon) => {
-        const salonLocation = salon.location || {};
+    // ==================================================
+    // OPEN NOW
+    // ==================================================
 
-        const state = (salonLocation.state || "").trim().toLowerCase();
-
-        return selectedState && state === selectedState;
-      });
+    if (openNow) {
+      results = results.filter((salon) => salon.isOpen === true);
     }
 
-    // Only replace the results when a location match exists.
-    // This prevents the page from becoming empty unnecessarily.
-    if (locationMatches.length > 0) {
-      filteredSalons = locationMatches;
+    // ==================================================
+    // RATING
+    // ==================================================
+
+    if (minimumRating > 0) {
+      results = results.filter(
+        (salon) => Number(salon.rating || 0) >= minimumRating,
+      );
     }
-  }
 
-  // Pincode Filter
-  if (selectedPincode.trim()) {
-    const normalizedPincode = selectedPincode.trim().toLowerCase();
+    // ==================================================
+    // SERVICE-LEVEL PRICE
+    // ==================================================
 
-    const pincodeMatches = filteredSalons.filter((salon) => {
-      const pincode = String(salon.location?.pincode || "")
-        .trim()
-        .toLowerCase();
-
-      const postcode = String(salon.location?.postcode || "")
-        .trim()
-        .toLowerCase();
-
-      return pincode === normalizedPincode || postcode === normalizedPincode;
-    });
-
-    if (pincodeMatches.length > 0) {
-      filteredSalons = pincodeMatches;
+    if (priceRange !== "Any Price") {
+      results = results.filter((salon) =>
+        salonMatchesPriceRange(salon, priceRange, selectedServices),
+      );
     }
-  }
 
-  // Filter by Services
-  if (selectedServices.length > 0) {
-    filteredSalons = filteredSalons.filter((salon) =>
-      selectedServices.some((service) =>
-        salon.services.some((salonService) => salonService.name === service),
-      ),
-    );
-  }
+    // ==================================================
+    // SORT
+    // ==================================================
 
-  // Rating Filter
-  if (minimumRating > 0) {
-    filteredSalons = filteredSalons.filter(
-      (salon) => salon.rating >= minimumRating,
-    );
-  }
+    results.sort((a, b) => {
+      switch (sortBy) {
+        // ----------------------------------------------
+        // Recommended
+        // ----------------------------------------------
+        case "Recommended": {
+          if (b.searchScore !== a.searchScore) {
+            return b.searchScore - a.searchScore;
+          }
 
-  // Price Filter
-  if (priceRange !== "Any Price") {
-    filteredSalons = filteredSalons.filter((salon) => {
-      switch (priceRange) {
-        case "₹0 - ₹500":
-          return salon.price <= 500;
+          if (a.calculatedDistance !== null && b.calculatedDistance !== null) {
+            return a.calculatedDistance - b.calculatedDistance;
+          }
 
-        case "₹500 - ₹1000":
-          return salon.price > 500 && salon.price <= 1000;
+          return Number(b.rating || 0) - Number(a.rating || 0);
+        }
 
-        case "₹1000+":
-          return salon.price > 1000;
+        // ----------------------------------------------
+        // Highest Rated
+        // ----------------------------------------------
+        case "Highest Rated":
+          return Number(b.rating || 0) - Number(a.rating || 0);
 
-        default:
-          return true;
+        // ----------------------------------------------
+        // Lowest Price
+        // ----------------------------------------------
+        case "Lowest Price": {
+          const aPrices = (a.services || [])
+            .map((service) => Number(service?.price))
+            .filter(Number.isFinite);
+
+          const bPrices = (b.services || [])
+            .map((service) => Number(service?.price))
+            .filter(Number.isFinite);
+
+          const aMin = aPrices.length > 0 ? Math.min(...aPrices) : Infinity;
+
+          const bMin = bPrices.length > 0 ? Math.min(...bPrices) : Infinity;
+
+          return aMin - bMin;
+        }
+
+        // ----------------------------------------------
+        // Highest Price
+        // ----------------------------------------------
+        case "Highest Price": {
+          const aPrices = (a.services || [])
+            .map((service) => Number(service?.price))
+            .filter(Number.isFinite);
+
+          const bPrices = (b.services || [])
+            .map((service) => Number(service?.price))
+            .filter(Number.isFinite);
+
+          const aMax = aPrices.length > 0 ? Math.max(...aPrices) : -Infinity;
+
+          const bMax = bPrices.length > 0 ? Math.max(...bPrices) : -Infinity;
+
+          return bMax - aMax;
+        }
+
+        // ----------------------------------------------
+        // Most Popular
+        // ----------------------------------------------
+        case "Most Popular":
+          return Number(b.reviews || 0) - Number(a.reviews || 0);
+
+        // ----------------------------------------------
+        // Nearest
+        // ----------------------------------------------
+        case "Nearest":
+        default: {
+          if (a.calculatedDistance !== null && b.calculatedDistance !== null) {
+            return a.calculatedDistance - b.calculatedDistance;
+          }
+
+          /*
+           * Salons with a known distance come first.
+           */
+          if (a.calculatedDistance !== null) {
+            return -1;
+          }
+
+          if (b.calculatedDistance !== null) {
+            return 1;
+          }
+
+          /*
+           * If distance is unavailable for both,
+           * use rating as fallback.
+           */
+          return Number(b.rating || 0) - Number(a.rating || 0);
+        }
       }
     });
-  }
 
-  // Sorting
-  switch (sortBy) {
-    case "Highest Rated":
-      filteredSalons.sort((a, b) => b.rating - a.rating);
-      break;
+    return results;
+  }, [
+    salons,
+    selectedServices,
+    openNow,
+    minimumRating,
+    priceRange,
+    sortBy,
+    searchText,
+    selectedLocation,
+    selectedPincode,
+    userLocation,
+  ]);
 
-    case "Lowest Price":
-      filteredSalons.sort((a, b) => a.price - b.price);
-      break;
+  // ==================================================
+  // TOTAL RESULTS
+  // ==================================================
 
-    case "Highest Price":
-      filteredSalons.sort((a, b) => b.price - a.price);
-      break;
+  useEffect(() => {
+    setTotalSalons?.(processedSalons.length);
+  }, [processedSalons.length, setTotalSalons]);
 
-    case "Most Popular":
-      filteredSalons.sort((a, b) => b.reviews - a.reviews);
-      break;
+  /*
+   * IMPORTANT:
+   *
+   * If filterKey changes, this expression automatically
+   * shows only the first row.
+   *
+   * We do NOT need:
+   *
+   * setVisibleCount(...)
+   *
+   * inside an effect.
+   */
+  const visibleCount = loadState.key === filterKey ? loadState.count : rowSize;
 
-    case "Nearest":
-      filteredSalons.sort((a, b) => {
-        if (a.calculatedDistance == null) return 1;
-        if (b.calculatedDistance == null) return -1;
+  // ==================================================
+  // INFINITE ROW LOADING
+  // ==================================================
 
-        return a.calculatedDistance - b.calculatedDistance;
-      });
-      break;
-
-    default:
-      break;
-  }
-
-  console.log("Search:", searchText);
-  console.log("Location:", selectedLocation);
-  console.log("Filtered Salons:", filteredSalons);
-  console.log("Count:", filteredSalons.length);
-
-  if (setTotalSalons) {
-    setTotalSalons(filteredSalons.length);
-  }
-
-  if (filteredSalons.length === 0) {
-    const hasSearch = searchText.trim();
-    const hasLocation = selectedLocation.trim();
-    const hasPincode = selectedPincode.trim();
-    const hasFilters =
-      selectedServices.length > 0 ||
-      minimumRating > 0 ||
-      priceRange !== "Any Price";
-
-    let emptyTitle = "No salons found";
-    let emptyMessage =
-      "We couldn't find any salons matching your current search, location, or filters.";
-
-    if (hasSearch && hasLocation) {
-      emptyTitle = "No matching salons found";
-      emptyMessage = `We couldn't find any salons matching "${searchText.trim()}" in ${selectedLocation.trim()}.`;
-    } else if (hasSearch) {
-      emptyTitle = "No matching salons found";
-      emptyMessage = `We couldn't find any salon or service matching "${searchText.trim()}".`;
-    } else if (hasPincode) {
-      emptyTitle = "No salons in this pincode";
-      emptyMessage = `We couldn't find any salons available in pincode ${selectedPincode.trim()}.`;
-    } else if (hasLocation) {
-      emptyTitle = "No salons in this location";
-      emptyMessage = `We couldn't find any salons in ${selectedLocation.trim()}.`;
-    } else if (hasFilters) {
-      emptyTitle = "No salons match your filters";
-      emptyMessage =
-        "Try changing or clearing some filters to discover more salons.";
+  useEffect(() => {
+    if (visibleCount >= processedSalons.length) {
+      return;
     }
 
+    const sentinel = document.getElementById("salon-grid-sentinel");
+
+    if (!sentinel) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
+        setLoadState((currentState) => {
+          /*
+           * If the filter/search changed since the previous
+           * load, start from the first row and load one
+           * additional row.
+           */
+          if (currentState.key !== filterKey) {
+            return {
+              key: filterKey,
+              count: Math.min(rowSize * 2, processedSalons.length),
+            };
+          }
+
+          return {
+            key: filterKey,
+            count: Math.min(
+              currentState.count + rowSize,
+              processedSalons.length,
+            ),
+          };
+        });
+      },
+      {
+        rootMargin: "250px",
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [filterKey, visibleCount, processedSalons.length, rowSize]);
+
+  const visibleSalons = processedSalons.slice(0, visibleCount);
+
+  // ==================================================
+  // EMPTY STATE
+  // ==================================================
+
+  if (processedSalons.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center sm:py-20">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-3xl">
-          😔
-        </div>
+      <div className="rounded-2xl border border-gray-200 bg-white px-5 py-12 text-center">
+        <h3 className="text-base font-semibold text-gray-900">
+          No salons found
+        </h3>
 
-        <h2 className="mt-5 text-2xl font-bold text-slate-900">{emptyTitle}</h2>
-
-        <p className="mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-base">
-          {emptyMessage}
+        <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+          Try changing your search, location, service, rating, or price filters.
         </p>
 
-        <div className="mt-7 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="rounded-xl border border-purple-200 bg-white px-6 py-3 font-semibold text-purple-700 transition hover:bg-purple-50"
-            >
-              Clear Filters
-            </button>
-          )}
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+          >
+            Reset Filters
+          </button>
 
           <button
             type="button"
             onClick={onStartNewSearch}
-            className="rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700"
+            className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
-            Start New Search
+            New Search
           </button>
         </div>
       </div>
     );
   }
 
+  // ==================================================
+  // GRID
+  // ==================================================
+
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
-      {filteredSalons.map((salon) => (
-        <SalonCard
-          key={salon._id}
-          {...salon}
-          id={salon._id}
-          image={salon.profileImage}
-          distance={
-            salon.calculatedDistance != null
-              ? `${salon.calculatedDistance.toFixed(1)} km`
-              : salon.distance
-          }
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:gap-5">
+        {visibleSalons.map((salon) => (
+          <SalonCard
+            key={salon._id}
+            id={salon._id}
+            image={salon.profileImage}
+            name={salon.name}
+            rating={salon.rating}
+            reviews={salon.reviews}
+            services={salon.services}
+            location={salon.location}
+            distance={salon.calculatedDistance}
+            price={salon.price}
+            priceLabel={salon.priceLabel}
+            isOpen={salon.isOpen}
+          />
+        ))}
+      </div>
+
+      {/* ==================================================
+          INFINITE LOADING SENTINEL
+          ================================================== */}
+
+      {visibleCount < processedSalons.length && (
+        <div
+          id="salon-grid-sentinel"
+          className="flex min-h-20 items-center justify-center"
+          aria-hidden="true"
+        >
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-purple-600" />
+        </div>
+      )}
+    </>
   );
 }

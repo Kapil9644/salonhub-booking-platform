@@ -1,5 +1,7 @@
 const Review = require("../models/Review");
 const Booking = require("../models/Booking");
+const Salon = require("../models/Salon");
+const { createNotification } = require("../utils/notificationService");
 
 // ========================================
 // CREATE REVIEW
@@ -78,6 +80,18 @@ const createReview = async (req, res) => {
       comment: trimmedComment,
     });
 
+    const salon = await Salon.findById(booking.salon.id);
+
+    if (salon?.owner) {
+      await createNotification({
+        recipient: salon.owner,
+        type: "NEW_REVIEW",
+        title: "New Review",
+        message: `A new ${numericRating}-star review has been submitted for ${salon.name}.`,
+        relatedBooking: booking._id,
+      });
+    }
+
     const populatedReview = await Review.findById(review._id)
       .populate("customer", "fullName profileImage")
       .lean();
@@ -97,6 +111,119 @@ const createReview = async (req, res) => {
         message: "You have already reviewed this booking.",
       });
     }
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// ========================================
+// UPDATE REVIEW
+// ========================================
+const updateReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { rating, comment } = req.body;
+
+    if (rating === undefined || !comment?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating and comment are required.",
+      });
+    }
+
+    const numericRating = Number(rating);
+
+    if (
+      !Number.isInteger(numericRating) ||
+      numericRating < 1 ||
+      numericRating > 5
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be a whole number between 1 and 5.",
+      });
+    }
+
+    const trimmedComment = comment.trim();
+
+    if (trimmedComment.length < 3 || trimmedComment.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: "Review must be between 3 and 1000 characters.",
+      });
+    }
+
+    const review = await Review.findOne({
+      _id: reviewId,
+      customer: req.user.id,
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found.",
+      });
+    }
+
+    review.rating = numericRating;
+    review.comment = trimmedComment;
+
+    await review.save();
+
+    const updatedReview = await Review.findById(review._id)
+      .populate("customer", "fullName profileImage")
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      message: "Review updated successfully.",
+      review: updatedReview,
+    });
+  } catch (error) {
+    console.error("Update review error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+// ========================================
+// GET REVIEW FOR A BOOKING
+// ========================================
+const getBookingReview = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      user: req.user.id,
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    const review = await Review.findOne({
+      booking: booking._id,
+      customer: req.user.id,
+    })
+      .populate("customer", "fullName profileImage")
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      review: review || null,
+    });
+  } catch (error) {
+    console.error("Get booking review error:", error);
 
     res.status(500).json({
       success: false,
@@ -147,5 +274,7 @@ const getSalonReviews = async (req, res) => {
 
 module.exports = {
   createReview,
+  updateReview,
+  getBookingReview,
   getSalonReviews,
 };

@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Bell, Menu, Store, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getMySalonOwnerNotifications } from "../../../services/salonOwnerNotificationService";
 import { getMySalon } from "../../../services/salonService";
 import { useSalonOwnerAuth } from "../../../context/SalonOwnerAuthContext";
 
 export default function SalonOwnerNavbar({ onMenuClick }) {
   const { salonOwner } = useSalonOwnerAuth();
+  const navigate = useNavigate();
 
   const [salonName, setSalonName] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Public / authentication pages
   const isPublicSalonOwnerPage =
@@ -32,6 +36,22 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
     };
 
     fetchSalonName();
+  }, [isPublicSalonOwnerPage]);
+
+  useEffect(() => {
+    if (isPublicSalonOwnerPage) return;
+
+    const fetchUnreadNotifications = async () => {
+      try {
+        const data = await getMySalonOwnerNotifications();
+        setUnreadCount(data.unreadCount || 0);
+      } catch (error) {
+        console.error("Failed to fetch salon owner notification count:", error);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchUnreadNotifications();
   }, [isPublicSalonOwnerPage]);
 
   const ownerName = salonOwner?.fullName || "Salon Owner";
@@ -69,12 +89,20 @@ export default function SalonOwnerNavbar({ onMenuClick }) {
         {/* Right Side */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           {/* Notifications */}
+
           <button
             type="button"
-            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-purple-600"
+            onClick={() => navigate("/salon-owner/notifications")}
+            className="relative rounded-full p-2 text-gray-600 transition hover:bg-purple-50 hover:text-purple-600"
             aria-label="Notifications"
           >
             <Bell size={21} />
+
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-purple-600 px-1 text-[10px] font-bold leading-none text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {/* Owner Account */}

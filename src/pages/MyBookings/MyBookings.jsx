@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Container from "../../layouts/Container/Container";
 import { getMyBookings, cancelBooking } from "../../services/bookingService";
+import {
+  createReview,
+  updateReview,
+  getBookingReview,
+} from "../../services/reviewService";
 import EditBookingModal from "../../components/Booking/EditBookingModal";
 import {
   CalendarDays,
@@ -8,13 +14,21 @@ import {
   Clock,
   MapPin,
   Scissors,
+  Star,
   XCircle,
 } from "lucide-react";
 
 export default function MyBookings() {
+  const [searchParams] = useSearchParams();
+  const bookingIdFromNotification = searchParams.get("booking");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingBooking, setEditingBooking] = useState(null);
+  const [reviewingBooking, setReviewingBooking] = useState(null);
+  const [bookingReviews, setBookingReviews] = useState({});
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   // Controls which section is open
   const [activeSection, setActiveSection] = useState(null);
@@ -43,6 +57,71 @@ export default function MyBookings() {
     }
   };
 
+  const handleSubmitReview = async () => {
+    if (!reviewingBooking) return;
+
+    if (reviewRating < 1 || reviewRating > 5) {
+      alert("Please select a rating.");
+      return;
+    }
+
+    if (!reviewComment.trim()) {
+      alert("Please write a review.");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+
+      // Review API will be connected here.
+      // This step only prepares the review submission flow.
+
+      const existingReview = bookingReviews[reviewingBooking._id];
+
+      let response;
+
+      if (existingReview) {
+        response = await updateReview(existingReview._id, {
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        });
+      } else {
+        response = await createReview({
+          bookingId: reviewingBooking._id,
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        });
+      }
+
+      if (response.review) {
+        setBookingReviews((currentReviews) => ({
+          ...currentReviews,
+          [reviewingBooking._id]: response.review,
+        }));
+      }
+
+      alert(
+        response.message ||
+          (existingReview
+            ? "Review updated successfully."
+            : "Review submitted successfully."),
+      );
+
+      setReviewingBooking(null);
+      setReviewRating(0);
+      setReviewComment("");
+    } catch (error) {
+      console.error("Submit review error:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to submit review. Please try again.",
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -50,7 +129,26 @@ export default function MyBookings() {
 
         const data = await getMyBookings();
 
-        setBookings(data.bookings || []);
+        const fetchedBookings = data.bookings || [];
+
+        setBookings(fetchedBookings);
+
+        if (bookingIdFromNotification) {
+          const targetBooking = fetchedBookings.find(
+            (booking) =>
+              String(booking._id) === String(bookingIdFromNotification),
+          );
+
+          if (targetBooking) {
+            if (targetBooking.status === "Upcoming") {
+              setActiveSection("upcoming");
+            } else if (targetBooking.status === "Cancelled") {
+              setActiveSection("cancelled");
+            } else if (targetBooking.status === "Completed") {
+              setActiveSection("completed");
+            }
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch bookings:", error);
         setBookings([]);
@@ -60,7 +158,85 @@ export default function MyBookings() {
     };
 
     fetchBookings();
-  }, []);
+  }, [bookingIdFromNotification]);
+
+  useEffect(() => {
+    const fetchBookingReviews = async () => {
+      const completedBookings = bookings.filter(
+        (booking) => booking.status === "Completed",
+      );
+
+      if (completedBookings.length === 0) {
+        setBookingReviews({});
+        return;
+      }
+
+      try {
+        const reviewResults = await Promise.all(
+          completedBookings.map(async (booking) => {
+            try {
+              const data = await getBookingReview(booking._id);
+
+              return {
+                bookingId: booking._id,
+                review: data.review || null,
+              };
+            } catch (error) {
+              console.error(
+                `Failed to fetch review for booking ${booking._id}:`,
+                error,
+              );
+
+              return {
+                bookingId: booking._id,
+                review: null,
+              };
+            }
+          }),
+        );
+
+        const reviewsByBooking = {};
+
+        reviewResults.forEach(({ bookingId, review }) => {
+          reviewsByBooking[bookingId] = review;
+        });
+
+        setBookingReviews(reviewsByBooking);
+      } catch (error) {
+        console.error("Failed to fetch booking reviews:", error);
+        setBookingReviews({});
+      }
+    };
+
+    fetchBookingReviews();
+  }, [bookings]);
+
+  useEffect(() => {
+    if (!bookingIdFromNotification || loading || bookings.length === 0) {
+      return;
+    }
+
+    const targetBooking = bookings.find(
+      (booking) => String(booking._id) === String(bookingIdFromNotification),
+    );
+
+    if (!targetBooking) return;
+
+    const timer = setTimeout(() => {
+      const bookingElement = document.getElementById(
+        `booking-${bookingIdFromNotification}`,
+      );
+
+      if (bookingElement) {
+        bookingElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [bookingIdFromNotification, loading, bookings]);
 
   const upcomingBookings = bookings.filter(
     (booking) => booking.status === "Upcoming",
@@ -80,8 +256,9 @@ export default function MyBookings() {
 
   const renderBookingCard = (booking) => (
     <div
+      id={`booking-${booking._id}`}
       key={booking._id}
-      className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+      className="scroll-mt-28 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
     >
       {/* Header */}
       <div className="flex flex-col gap-1 border-b border-gray-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-2 sm:p-5">
@@ -252,6 +429,25 @@ export default function MyBookings() {
             </span>
           </div>
 
+          {booking.status === "Cancelled" && booking.cancelledAt && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] shrink-0 whitespace-nowrap text-gray-500">
+                Cancelled On
+              </span>
+
+              <span className="min-w-0 whitespace-nowrap text-right text-[12px] font-semibold leading-4 text-red-600 sm:text-sm">
+                {new Date(booking.cancelledAt).toLocaleString("en-IN", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3">
             <span className=" text-[13px] shrink-0 whitespace-nowrap text-gray-500">
               Payment Method
@@ -346,6 +542,25 @@ export default function MyBookings() {
             className="w-full rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600 sm:w-auto"
           >
             Cancel Booking
+          </button>
+        </div>
+      )}
+
+      {booking.status === "Completed" && (
+        <div className="border-t border-gray-100 p-3.5 sm:p-4.5">
+          <button
+            type="button"
+            onClick={() => {
+              const existingReview = bookingReviews[booking._id];
+
+              setReviewingBooking(booking);
+              setReviewRating(existingReview?.rating || 0);
+              setReviewComment(existingReview?.comment || "");
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700"
+          >
+            <Star size={17} />
+            {bookingReviews[booking._id] ? "Edit Review" : "Write a Review"}
           </button>
         </div>
       )}
@@ -573,6 +788,119 @@ export default function MyBookings() {
             );
           }}
         />
+      )}
+
+      {/* Write Review Modal */}
+      {reviewingBooking && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-6">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Write a Review
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Share your experience at {reviewingBooking.salon?.name}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setReviewingBooking(null)}
+                className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close review modal"
+              >
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-5 px-5 py-5 sm:px-6">
+              {/* Rating */}
+              <div>
+                <p className="mb-3 text-sm font-semibold text-slate-800">
+                  How was your experience?
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="rounded-lg p-1 transition hover:scale-110"
+                      aria-label={`${star} star${star > 1 ? "s" : ""}`}
+                    >
+                      <Star
+                        size={30}
+                        className={
+                          star <= reviewRating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  {reviewRating === 0
+                    ? "Select a rating from 1 to 5."
+                    : `${reviewRating} out of 5 stars`}
+                </p>
+              </div>
+
+              {/* Comment */}
+              <div>
+                <label
+                  htmlFor="review-comment"
+                  className="mb-2 block text-sm font-semibold text-slate-800"
+                >
+                  Your Review
+                </label>
+
+                <textarea
+                  id="review-comment"
+                  value={reviewComment}
+                  onChange={(event) => setReviewComment(event.target.value)}
+                  rows={5}
+                  maxLength={1000}
+                  placeholder="Tell us about your experience..."
+                  className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-gray-400 focus:border-purple-400 focus:bg-white focus:ring-2 focus:ring-purple-100"
+                />
+
+                <div className="mt-1 text-right text-xs text-gray-400">
+                  {reviewComment.length}/1000
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setReviewingBooking(null)}
+                  disabled={reviewSubmitting}
+                  className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSubmitReview}
+                  disabled={reviewSubmitting}
+                  className="flex items-center justify-center gap-2 rounded-full bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Star size={16} />
+
+                  {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </Container>
   );
