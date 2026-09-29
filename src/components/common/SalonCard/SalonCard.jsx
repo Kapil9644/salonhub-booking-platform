@@ -127,7 +127,7 @@ export default function SalonCard({
           </h3>
 
           {/* Services */}
-          <div className="mt-1.5 flex min-h-[22px] flex-wrap content-start gap-1 overflow-hidden">
+          <div className="mt-1.5 h-[44px] shrink-0 flex flex-wrap content-start gap-1 overflow-hidden">
             {visibleServices.map((service) => (
               <span
                 key={service._id || service.id}

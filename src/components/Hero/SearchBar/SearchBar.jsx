@@ -1,12 +1,17 @@
 import { Search, MapPin, LoaderCircle } from "lucide-react";
 import { useLocation } from "../../../context/LocationContext";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LocationPicker from "./LocationPicker/LocationPicker";
 
 export default function SearchBar() {
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
+
+  const [searchParams] = useSearchParams();
+
+  const [searchText, setSearchText] = useState(
+    () => searchParams.get("search") || "",
+  );
 
   const { location, locationStatus } = useLocation();
   const navigate = useNavigate();
@@ -20,24 +25,13 @@ export default function SearchBar() {
           .join(", ") || "Current location"
       : "Use my location";
 
-  const locationPincode =
-    locationStatus === "success" && location
-      ? location.pincode || location.postcode || ""
-      : "";
-
   const handleFindSalons = () => {
     const params = new URLSearchParams();
 
-    if (locationText && locationText !== "Use my location") {
-      params.set("location", locationText);
-    }
+    const query = searchText.trim();
 
-    if (locationPincode) {
-      params.set("pincode", locationPincode);
-    }
-
-    if (searchText.trim()) {
-      params.set("search", searchText.trim());
+    if (query) {
+      params.set("search", query);
     }
 
     navigate(`/salons?${params.toString()}`);
@@ -66,7 +60,7 @@ export default function SearchBar() {
       </button>
 
       {/* Divider */}
-      <div className="hidden h-7 w-px bg-gray-200 md:block"></div>
+      <div className="hidden h-7 w-px bg-gray-200 md:block" />
 
       {/* Search */}
       <div className="relative flex min-w-0 flex-1 items-center gap-2 px-2.5 md:px-3">
@@ -91,20 +85,20 @@ export default function SearchBar() {
             type="button"
             onClick={() => setSearchText("")}
             aria-label="Clear search"
-            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-base  leading-none text-black transition"
+            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-base leading-none text-black transition hover:bg-gray-100"
           >
-            x
+            ×
           </button>
         )}
       </div>
 
-      {/* Button */}
+      {/* Find Salons */}
       <button
         type="button"
         onClick={handleFindSalons}
         className="w-full rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold whitespace-nowrap text-white transition hover:bg-purple-700 md:ml-2 md:w-auto md:min-w-[130px] md:px-5"
       >
-        Find Salons
+        Search
       </button>
 
       {/* Location Picker */}

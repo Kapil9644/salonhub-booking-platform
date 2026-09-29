@@ -176,7 +176,7 @@ export default function SimilarSalons({ salon }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {visibleSalons.map((item) => (
           <SalonCard
             key={item._id}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation } from "../../../context/LocationContext";
 import SalonCard from "../../common/SalonCard/SalonCard";
@@ -9,37 +9,17 @@ export default function SalonGrid() {
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const { location } = useLocation();
-  const salonsWithDistance = salons.map((salon) => {
-    const salonLatitude = salon.location?.latitude;
-    const salonLongitude = salon.location?.longitude;
-
-    if (
-      location?.latitude == null ||
-      location?.longitude == null ||
-      salonLatitude == null ||
-      salonLongitude == null
-    ) {
-      return salon;
-    }
-
-    const distance = calculateDistance(
-      location.latitude,
-      location.longitude,
-      salonLatitude,
-      salonLongitude,
-    );
-
-    return {
-      ...salon,
-      calculatedDistance: distance,
-    };
-  });
 
   const scrollRef = useRef(null);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // ==================================================
+  // FETCH PUBLIC SALONS
+  // ==================================================
 
   useEffect(() => {
     const fetchFeaturedSalons = async () => {
@@ -64,6 +44,79 @@ export default function SalonGrid() {
     fetchFeaturedSalons();
   }, []);
 
+  // ==================================================
+  // LOCATION-BASED TOP PICKS
+  //
+  // Current location changes:
+  // distance is recalculated
+  // salons are reordered automatically.
+  // ==================================================
+
+  const salonsWithDistance = useMemo(() => {
+    const processedSalons = salons.map((salon) => {
+      const salonLatitude = salon?.location?.latitude;
+
+      const salonLongitude = salon?.location?.longitude;
+
+      // No usable location for either side
+      if (
+        location?.latitude == null ||
+        location?.longitude == null ||
+        salonLatitude == null ||
+        salonLongitude == null
+      ) {
+        return {
+          ...salon,
+          calculatedDistance: null,
+        };
+      }
+
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        salonLatitude,
+        salonLongitude,
+      );
+
+      return {
+        ...salon,
+        calculatedDistance: distance,
+      };
+    });
+
+    // ==================================================
+    // If customer location is available:
+    // nearest salons first.
+    //
+    // Salons without coordinates go after salons
+    // with a calculated distance.
+    // ==================================================
+
+    if (location?.latitude != null && location?.longitude != null) {
+      processedSalons.sort((a, b) => {
+        if (a.calculatedDistance !== null && b.calculatedDistance !== null) {
+          return a.calculatedDistance - b.calculatedDistance;
+        }
+
+        if (a.calculatedDistance !== null) {
+          return -1;
+        }
+
+        if (b.calculatedDistance !== null) {
+          return 1;
+        }
+
+        return 0;
+      });
+    }
+
+    return processedSalons;
+  }, [salons, location?.latitude, location?.longitude]);
+
+  // ==================================================
+  // SCROLL BUTTON STATE
+  // ==================================================
+
   const updateScrollButtons = () => {
     const container = scrollRef.current;
 
@@ -72,15 +125,23 @@ export default function SalonGrid() {
     const maxScrollLeft = container.scrollWidth - container.clientWidth;
 
     setCanScrollLeft(container.scrollLeft > 5);
+
     setCanScrollRight(container.scrollLeft < maxScrollLeft - 5);
   };
+
+  // ==================================================
+  // SCROLL LISTENERS
+  // ==================================================
 
   useEffect(() => {
     const container = scrollRef.current;
 
     if (!container) return;
 
-    updateScrollButtons();
+    // Wait for newly sorted/rendered cards
+    requestAnimationFrame(() => {
+      updateScrollButtons();
+    });
 
     const handleScroll = () => {
       updateScrollButtons();
@@ -98,9 +159,14 @@ export default function SalonGrid() {
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
+
       window.removeEventListener("resize", handleResize);
     };
-  }, [salons]);
+  }, [salonsWithDistance]);
+
+  // ==================================================
+  // SCROLL BY ONE CARD
+  // ==================================================
 
   const scrollByCard = (direction) => {
     const container = scrollRef.current;
@@ -114,6 +180,7 @@ export default function SalonGrid() {
     const cardWidth = firstCard.getBoundingClientRect().width;
 
     const styles = window.getComputedStyle(container);
+
     const gap = parseFloat(styles.columnGap || styles.gap || "0");
 
     const scrollAmount = cardWidth + gap;
@@ -123,6 +190,10 @@ export default function SalonGrid() {
       behavior: "smooth",
     });
   };
+
+  // ==================================================
+  // LOADING
+  // ==================================================
 
   if (loading) {
     return (
@@ -137,6 +208,10 @@ export default function SalonGrid() {
     );
   }
 
+  // ==================================================
+  // ERROR
+  // ==================================================
+
   if (error) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-6 text-center">
@@ -144,6 +219,10 @@ export default function SalonGrid() {
       </div>
     );
   }
+
+  // ==================================================
+  // EMPTY
+  // ==================================================
 
   if (salons.length === 0) {
     return (
@@ -155,9 +234,16 @@ export default function SalonGrid() {
     );
   }
 
+  // ==================================================
+  // CAROUSEL
+  // ==================================================
+
   return (
     <div className="relative w-full">
-      {/* Left Arrow */}
+      {/* ==========================================
+          LEFT ARROW
+          ========================================== */}
+
       {canScrollLeft && (
         <button
           type="button"
@@ -169,7 +255,10 @@ export default function SalonGrid() {
         </button>
       )}
 
-      {/* Salon Carousel */}
+      {/* ==========================================
+          SALON CAROUSEL
+          ========================================== */}
+
       <div
         ref={scrollRef}
         className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-1 scrollbar-hide sm:gap-4"
@@ -193,7 +282,10 @@ export default function SalonGrid() {
         ))}
       </div>
 
-      {/* Right Arrow */}
+      {/* ==========================================
+          RIGHT ARROW
+          ========================================== */}
+
       {canScrollRight && (
         <button
           type="button"

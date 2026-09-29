@@ -27,8 +27,6 @@ const getSalonDistance = (salon, userLocation) => {
 
 export default function SalonGrid({
   salons = [],
-  selectedServices = [],
-  openNow = false,
   minimumRating = 0,
   priceRange = "Any Price",
   sortBy = "Nearest",
@@ -36,19 +34,17 @@ export default function SalonGrid({
   selectedLocation = "",
   selectedPincode = "",
   userLocation = null,
+  openNow = false,
   setTotalSalons,
   onResetFilters,
   onStartNewSearch,
 }) {
-  /*
-   * Mobile:
-   *   2 salons per row
-   *
-   * iPad/Desktop:
-   *   3 salons per row
-   *
-   * We use this only for the amount loaded at a time.
-   */
+  // ==================================================
+  // ROW SIZE
+  // Mobile = 2
+  // Tablet/Desktop = 3
+  // ==================================================
+
   const getRowSize = () => {
     if (typeof window === "undefined") {
       return 3;
@@ -59,22 +55,19 @@ export default function SalonGrid({
 
   const [rowSize, setRowSize] = useState(getRowSize);
 
-  /*
-   * loadState remembers:
-   * - which filter/search state was active
-   * - how many salons have been loaded for that state
-   *
-   * This allows us to reset the visible results without
-   * calling setState synchronously inside useEffect.
-   */
+  // ==================================================
+  // LOAD STATE
+  // ==================================================
+
   const [loadState, setLoadState] = useState(() => ({
     key: "",
     count: getRowSize(),
   }));
 
-  /*
-   * Detect mobile/tablet/desktop resize.
-   */
+  // ==================================================
+  // RESPONSIVE ROW SIZE
+  // ==================================================
+
   useEffect(() => {
     const handleResize = () => {
       const nextRowSize = getRowSize();
@@ -95,24 +88,21 @@ export default function SalonGrid({
     };
   }, []);
 
-  /*
-   * One key representing the current search/filter/sort/location state.
-   *
-   * When this changes, visibleCount below automatically becomes
-   * the first row again.
-   */
+  // ==================================================
+  // FILTER KEY
+  // Any search/filter/sort/location change
+  // starts the grid from the first row again.
+  // ==================================================
+
   const filterKey = useMemo(() => {
     return JSON.stringify({
       searchText: searchText.trim(),
       selectedLocation: selectedLocation.trim(),
       selectedPincode: selectedPincode.trim(),
-      selectedServices: [...selectedServices]
-        .map((service) => normalizeText(service))
-        .sort(),
       minimumRating,
       priceRange,
-      openNow,
       sortBy,
+      openNow,
       latitude: userLocation?.latitude ?? null,
       longitude: userLocation?.longitude ?? null,
     });
@@ -120,14 +110,17 @@ export default function SalonGrid({
     searchText,
     selectedLocation,
     selectedPincode,
-    selectedServices,
     minimumRating,
     priceRange,
-    openNow,
     sortBy,
+    openNow,
     userLocation?.latitude,
     userLocation?.longitude,
   ]);
+
+  // ==================================================
+  // PROCESS SALONS
+  // ==================================================
 
   const processedSalons = useMemo(() => {
     let results = salons.map((salon) => ({
@@ -145,7 +138,7 @@ export default function SalonGrid({
     }
 
     // ==================================================
-    // LOCATION
+    // LOCATION / PINCODE SEARCH
     // ==================================================
 
     const normalizedSelectedLocation = normalizeText(selectedLocation);
@@ -169,15 +162,6 @@ export default function SalonGrid({
           location.pincode || location.postcode || "",
         );
 
-        /*
-         * Location can be:
-         *
-         * "MP Nagar"
-         * "Bhopal"
-         * "Madhya Pradesh"
-         *
-         * We support both complete and multi-word matching.
-         */
         const locationTerms = normalizedSelectedLocation
           .split(/\s+/)
           .filter(Boolean);
@@ -199,33 +183,6 @@ export default function SalonGrid({
     }
 
     // ==================================================
-    // SERVICES
-    // ==================================================
-
-    if (selectedServices.length > 0) {
-      const normalizedSelectedServices = selectedServices.map(normalizeText);
-
-      results = results.filter((salon) => {
-        const salonServices = Array.isArray(salon.services)
-          ? salon.services
-          : [];
-
-        /*
-         * OR behaviour:
-         *
-         * Hair Spa OR Facial
-         *
-         * Salon having either selected service is shown.
-         */
-        return normalizedSelectedServices.some((selectedService) =>
-          salonServices.some(
-            (service) => normalizeText(service?.name) === selectedService,
-          ),
-        );
-      });
-    }
-
-    // ==================================================
     // OPEN NOW
     // ==================================================
 
@@ -234,7 +191,7 @@ export default function SalonGrid({
     }
 
     // ==================================================
-    // RATING
+    // MINIMUM RATING
     // ==================================================
 
     if (minimumRating > 0) {
@@ -244,12 +201,13 @@ export default function SalonGrid({
     }
 
     // ==================================================
-    // SERVICE-LEVEL PRICE
+    // SERVICE PRICE
+    // Checks actual service prices.
     // ==================================================
 
     if (priceRange !== "Any Price") {
       results = results.filter((salon) =>
-        salonMatchesPriceRange(salon, priceRange, selectedServices),
+        salonMatchesPriceRange(salon, priceRange),
       );
     }
 
@@ -262,7 +220,8 @@ export default function SalonGrid({
         // ----------------------------------------------
         // Recommended
         // ----------------------------------------------
-        case "Recommended": {
+
+        case "Recommended":
           if (b.searchScore !== a.searchScore) {
             return b.searchScore - a.searchScore;
           }
@@ -272,17 +231,18 @@ export default function SalonGrid({
           }
 
           return Number(b.rating || 0) - Number(a.rating || 0);
-        }
 
         // ----------------------------------------------
         // Highest Rated
         // ----------------------------------------------
+
         case "Highest Rated":
           return Number(b.rating || 0) - Number(a.rating || 0);
 
         // ----------------------------------------------
         // Lowest Price
         // ----------------------------------------------
+
         case "Lowest Price": {
           const aPrices = (a.services || [])
             .map((service) => Number(service?.price))
@@ -302,6 +262,7 @@ export default function SalonGrid({
         // ----------------------------------------------
         // Highest Price
         // ----------------------------------------------
+
         case "Highest Price": {
           const aPrices = (a.services || [])
             .map((service) => Number(service?.price))
@@ -321,21 +282,20 @@ export default function SalonGrid({
         // ----------------------------------------------
         // Most Popular
         // ----------------------------------------------
+
         case "Most Popular":
           return Number(b.reviews || 0) - Number(a.reviews || 0);
 
         // ----------------------------------------------
         // Nearest
         // ----------------------------------------------
+
         case "Nearest":
-        default: {
+        default:
           if (a.calculatedDistance !== null && b.calculatedDistance !== null) {
             return a.calculatedDistance - b.calculatedDistance;
           }
 
-          /*
-           * Salons with a known distance come first.
-           */
           if (a.calculatedDistance !== null) {
             return -1;
           }
@@ -344,20 +304,13 @@ export default function SalonGrid({
             return 1;
           }
 
-          /*
-           * If distance is unavailable for both,
-           * use rating as fallback.
-           */
           return Number(b.rating || 0) - Number(a.rating || 0);
-        }
       }
     });
 
     return results;
   }, [
     salons,
-    selectedServices,
-    openNow,
     minimumRating,
     priceRange,
     sortBy,
@@ -365,6 +318,7 @@ export default function SalonGrid({
     selectedLocation,
     selectedPincode,
     userLocation,
+    openNow,
   ]);
 
   // ==================================================
@@ -375,22 +329,14 @@ export default function SalonGrid({
     setTotalSalons?.(processedSalons.length);
   }, [processedSalons.length, setTotalSalons]);
 
-  /*
-   * IMPORTANT:
-   *
-   * If filterKey changes, this expression automatically
-   * shows only the first row.
-   *
-   * We do NOT need:
-   *
-   * setVisibleCount(...)
-   *
-   * inside an effect.
-   */
+  // ==================================================
+  // VISIBLE COUNT
+  // ==================================================
+
   const visibleCount = loadState.key === filterKey ? loadState.count : rowSize;
 
   // ==================================================
-  // INFINITE ROW LOADING
+  // INFINITE LOADING
   // ==================================================
 
   useEffect(() => {
@@ -411,11 +357,7 @@ export default function SalonGrid({
         }
 
         setLoadState((currentState) => {
-          /*
-           * If the filter/search changed since the previous
-           * load, start from the first row and load one
-           * additional row.
-           */
+          // New filter/search/sort/location
           if (currentState.key !== filterKey) {
             return {
               key: filterKey,
@@ -423,6 +365,7 @@ export default function SalonGrid({
             };
           }
 
+          // Load one more row
           return {
             key: filterKey,
             count: Math.min(
@@ -439,10 +382,12 @@ export default function SalonGrid({
 
     observer.observe(sentinel);
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [filterKey, visibleCount, processedSalons.length, rowSize]);
+
+  // ==================================================
+  // VISIBLE SALONS
+  // ==================================================
 
   const visibleSalons = processedSalons.slice(0, visibleCount);
 
@@ -458,7 +403,7 @@ export default function SalonGrid({
         </h3>
 
         <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
-          Try changing your search, location, service, rating, or price filters.
+          Try changing your search, location, rating, or price filters.
         </p>
 
         <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -488,7 +433,7 @@ export default function SalonGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:gap-5">
         {visibleSalons.map((salon) => (
           <SalonCard
             key={salon._id}
@@ -506,10 +451,6 @@ export default function SalonGrid({
           />
         ))}
       </div>
-
-      {/* ==================================================
-          INFINITE LOADING SENTINEL
-          ================================================== */}
 
       {visibleCount < processedSalons.length && (
         <div
