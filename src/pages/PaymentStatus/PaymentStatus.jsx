@@ -30,19 +30,19 @@ export default function PaymentStatus() {
 
         if (!isActive) return;
 
-        const payments = response?.data?.payments || [];
+        const paymentStatus = response?.data?.paymentStatus;
 
-        const successfulPayment = payments.find(
-          (payment) => payment.payment_status === "SUCCESS",
-        );
-
-        if (successfulPayment) {
+        if (paymentStatus === "PAID") {
           try {
             const bookingResponse = await createPaidBooking(orderId);
 
-            if (!bookingResponse?.booking) {
-              throw new Error("Booking could not be created.");
+            if (!bookingResponse?.success || !bookingResponse?.booking) {
+              throw new Error(
+                bookingResponse?.message || "Booking could not be created.",
+              );
             }
+
+            if (!isActive) return;
 
             navigate("/booking-confirmation", {
               state: {
@@ -52,34 +52,30 @@ export default function PaymentStatus() {
                   status: "PAID",
                   amount: bookingResponse.booking.totalPrice,
                   orderId,
-                  transactionId: successfulPayment.cf_payment_id,
-                  paymentDate: successfulPayment.payment_time,
                 },
               },
+              replace: true,
             });
 
             return;
           } catch (bookingError) {
             console.error("Paid booking creation error:", bookingError);
 
+            if (!isActive) return;
+
             setStatus("failed");
             setMessage(
               bookingError.response?.data?.message ||
+                bookingError.message ||
                 "Payment was successful, but the booking could not be created.",
             );
             return;
           }
         }
 
-        const failedPayment = payments.find((payment) =>
-          ["FAILED", "USER_DROPPED", "CANCELLED", "VOID"].includes(
-            payment.payment_status,
-          ),
-        );
-
-        if (failedPayment) {
+        if (paymentStatus === "FAILED") {
           setStatus("failed");
-          setMessage(`Payment ${failedPayment.payment_status.toLowerCase()}.`);
+          setMessage("Payment failed. Please check your payment status.");
           return;
         }
 
@@ -93,6 +89,8 @@ export default function PaymentStatus() {
         }
       } catch (error) {
         console.error("Payment verification error:", error);
+
+        if (!isActive) return;
 
         setStatus("failed");
         setMessage(

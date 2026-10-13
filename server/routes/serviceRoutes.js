@@ -7,10 +7,14 @@ const salonOwnerProtect = require("../middleware/salonOwnerAuthMiddleware");
 const {
   getMyServices,
   getPublicSalonServices,
+  getPublicServiceCatalog,
+
   createService,
   updateService,
   deleteService,
 } = require("../controllers/serviceController");
+
+router.get("/catalog", getPublicServiceCatalog);
 
 // Get logged-in salon owner's services
 router.get("/my", salonOwnerProtect, getMyServices);

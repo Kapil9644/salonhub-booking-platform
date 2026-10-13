@@ -25,8 +25,13 @@ export default function Salons() {
   const searchText = searchParams.get("search") || "";
   const selectedLocation = searchParams.get("location") || "";
   const selectedPincode = searchParams.get("pincode") || "";
+  const serviceCategory = searchParams.get("serviceCategory") || "";
 
   const [totalSalons, setTotalSalons] = useState(0);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // ==================================================
   // OPEN NOW
@@ -164,29 +169,123 @@ export default function Salons() {
   };
 
   // ==================================================
-  // FETCH SALONS
+  // FETCH FIRST PAGE OF SALONS
+  // ==================================================
+
+  // ==================================================
+  // FETCH SALONS WHEN SEARCH/FILTERS CHANGE
   // ==================================================
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchSalons = async () => {
       try {
         setLoading(true);
         setError("");
+        setSalons([]);
+        setCurrentPage(1);
+        setHasMore(false);
+        setTotalSalons(0);
 
-        const data = await getPublicSalons();
+        const data = await getPublicSalons({
+          page: 1,
+          limit: 20,
+          search: searchText,
+          location: selectedLocation,
+          pincode: selectedPincode,
+          serviceCategory,
+          rating: minimumRating || undefined,
+          price: priceRange !== "Any Price" ? priceRange : undefined,
+          openNow: openNow ? "true" : undefined,
+          sort: sortBy,
+          latitude: location?.latitude ?? undefined,
+          longitude: location?.longitude ?? undefined,
+        });
+
+        if (cancelled) return;
 
         setSalons(data.salons || []);
+        setCurrentPage(data.pagination?.currentPage || 1);
+        setHasMore(data.pagination?.hasMore ?? false);
+        setTotalSalons(data.pagination?.totalSalons ?? 0);
       } catch (error) {
-        console.error("Failed to fetch public salons:", error);
+        if (cancelled) return;
 
+        console.error("Failed to fetch public salons:", error);
         setError(error.response?.data?.message || "Failed to load salons.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchSalons();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    searchText,
+    selectedLocation,
+    selectedPincode,
+    serviceCategory,
+    minimumRating,
+    priceRange,
+    openNow,
+    sortBy,
+  ]);
+
+  // ==================================================
+  // LOAD NEXT PAGE
+  // ==================================================
+
+  const loadMoreSalons = async () => {
+    if (loadingMore || loading || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      setError("");
+
+      const nextPage = currentPage + 1;
+
+      const data = await getPublicSalons({
+        page: nextPage,
+        limit: 20,
+        search: searchText,
+        location: selectedLocation,
+        pincode: selectedPincode,
+        serviceCategory,
+        rating: minimumRating || undefined,
+        price: priceRange !== "Any Price" ? priceRange : undefined,
+        openNow: openNow ? "true" : undefined,
+        sort: sortBy,
+        latitude: location?.latitude ?? undefined,
+        longitude: location?.longitude ?? undefined,
+      });
+
+      const newSalons = data.salons || [];
+
+      setSalons((previousSalons) => {
+        const existingIds = new Set(
+          previousSalons.map((salon) => String(salon._id)),
+        );
+
+        return [
+          ...previousSalons,
+          ...newSalons.filter((salon) => !existingIds.has(String(salon._id))),
+        ];
+      });
+
+      setCurrentPage(data.pagination?.currentPage || nextPage);
+      setHasMore(data.pagination?.hasMore ?? false);
+      setTotalSalons(data.pagination?.totalSalons ?? 0);
+    } catch (error) {
+      console.error("Failed to load more salons:", error);
+      setError(error.response?.data?.message || "Failed to load more salons.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <Container>
@@ -297,6 +396,7 @@ export default function Salons() {
                 priceRange={priceRange}
                 sortBy={sortBy}
                 searchText={searchText}
+                serviceCategory={serviceCategory}
                 selectedLocation={selectedLocation}
                 userLocation={location}
                 selectedPincode={selectedPincode}
@@ -306,6 +406,25 @@ export default function Salons() {
                 onStartNewSearch={startNewSearch}
               />
             </div>
+
+            {hasMore && salons.length > 0 && (
+              <div className="flex justify-center py-5">
+                <button
+                  type="button"
+                  onClick={loadMoreSalons}
+                  disabled={loadingMore || loading}
+                  className="rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {loadingMore ? "Loading..." : "Load More Salons"}
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <p className="py-3 text-center text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            )}
           </div>
         </div>
       </div>

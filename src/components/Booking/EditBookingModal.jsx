@@ -50,34 +50,42 @@ export default function EditBookingModal({ booking, onClose, onUpdated }) {
       try {
         setLoading(true);
 
-        // Get real salons from backend
+        // Get public salons for the dropdown
         const salonResponse = await getPublicSalons();
-
         const salonList = salonResponse.salons || [];
 
-        setSalons(salonList);
+        // Get the salon ID saved in this booking
+        const bookedSalonId =
+          booking?.salon?.id ||
+          booking?.salon?._id ||
+          (typeof booking?.salon === "string" ? booking.salon : null);
 
-        // Find actual booked salon
-        const bookedSalonId = booking?.salon?.id;
-
-        const salonFromList = salonList.find(
-          (salon) => String(salon._id || salon.id) === String(bookedSalonId),
-        );
-
-        if (!salonFromList) {
-          throw new Error("Booked salon not found.");
+        if (!bookedSalonId) {
+          throw new Error("Salon ID is missing from this booking.");
         }
 
-        // Get complete salon details
-        const salonId = salonFromList._id || salonFromList.id;
-
-        const detailsResponse = await getPublicSalonDetails(salonId);
+        // Fetch the booked salon directly by its ID
+        const detailsResponse = await getPublicSalonDetails(bookedSalonId);
 
         if (!detailsResponse.success || !detailsResponse.salon) {
-          throw new Error("Unable to load salon details.");
+          throw new Error("Unable to load the booked salon details.");
         }
 
         const realSalon = detailsResponse.salon;
+
+        // Keep the booked salon available in the dropdown
+        const salonExists = salonList.some(
+          (salon) =>
+            String(salon._id || salon.id) ===
+            String(realSalon._id || realSalon.id),
+        );
+
+        const updatedSalonList = salonExists
+          ? salonList
+          : [realSalon, ...salonList];
+
+        setSalons(updatedSalonList);
+        setSelectedSalon(realSalon);
 
         setSelectedSalon(realSalon);
 

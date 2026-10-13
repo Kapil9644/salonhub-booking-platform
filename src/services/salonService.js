@@ -52,9 +52,29 @@ export const uploadSalonProfileImage = async (imageFile) => {
 // PUBLIC / CUSTOMER APIs
 // ================================
 
-export const getPublicSalons = async () => {
-  const response = await api.get("/salons");
+export const getPublicSalons = async (options = {}) => {
+  const params = {};
 
+  for (const key of [
+    "page",
+    "limit",
+    "search",
+    "location",
+    "pincode",
+    "serviceCategory",
+    "rating",
+    "price",
+    "openNow",
+    "sort",
+    "latitude",
+    "longitude",
+  ]) {
+    if (options[key] !== undefined && options[key] !== "") {
+      params[key] = options[key];
+    }
+  }
+
+  const response = await api.get("/salons", { params });
   return response.data;
 };
 

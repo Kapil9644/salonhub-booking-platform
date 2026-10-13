@@ -1,29 +1,71 @@
+import { useEffect, useState } from "react";
 import { CalendarCheck, Clock3, Store, Users } from "lucide-react";
 
-const stats = [
-  {
-    label: "Total Salons",
-    value: "0",
-    icon: Store,
-  },
-  {
-    label: "Pending Applications",
-    value: "0",
-    icon: Clock3,
-  },
-  {
-    label: "Total Customers",
-    value: "0",
-    icon: Users,
-  },
-  {
-    label: "Appointments",
-    value: "0",
-    icon: CalendarCheck,
-  },
-];
+import { getAdminDashboardStats } from "../../../services/adminDashboardService";
 
 export default function AdminDashboard() {
+  const [statsData, setStatsData] = useState({
+    totalSalons: 0,
+    pendingApplications: 0,
+    totalCustomers: 0,
+    totalAppointments: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getAdminDashboardStats();
+
+        setStatsData({
+          totalSalons: data.stats?.totalSalons || 0,
+          pendingApplications: data.stats?.pendingApplications || 0,
+          totalCustomers: data.stats?.totalCustomers || 0,
+          totalAppointments: data.stats?.totalAppointments || 0,
+        });
+      } catch (error) {
+        console.error("Failed to load admin dashboard stats:", error);
+
+        setError(
+          error.response?.data?.message ||
+            "Failed to load dashboard statistics.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
+  const stats = [
+    {
+      label: "Total Salons",
+      value: statsData.totalSalons,
+      icon: Store,
+    },
+    {
+      label: "Pending Applications",
+      value: statsData.pendingApplications,
+      icon: Clock3,
+    },
+    {
+      label: "Total Customers",
+      value: statsData.totalCustomers,
+      icon: Users,
+    },
+    {
+      label: "Appointments",
+      value: statsData.totalAppointments,
+      icon: CalendarCheck,
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-7xl">
       {/* Header */}
@@ -40,6 +82,13 @@ export default function AdminDashboard() {
           Manage Rupiva and monitor platform activity.
         </p>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-700">{error}</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -58,7 +107,7 @@ export default function AdminDashboard() {
                   </p>
 
                   <p className="mt-3 text-3xl font-bold text-slate-900">
-                    {stat.value}
+                    {loading ? "..." : stat.value}
                   </p>
                 </div>
 

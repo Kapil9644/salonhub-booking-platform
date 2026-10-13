@@ -4,6 +4,7 @@ const Salon = require("../models/Salon");
 const WorkingHours = require("../models/WorkingHours");
 const PaymentTransaction = require("../models/PaymentTransaction");
 const { createNotification } = require("../utils/notificationService");
+const AdminSettings = require("../models/AdminSettings");
 // ========================================
 
 // ========================================
@@ -235,6 +236,19 @@ const createBooking = async (req, res) => {
       });
     }
 
+    const adminSettings = await AdminSettings.findOne()
+      .select("allowPayAfterService")
+      .lean();
+
+    const allowPayAfterService = adminSettings?.allowPayAfterService ?? true;
+
+    if (paymentMethod === "PAY_AFTER_SERVICE" && !allowPayAfterService) {
+      return res.status(403).json({
+        success: false,
+        message: "Pay After Service is currently unavailable.",
+      });
+    }
+
     if (!salon?.id || !services?.length || !date || !time) {
       return res.status(400).json({
         success: false,
@@ -328,6 +342,38 @@ const createBooking = async (req, res) => {
       });
     }
 
+    // Get platform commission settings for Pay After Service bookings.
+    const commissionSettings = await AdminSettings.findOne()
+      .select("platformCommission")
+      .lean();
+
+    const commissionRate = Number.isFinite(
+      commissionSettings?.platformCommission,
+    )
+      ? commissionSettings.platformCommission
+      : 10;
+
+    if (
+      !Number.isFinite(commissionRate) ||
+      commissionRate < 0 ||
+      commissionRate > 100
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Platform commission setting is invalid.",
+      });
+    }
+
+    // Calculate commission using integer paise.
+    const totalPricePaise = Math.round(totalPrice * 100);
+    const commissionAmountPaise = Math.round(
+      (totalPricePaise * commissionRate) / 100,
+    );
+    const salonNetAmountPaise = totalPricePaise - commissionAmountPaise;
+
+    const commissionAmount = commissionAmountPaise / 100;
+    const salonNetAmount = salonNetAmountPaise / 100;
+
     // Create booking
     const booking = await Booking.create({
       user: req.user.id,
@@ -351,6 +397,11 @@ const createBooking = async (req, res) => {
       totalDuration,
       paymentMethod,
       paymentStatus: "UNPAID",
+
+      commissionRate,
+      commissionAmount,
+      salonNetAmount,
+      settlementStatus: "NOT_ELIGIBLE",
 
       date,
       time,
@@ -552,6 +603,11 @@ const createPaidBooking = async (req, res) => {
 
       paymentMethod: "PAY_NOW",
       paymentStatus: "PAID",
+
+      commissionRate: paymentTransaction.commissionRate,
+      commissionAmount: paymentTransaction.commissionAmount,
+      salonNetAmount: paymentTransaction.salonNetAmount,
+      settlementStatus: "PENDING",
 
       paymentOrderId: paymentTransaction.orderId,
       cashfreeOrderId: paymentTransaction.cashfreeOrderId,

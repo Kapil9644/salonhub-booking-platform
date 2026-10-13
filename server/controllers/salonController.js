@@ -353,80 +353,315 @@ const toggleSalonStatus = async (req, res) => {
   }
 };
 
+const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 // Get salons visible to customers
-// Get salons visible to customers
+
 const getPublicSalons = async (req, res) => {
   try {
-    const salons = await Salon.find({
-      approvalStatus: "Approved",
-      isListed: true,
-    }).sort({ createdAt: -1 });
-
-    const salonsWithServices = await Promise.all(
-      salons.map(async (salon) => {
-        const services = await Service.find({
-          salon: salon._id,
-          isActive: true,
-        }).sort({ createdAt: -1 });
-
-        const workingHours = await WorkingHours.findOne({
-          salon: salon._id,
-        });
-
-        const currentIsOpen = calculateSalonOpenStatus(salon, workingHours);
-
-        const reviews = await Review.find({
-          salon: salon._id,
-        }).select("rating");
-
-        const totalReviews = reviews.length;
-
-        const totalRating = reviews.reduce(
-          (total, review) => total + review.rating,
-          0,
-        );
-
-        const averageRating =
-          totalReviews > 0
-            ? Number((totalRating / totalReviews).toFixed(1))
-            : null;
-
-        const lowestPrice =
-          services.length > 0
-            ? Math.min(...services.map((service) => service.price))
-            : null;
-
-        return {
-          _id: salon._id,
-          name: salon.name,
-          profileImage: salon.profileImage,
-          about: salon.about,
-          location: salon.location,
-          phone: salon.phone,
-          email: salon.email,
-          isListed: salon.isListed,
-          isOpen: currentIsOpen,
-          rating: averageRating,
-          reviews: totalReviews,
-          approvalStatus: salon.approvalStatus,
-          services,
-          price: lowestPrice,
-          priceLabel:
-            lowestPrice !== null
-              ? `₹${lowestPrice} Onwards`
-              : "Price unavailable",
-        };
-      }),
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(
+      50,
+      Math.max(1, Number.parseInt(req.query.limit, 10) || 20),
     );
 
-    res.status(200).json({
+    const searchText = String(req.query.search || "").trim();
+    const selectedLocation = String(req.query.location || "").trim();
+    const selectedPincode = String(req.query.pincode || "").trim();
+    const serviceCategory = String(req.query.serviceCategory || "").trim();
+    const minimumRating = Math.min(
+      5,
+      Math.max(0, Number(req.query.rating) || 0),
+    );
+    const openNow = req.query.openNow === "true";
+    const sortBy = String(req.query.sort || "Nearest");
+
+    const customerLat = Number(req.query.latitude);
+    const customerLon = Number(req.query.longitude);
+
+    const hasCustomerCoordinates =
+      req.query.latitude !== undefined &&
+      req.query.longitude !== undefined &&
+      Number.isFinite(customerLat) &&
+      Number.isFinite(customerLon) &&
+      customerLat >= -90 &&
+      customerLat <= 90 &&
+      customerLon >= -180 &&
+      customerLon <= 180;
+
+    const escapeRegex = (value = "") =>
+      value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const baseFilter = {
+      approvalStatus: "Approved",
+      isListed: true,
+    };
+
+    const andFilters = [];
+
+    // Search salon name, address, area, city, state and pincode.
+    if (searchText) {
+      const regex = new RegExp(escapeRegex(searchText), "i");
+
+      const matchingServices = await Service.distinct("salon", {
+        isActive: true,
+        name: regex,
+      });
+
+      andFilters.push({
+        $or: [
+          { name: regex },
+          { "location.address": regex },
+          { "location.area": regex },
+          { "location.city": regex },
+          { "location.state": regex },
+          { "location.pincode": regex },
+          { _id: { $in: matchingServices } },
+        ],
+      });
+    }
+
+    // Explicit location filter.
+    if (selectedLocation) {
+      const locationRegex = new RegExp(escapeRegex(selectedLocation), "i");
+
+      andFilters.push({
+        $or: [
+          { "location.area": locationRegex },
+          { "location.city": locationRegex },
+          { "location.state": locationRegex },
+        ],
+      });
+    }
+
+    // Exact pincode filter.
+    if (selectedPincode) {
+      baseFilter["location.pincode"] = selectedPincode;
+    }
+
+    // Service category filter.
+    if (serviceCategory) {
+      const matchingServices = await Service.distinct("salon", {
+        isActive: true,
+        category: new RegExp(`^${escapeRegex(serviceCategory)}$`, "i"),
+      });
+
+      andFilters.push({
+        _id: { $in: matchingServices },
+      });
+    }
+
+    if (andFilters.length) {
+      baseFilter.$and = andFilters;
+    }
+
+    // Fetch candidate salons and related data in batches of queries.
+    const candidates = await Salon.find(baseFilter)
+      .sort({ createdAt: -1, _id: -1 })
+      .lean();
+
+    if (!candidates.length) {
+      return res.status(200).json({
+        success: true,
+        salons: [],
+        pagination: {
+          totalSalons: 0,
+          currentPage: page,
+          limit,
+          totalPages: 0,
+          hasMore: false,
+        },
+      });
+    }
+
+    const salonIds = candidates.map((salon) => salon._id);
+
+    const [services, workingHoursList, reviewStats] = await Promise.all([
+      Service.find({
+        salon: { $in: salonIds },
+        isActive: true,
+      })
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      WorkingHours.find({
+        salon: { $in: salonIds },
+      }).lean(),
+
+      Review.aggregate([
+        { $match: { salon: { $in: salonIds } } },
+        {
+          $group: {
+            _id: "$salon",
+            totalReviews: { $sum: 1 },
+            averageRating: { $avg: "$rating" },
+          },
+        },
+      ]),
+    ]);
+
+    const servicesBySalon = new Map();
+    for (const service of services) {
+      const key = String(service.salon);
+
+      if (!servicesBySalon.has(key)) {
+        servicesBySalon.set(key, []);
+      }
+
+      servicesBySalon.get(key).push(service);
+    }
+
+    const hoursBySalon = new Map(
+      workingHoursList.map((hours) => [String(hours.salon), hours]),
+    );
+
+    const reviewsBySalon = new Map(
+      reviewStats.map((stats) => [String(stats._id), stats]),
+    );
+
+    // Build public response objects before filtering and pagination.
+    let results = candidates.map((salon) => {
+      const key = String(salon._id);
+      const salonServices = servicesBySalon.get(key) || [];
+      const stats = reviewsBySalon.get(key);
+
+      const totalReviews = stats?.totalReviews || 0;
+      const averageRating =
+        totalReviews > 0 ? Number(stats.averageRating.toFixed(1)) : null;
+
+      const lowestPrice =
+        salonServices.length > 0
+          ? Math.min(...salonServices.map((service) => service.price))
+          : null;
+
+      return {
+        _id: salon._id,
+        name: salon.name,
+        profileImage: salon.profileImage,
+        about: salon.about,
+        location: salon.location,
+        phone: salon.phone,
+        email: salon.email,
+        isListed: salon.isListed,
+        isOpen: calculateSalonOpenStatus(salon, hoursBySalon.get(key)),
+        rating: averageRating,
+        reviews: totalReviews,
+        approvalStatus: salon.approvalStatus,
+        services: salonServices,
+        price: lowestPrice,
+        priceLabel:
+          lowestPrice !== null
+            ? `₹${lowestPrice} Onwards`
+            : "Price unavailable",
+        _createdAt: salon.createdAt,
+
+        distance:
+          hasCustomerCoordinates &&
+          Number.isFinite(salon.location?.latitude) &&
+          Number.isFinite(salon.location?.longitude)
+            ? Number(
+                calculateDistanceKm(
+                  customerLat,
+                  customerLon,
+                  salon.location.latitude,
+                  salon.location.longitude,
+                ).toFixed(2),
+              )
+            : null,
+      };
+    });
+
+    // Minimum rating filter.
+    if (minimumRating > 0) {
+      results = results.filter(
+        (salon) => salon.rating !== null && salon.rating >= minimumRating,
+      );
+    }
+
+    // Price filter uses the lowest active service price.
+    const priceRange = String(req.query.price || "Any Price");
+
+    if (priceRange === "₹0 - ₹500") {
+      results = results.filter(
+        (salon) =>
+          salon.price !== null && salon.price >= 0 && salon.price <= 500,
+      );
+    } else if (priceRange === "₹500 - ₹1000") {
+      results = results.filter(
+        (salon) =>
+          salon.price !== null && salon.price > 500 && salon.price <= 1000,
+      );
+    } else if (priceRange === "₹1000+") {
+      results = results.filter(
+        (salon) => salon.price !== null && salon.price > 1000,
+      );
+    }
+
+    // Currently open salons only.
+    if (openNow) {
+      results = results.filter((salon) => salon.isOpen);
+    }
+
+    // Sorting.
+    if (sortBy === "Highest Rated") {
+      results.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+    } else if (sortBy === "Lowest Price") {
+      results.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    } else if (sortBy === "Highest Price") {
+      results.sort((a, b) => (b.price ?? -1) - (a.price ?? -1));
+    } else if (sortBy === "Most Popular") {
+      results.sort((a, b) => b.reviews - a.reviews);
+    } else {
+      if (sortBy === "Nearest" && hasCustomerCoordinates) {
+        results.sort((a, b) => {
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+      } else {
+        results.sort(
+          (a, b) => new Date(b._createdAt || 0) - new Date(a._createdAt || 0),
+        );
+      }
+    }
+
+    const totalSalons = results.length;
+    const totalPages = Math.ceil(totalSalons / limit);
+    const startIndex = (page - 1) * limit;
+
+    const paginatedSalons = results
+      .slice(startIndex, startIndex + limit)
+      .map(({ _createdAt, ...salon }) => salon);
+
+    return res.status(200).json({
       success: true,
-      salons: salonsWithServices,
+      salons: paginatedSalons,
+      pagination: {
+        totalSalons,
+        currentPage: page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     console.error("Get public salons error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server Error",
     });

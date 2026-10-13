@@ -6,22 +6,28 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const isSalonOwnerPortal =
-      window.location.pathname.startsWith("/salon-owner");
+    const pathname = window.location.pathname;
 
-    const tokenKey = isSalonOwnerPortal ? "salonOwnerToken" : "token";
+    const isSalonOwnerPortal = pathname.startsWith("/salon-owner");
+    const isAdminPortal = pathname.startsWith("/admin");
+
+    const tokenKey = isSalonOwnerPortal
+      ? "salonOwnerToken"
+      : isAdminPortal
+        ? "adminToken"
+        : "token";
 
     const token = localStorage.getItem(tokenKey);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 export default api;

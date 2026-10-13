@@ -27,6 +27,7 @@ import SalonProfile from "../pages/SalonOwner/SalonProfile";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import AdminDashboard from "../pages/Admin/Dashboard/AdminDashboard";
 import SalonApplications from "../pages/Admin/SalonApplications/SalonApplications";
+import AdminSalons from "../pages/Admin/Salons/Salons";
 import SalonOwnerServices from "../pages/SalonOwner/Services";
 import WorkingHours from "../pages/SalonOwner/WorkingHours";
 import SalonOwnerLogin from "../pages/SalonOwner/SalonOwnerLogin/SalonOwnerLogin";
@@ -46,6 +47,10 @@ import SalonOwnerNotifications from "../pages/SalonOwner/Notifications/SalonOwne
 import Testimonials from "../pages/Testimonials/Testimonials";
 import Favorites from "../pages/Favorites/Favorites";
 import PaymentStatus from "../pages/PaymentStatus/PaymentStatus";
+import AdminCustomers from "../pages/Admin/Customers/Customers";
+import AdminAppointments from "../pages/Admin/Appointments/Appointments";
+import Payments from "../pages/Admin/Payments/Payments";
+import AdminSettings from "../pages/Admin/Settings/Settings";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -138,7 +143,6 @@ export default function AppRoutes() {
       </Route>
 
       {/* Salon Owner Public Portal */}
-      {/* Salon Owner Public Portal */}
       <Route element={<SalonOwnerPublicLayout />}>
         <Route path="/salon-owner" element={<SalonOwner />} />
 
@@ -211,6 +215,11 @@ export default function AppRoutes() {
             path="/admin/salon-applications"
             element={<SalonApplications />}
           />
+          <Route path="/admin/salons" element={<AdminSalons />} />
+          <Route path="/admin/customers" element={<AdminCustomers />} />
+          <Route path="/admin/appointments" element={<AdminAppointments />} />
+          <Route path="/admin/payments" element={<Payments />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
       </Route>
     </Routes>

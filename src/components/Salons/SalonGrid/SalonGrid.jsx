@@ -7,6 +7,94 @@ import {
   salonMatchesPriceRange,
 } from "../../../utils/salonFilters";
 
+const SERVICE_CATEGORY_ALIASES = {
+  face: [
+    "face",
+    "facial",
+    "skin",
+    "skin care",
+    "skincare",
+    "face scrub",
+    "face cleanup",
+    "cleanup",
+  ],
+
+  eye: ["eye", "eyebrow", "eyelash", "eyes", "brow", "lash"],
+
+  nail: ["nail", "nails", "manicure", "pedicure"],
+
+  hand: ["hand", "hands", "manicure"],
+
+  feet: ["feet", "foot", "pedicure"],
+
+  hair: [
+    "hair",
+    "haircut",
+    "hair color",
+    "hair treatment",
+    "hair spa",
+    "styling",
+  ],
+
+  beard: ["beard"],
+
+  shaving: ["shave", "shaving"],
+
+  moustache: ["moustache", "mustache"],
+
+  thread: ["thread", "threading", "eyebrow threading"],
+
+  wax: ["wax", "waxing", "hair removal"],
+
+  lip: ["lip", "lips"],
+
+  massage: ["massage"],
+
+  spa: ["spa"],
+
+  makeup: ["makeup", "make up"],
+
+  bridal: ["bridal", "bride"],
+};
+
+const matchesServiceCategory = (service, category) => {
+  const selectedCategory = normalizeText(category);
+
+  if (!selectedCategory) {
+    return false;
+  }
+
+  const serviceName = normalizeText(service?.name);
+  const serviceCategory = normalizeText(service?.category);
+  const description = normalizeText(service?.description);
+
+  const searchableText = [serviceName, serviceCategory, description].filter(
+    Boolean,
+  );
+
+  /* Direct match */
+  if (
+    searchableText.some(
+      (text) =>
+        text.includes(selectedCategory) || selectedCategory.includes(text),
+    )
+  ) {
+    return true;
+  }
+
+  /* Alias match */
+  const aliases = SERVICE_CATEGORY_ALIASES[selectedCategory] || [];
+
+  return aliases.some((alias) => {
+    const normalizedAlias = normalizeText(alias);
+
+    return searchableText.some(
+      (text) =>
+        text.includes(normalizedAlias) || normalizedAlias.includes(text),
+    );
+  });
+};
+
 const getSalonDistance = (salon, userLocation) => {
   if (
     userLocation?.latitude == null ||
@@ -28,6 +116,8 @@ const getSalonDistance = (salon, userLocation) => {
 export default function SalonGrid({
   salons = [],
   minimumRating = 0,
+  serviceCategory = "",
+
   priceRange = "Any Price",
   sortBy = "Nearest",
   searchText = "",
@@ -99,6 +189,7 @@ export default function SalonGrid({
       searchText: searchText.trim(),
       selectedLocation: selectedLocation.trim(),
       selectedPincode: selectedPincode.trim(),
+      serviceCategory: serviceCategory.trim(),
       minimumRating,
       priceRange,
       sortBy,
@@ -110,6 +201,7 @@ export default function SalonGrid({
     searchText,
     selectedLocation,
     selectedPincode,
+    serviceCategory,
     minimumRating,
     priceRange,
     sortBy,
@@ -123,20 +215,72 @@ export default function SalonGrid({
   // ==================================================
 
   const processedSalons = useMemo(() => {
-    let results = salons.map((salon) => ({
-      ...salon,
-      calculatedDistance: getSalonDistance(salon, userLocation),
-      searchScore: getSalonSearchScore(salon, searchText),
-    }));
+    let results = salons.map((salon) => {
+      const searchScore = getSalonSearchScore(salon, searchText);
+
+      const salonServices = Array.isArray(salon?.services)
+        ? salon.services
+        : [];
+
+      const exactServiceMatch =
+        Boolean(searchText.trim()) &&
+        salonServices.some(
+          (service) =>
+            normalizeText(service?.name) === normalizeText(searchText),
+        );
+
+      const categoryServiceMatch =
+        Boolean(serviceCategory) &&
+        salonServices.some((service) =>
+          matchesServiceCategory(service, serviceCategory),
+        );
+
+      return {
+        ...salon,
+
+        calculatedDistance: getSalonDistance(salon, userLocation),
+
+        searchScore,
+
+        /* Exact requested service gets highest priority */
+        serviceMatchPriority: exactServiceMatch
+          ? 2
+          : categoryServiceMatch
+            ? 1
+            : 0,
+
+        exactServiceMatch,
+        categoryServiceMatch,
+      };
+    });
 
     // ==================================================
     // SEARCH
     // ==================================================
 
     if (searchText.trim()) {
-      results = results.filter((salon) => salon.searchScore >= 0);
+      if (serviceCategory) {
+        /*
+         * Special search coming from /services page.
+         *
+         * Show:
+         * 1. Exact requested service
+         * 2. Other services from same category
+         */
+        results = results.filter(
+          (salon) =>
+            salon.exactServiceMatch ||
+            salon.categoryServiceMatch ||
+            salon.searchScore >= 0,
+        );
+      } else {
+        /*
+         * Normal /salons search.
+         * Existing behavior remains unchanged.
+         */
+        results = results.filter((salon) => salon.searchScore >= 0);
+      }
     }
-
     // ==================================================
     // LOCATION / PINCODE SEARCH
     // ==================================================
@@ -215,7 +359,37 @@ export default function SalonGrid({
     // SORT
     // ==================================================
 
+    // ==================================================
+    // SERVICE SEARCH PRIORITY
+    // ==================================================
+
+    if (searchText.trim() && serviceCategory) {
+      results.sort((a, b) => {
+        if (b.serviceMatchPriority !== a.serviceMatchPriority) {
+          return b.serviceMatchPriority - a.serviceMatchPriority;
+        }
+
+        /*
+         * Within the same priority,
+         * keep the normal search score.
+         */
+        if (b.searchScore !== a.searchScore) {
+          return b.searchScore - a.searchScore;
+        }
+
+        return 0;
+      });
+    }
+
     results.sort((a, b) => {
+      if (
+        searchText.trim() &&
+        serviceCategory &&
+        b.serviceMatchPriority !== a.serviceMatchPriority
+      ) {
+        return b.serviceMatchPriority - a.serviceMatchPriority;
+      }
+
       switch (sortBy) {
         // ----------------------------------------------
         // Recommended
@@ -433,7 +607,7 @@ export default function SalonGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:gap-5">
         {visibleSalons.map((salon) => (
           <SalonCard
             key={salon._id}

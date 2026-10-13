@@ -5,6 +5,7 @@ const router = express.Router();
 const {
   getSalonOwnerAppointments,
   updateAppointmentStatus,
+  markBookingPaymentReceived,
 } = require("../controllers/salonOwnerBookingController");
 
 const protect = require("../middleware/salonOwnerAuthMiddleware");
@@ -14,5 +15,8 @@ router.get("/", protect, getSalonOwnerAppointments);
 
 // Update appointment status
 router.patch("/:id/status", protect, updateAppointmentStatus);
+
+// Record payment received for a completed Pay After Service booking
+router.patch("/:id/payment-received", protect, markBookingPaymentReceived);
 
 module.exports = router;

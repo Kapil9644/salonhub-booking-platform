@@ -56,6 +56,46 @@ const paymentTransactionSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
+    // Commission and salon settlement snapshot.
+    commissionRate: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    commissionAmount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+
+    salonNetAmount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+
+    settlementStatus: {
+      type: String,
+      enum: ["NOT_ELIGIBLE", "PENDING", "PROCESSING", "PAID", "ON_HOLD"],
+      default: "NOT_ELIGIBLE",
+    },
+
+    settlementPaidAt: {
+      type: Date,
+      default: null,
+    },
+
+    settlementReference: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     bookingData: {
       salon: {
         id: {

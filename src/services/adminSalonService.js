@@ -11,3 +11,15 @@ export const approveSalon = async (salonId) => {
 
   return response.data;
 };
+
+export const rejectSalon = async (salonId) => {
+  const response = await adminApi.patch(`/admin/salons/${salonId}/reject`);
+
+  return response.data;
+};
+
+export const getAllSalons = async () => {
+  const response = await adminApi.get("/admin/salons/all");
+
+  return response.data;
+};

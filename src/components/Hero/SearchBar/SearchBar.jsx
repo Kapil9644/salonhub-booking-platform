@@ -1,13 +1,17 @@
 import { Search, MapPin, LoaderCircle } from "lucide-react";
 import { useLocation } from "../../../context/LocationContext";
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  useNavigate,
+  useSearchParams,
+  useLocation as useRouterLocation,
+} from "react-router-dom";
 import LocationPicker from "./LocationPicker/LocationPicker";
 
 export default function SearchBar() {
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchText, setSearchText] = useState(
     () => searchParams.get("search") || "",
@@ -15,6 +19,7 @@ export default function SearchBar() {
 
   const { location, locationStatus } = useLocation();
   const navigate = useNavigate();
+  const routerLocation = useRouterLocation();
 
   const isLoading = locationStatus === "loading";
 
@@ -24,6 +29,27 @@ export default function SearchBar() {
           .filter(Boolean)
           .join(", ") || "Current location"
       : "Use my location";
+
+  /*
+   * ==================================================
+   * SYNC SEARCH INPUT WITH URL
+   * ==================================================
+   *
+   * If the URL changes externally, keep the input
+   * synchronized with the URL search parameter.
+   */
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+
+    setSearchText(urlSearch);
+  }, [searchParams]);
+
+  /*
+   * ==================================================
+   * SEARCH
+   * ==================================================
+   */
 
   const handleFindSalons = () => {
     const params = new URLSearchParams();
@@ -37,9 +63,38 @@ export default function SearchBar() {
     navigate(`/salons?${params.toString()}`);
   };
 
+  /*
+   * ==================================================
+   * CLEAR SEARCH
+   * ==================================================
+   */
+
+  const handleClearSearch = () => {
+    // Clear input immediately
+    setSearchText("");
+
+    /*
+     * On /salons page:
+     * remove ONLY the search parameter.
+     *
+     * Other URL parameters such as location,
+     * pincode, rating, price, etc. remain untouched.
+     */
+    if (routerLocation.pathname === "/salons") {
+      const params = new URLSearchParams(searchParams);
+
+      params.delete("search");
+
+      setSearchParams(params);
+    }
+  };
+
   return (
     <div className="relative flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-lg md:h-14 md:flex-row md:items-center md:gap-0 md:rounded-2xl md:p-1.5">
-      {/* Location */}
+      {/* ==================================================
+          LOCATION
+          ================================================== */}
+
       <button
         type="button"
         onClick={() => setIsLocationPickerOpen((previous) => !previous)}
@@ -62,7 +117,10 @@ export default function SearchBar() {
       {/* Divider */}
       <div className="hidden h-7 w-px bg-gray-200 md:block" />
 
-      {/* Search */}
+      {/* ==================================================
+          SEARCH
+          ================================================== */}
+
       <div className="relative flex min-w-0 flex-1 items-center gap-2 px-2.5 md:px-3">
         <Search className="shrink-0 text-gray-400" size={18} />
 
@@ -79,11 +137,14 @@ export default function SearchBar() {
           className="w-full min-w-0 bg-transparent pr-10 text-sm text-gray-700 outline-none placeholder:text-gray-400"
         />
 
-        {/* Clear Search */}
+        {/* ==================================================
+            CLEAR SEARCH
+            ================================================== */}
+
         {searchText && (
           <button
             type="button"
-            onClick={() => setSearchText("")}
+            onClick={handleClearSearch}
             aria-label="Clear search"
             className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-base leading-none text-black transition hover:bg-gray-100"
           >
@@ -92,7 +153,10 @@ export default function SearchBar() {
         )}
       </div>
 
-      {/* Find Salons */}
+      {/* ==================================================
+          SEARCH BUTTON
+          ================================================== */}
+
       <button
         type="button"
         onClick={handleFindSalons}
@@ -101,7 +165,10 @@ export default function SearchBar() {
         Search
       </button>
 
-      {/* Location Picker */}
+      {/* ==================================================
+          LOCATION PICKER
+          ================================================== */}
+
       {isLocationPickerOpen && (
         <LocationPicker onClose={() => setIsLocationPickerOpen(false)} />
       )}

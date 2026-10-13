@@ -9,6 +9,5 @@ export const verifyPaymentOrder = async (orderId) => {
   const response = await api.post("/payments/verify-order", {
     orderId,
   });
-
   return response.data;
 };

@@ -30,3 +30,21 @@ export const getPublicSalonServices = async (salonId) => {
 
   return response.data;
 };
+// Get all active global services
+export const getGlobalServices = async () => {
+  const response = await api.get("/global-services");
+
+  return response.data;
+};
+
+// Get one active global service
+export const getGlobalServiceById = async (serviceId) => {
+  const response = await api.get(`/global-services/${serviceId}`);
+
+  return response.data;
+};
+
+export const getPublicServiceCatalog = async () => {
+  const response = await api.get("/services/catalog");
+  return response.data;
+};

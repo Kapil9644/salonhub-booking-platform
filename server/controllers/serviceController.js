@@ -68,6 +68,74 @@ const getPublicSalonServices = async (req, res) => {
   }
 };
 
+// Get all public salon services for customer service discovery
+const getPublicServiceCatalog = async (req, res) => {
+  try {
+    const services = await Service.aggregate([
+      {
+        $match: {
+          isActive: true,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "salons",
+          localField: "salon",
+          foreignField: "_id",
+          as: "salonData",
+        },
+      },
+
+      {
+        $unwind: "$salonData",
+      },
+
+      {
+        $match: {
+          "salonData.approvalStatus": "Approved",
+          "salonData.isListed": true,
+        },
+      },
+
+      {
+        $project: {
+          _id: 1,
+
+          name: 1,
+          category: 1,
+          description: 1,
+          price: 1,
+          duration: 1,
+          isActive: 1,
+
+          salonId: "$salonData._id",
+          salonName: "$salonData.name",
+        },
+      },
+
+      {
+        $sort: {
+          category: 1,
+          name: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      services,
+    });
+  } catch (error) {
+    console.error("Get public service catalog error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 // Create a service
 const createService = async (req, res) => {
   try {
@@ -82,7 +150,15 @@ const createService = async (req, res) => {
       });
     }
 
-    const { name, description, price, duration } = req.body;
+    const { category, name, description, price, duration, globalService } =
+      req.body;
+
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        message: "Service category is required.",
+      });
+    }
 
     if (!name || price === undefined || duration === undefined) {
       return res.status(400).json({
@@ -107,10 +183,12 @@ const createService = async (req, res) => {
 
     const service = await Service.create({
       salon: salon._id,
+      category,
       name,
       description,
       price: Number(price),
       duration: Number(duration),
+      globalService: globalService || null,
     });
 
     res.status(201).json({
@@ -154,7 +232,19 @@ const updateService = async (req, res) => {
       });
     }
 
-    const { name, description, price, duration, isActive } = req.body;
+    const {
+      category,
+      name,
+      description,
+      price,
+      duration,
+      isActive,
+      globalService,
+    } = req.body;
+
+    if (category !== undefined) {
+      service.category = category || "Other";
+    }
 
     if (name !== undefined) {
       service.name = name;
@@ -188,6 +278,10 @@ const updateService = async (req, res) => {
 
     if (isActive !== undefined) {
       service.isActive = Boolean(isActive);
+    }
+
+    if (globalService !== undefined) {
+      service.globalService = globalService || null;
     }
 
     await service.save();
@@ -252,6 +346,7 @@ const deleteService = async (req, res) => {
 module.exports = {
   getMyServices,
   getPublicSalonServices,
+  getPublicServiceCatalog,
   createService,
   updateService,
   deleteService,

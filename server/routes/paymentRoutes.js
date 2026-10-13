@@ -1,16 +1,19 @@
 const express = require("express");
 const protect = require("../middleware/authMiddleware");
+
 const {
   createPaymentOrder,
   verifyPaymentOrder,
+  processCashfreeWebhook,
 } = require("../controllers/paymentController");
 
 const router = express.Router();
 
-// Create Cashfree payment order
 router.post("/create-order", protect, createPaymentOrder);
-
-// Verify Cashfree payment order
 router.post("/verify-order", protect, verifyPaymentOrder);
+
+// Cashfree calls this endpoint directly.
+// Signature verification happens inside the controller.
+router.post("/webhook", processCashfreeWebhook);
 
 module.exports = router;

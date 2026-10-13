@@ -8,6 +8,14 @@ const serviceSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Main service category selected by salon owner
+    category: {
+      type: String,
+      required: true,
+      default: "Other",
+      trim: true,
+    },
+
     name: {
       type: String,
       required: true,
@@ -32,6 +40,14 @@ const serviceSchema = new mongoose.Schema(
       min: 1,
     },
 
+    // Optional connection to Rupiva's global service catalogue.
+    // Salon owners are NOT required to use this.
+    globalService: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GlobalService",
+      default: null,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -41,5 +57,7 @@ const serviceSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+serviceSchema.index({ salon: 1, isActive: 1 });
 
 module.exports = mongoose.model("Service", serviceSchema);

@@ -128,6 +128,43 @@ const bookingSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
+    // Commission snapshot and salon settlement tracking.
+    commissionRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    commissionAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    salonNetAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    settlementStatus: {
+      type: String,
+      enum: ["NOT_ELIGIBLE", "PENDING", "PROCESSING", "PAID", "ON_HOLD"],
+      default: "NOT_ELIGIBLE",
+    },
+
+    settlementPaidAt: {
+      type: Date,
+      default: null,
+    },
+
+    settlementReference: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     paymentOrderId: {
       type: String,
       default: "",

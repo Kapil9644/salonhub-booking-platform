@@ -18,3 +18,12 @@ export const updateAppointmentStatus = async (bookingId, status) => {
 
   return response.data;
 };
+
+// Record payment received for a completed booking
+export const markBookingPaymentReceived = async (bookingId) => {
+  const response = await salonOwnerApi.patch(
+    `/salon-owner/appointments/${bookingId}/payment-received`,
+  );
+
+  return response.data;
+};
