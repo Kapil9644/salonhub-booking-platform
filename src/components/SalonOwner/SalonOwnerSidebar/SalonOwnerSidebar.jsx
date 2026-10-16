@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useSalonOwnerAuth } from "../../../context/SalonOwnerAuthContext";
+import { CreditCard } from "lucide-react";
 
 const menuItems = [
   {
@@ -42,6 +43,11 @@ const menuItems = [
     label: "Appointments",
     path: "/salon-owner/appointments",
     icon: CalendarDays,
+  },
+  {
+    label: "Payments",
+    path: "/salon-owner/payments",
+    icon: CreditCard,
   },
   {
     label: "Settings",

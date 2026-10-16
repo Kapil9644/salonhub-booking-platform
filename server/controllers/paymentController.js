@@ -5,6 +5,7 @@ const Salon = require("../models/Salon");
 const Service = require("../models/Service");
 const PaymentTransaction = require("../models/PaymentTransaction");
 const AdminSettings = require("../models/AdminSettings");
+const Booking = require("../models/Booking");
 
 const isValidDate = (date) => {
   if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -605,8 +606,152 @@ const processCashfreeWebhook = async (req, res) => {
   }
 };
 
+const getMyPaymentHistory = async (req, res) => {
+  try {
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(
+      50,
+      Math.max(1, Number.parseInt(req.query.limit, 10) || 10),
+    );
+
+    const filter = { user: req.user.id };
+    const [transactions, total] = await Promise.all([
+      PaymentTransaction.find(filter)
+        .select(
+          "orderId amount currency paymentMethod paymentStatus refundStatus refundAmount cashfreeRefundId refundReason refundInitiatedAt refundCompletedAt cashfreePaymentDate bookingData createdAt updatedAt",
+        )
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      PaymentTransaction.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      data: transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Payment history error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load payment history.",
+    });
+  }
+};
+
+const cancelPaidBookingAndRequestRefund = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reason =
+      typeof req.body?.reason === "string"
+        ? req.body.reason.trim().slice(0, 500)
+        : "Customer booking cancellation";
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking ID.",
+      });
+    }
+
+    const booking = await Booking.findOne({
+      _id: id,
+      user: req.user.id,
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    if (booking.status === "Cancelled") {
+      return res.status(409).json({
+        success: false,
+        message: "This booking is already cancelled.",
+      });
+    }
+
+    if (booking.status !== "Upcoming") {
+      return res.status(400).json({
+        success: false,
+        message: "Only upcoming bookings can be cancelled.",
+      });
+    }
+
+    // Cancel the booking first. Unpaid PAY_AFTER_SERVICE bookings
+    // must never create a refund request.
+    booking.status = "Cancelled";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
+    if (booking.paymentMethod !== "PAY_NOW") {
+      return res.json({
+        success: true,
+        message: "Booking cancelled. No refund is due for an unpaid booking.",
+        refundStatus: "NOT_REQUESTED",
+      });
+    }
+
+    const transaction = await PaymentTransaction.findOne({
+      orderId: booking.paymentOrderId,
+      user: req.user.id,
+    });
+
+    if (!transaction || transaction.paymentStatus !== "PAID") {
+      return res.json({
+        success: true,
+        message:
+          "Booking cancelled. Payment could not be confirmed for an automatic refund; please contact support.",
+        refundStatus: "NOT_REQUESTED",
+      });
+    }
+
+    if (
+      ["PENDING", "PROCESSING", "SUCCESS"].includes(transaction.refundStatus)
+    ) {
+      return res.json({
+        success: true,
+        message: "Booking cancelled. Refund is already being handled.",
+        refundStatus: transaction.refundStatus,
+      });
+    }
+
+    // This is a placeholder for the actual Cashfree refund call.
+    // Do not mark the refund successful until Cashfree confirms it.
+    transaction.refundStatus = "PENDING";
+    transaction.refundAmount = transaction.amount;
+    transaction.refundReason = reason;
+    transaction.refundInitiatedAt = new Date();
+    await transaction.save();
+
+    return res.status(202).json({
+      success: true,
+      message:
+        "Booking cancelled. Refund request is recorded and requires gateway processing.",
+      refundStatus: transaction.refundStatus,
+    });
+  } catch (error) {
+    console.error("Booking cancellation/refund error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to process cancellation right now.",
+    });
+  }
+};
+
 module.exports = {
   createPaymentOrder,
   verifyPaymentOrder,
   processCashfreeWebhook,
+  getMyPaymentHistory,
+  cancelPaidBookingAndRequestRefund,
 };

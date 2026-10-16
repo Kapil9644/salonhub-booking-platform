@@ -1,6 +1,8 @@
 const Booking = require("../models/Booking");
 const Salon = require("../models/Salon");
 
+const { processCancellationRefund } = require("./bookingController");
+
 // ========================================
 // GET APPOINTMENTS FOR LOGGED-IN SALON OWNER
 // ========================================
@@ -43,6 +45,7 @@ const getSalonOwnerAppointments = async (req, res) => {
 // ========================================
 // UPDATE APPOINTMENT STATUS
 // ========================================
+
 const updateAppointmentStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -56,7 +59,7 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    // Find salon belonging to logged-in owner
+    // Find salon belonging to the logged-in owner
     const salon = await Salon.findOne({
       owner: req.user.id,
     });
@@ -68,11 +71,11 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    // Find booking belonging to this salon
+    // Find a booking belonging to this salon
     const booking = await Booking.findOne({
       _id: req.params.id,
       "salon.id": salon._id,
-    }).populate("user", "fullname email phone profileImage");
+    }).populate("user", "fullName email phone profileImage");
 
     if (!booking) {
       return res.status(404).json({
@@ -81,7 +84,7 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    // Prevent changing completed/cancelled appointments back accidentally
+    // Prevent modifying completed/cancelled appointments
     if (booking.status === "Completed" || booking.status === "Cancelled") {
       return res.status(400).json({
         success: false,
@@ -89,14 +92,28 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    booking.status = status;
+    let refundResult = null;
+
+    if (status === "Cancelled") {
+      booking.status = "Cancelled";
+      booking.cancelledAt = new Date();
+
+      // Initiate refund for an eligible prepaid booking
+      refundResult = await processCancellationRefund(booking);
+    } else {
+      booking.status = status;
+    }
 
     await booking.save();
 
     return res.status(200).json({
       success: true,
-      message: `Appointment marked as ${status}.`,
+      message:
+        status === "Cancelled"
+          ? "Appointment cancelled successfully."
+          : `Appointment marked as ${status}.`,
       booking,
+      ...(refundResult ? { refund: refundResult } : {}),
     });
   } catch (error) {
     console.error("Update appointment status error:", error);

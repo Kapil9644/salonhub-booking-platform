@@ -171,6 +171,24 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
     },
 
+    refundStatus: {
+      type: String,
+      enum: ["NOT_REQUESTED", "PENDING", "PROCESSING", "SUCCESS", "FAILED"],
+      default: "NOT_REQUESTED",
+    },
+
+    refundAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    cashfreeRefundId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     cashfreeOrderId: {
       type: String,
       default: "",

@@ -56,6 +56,41 @@ const paymentTransactionSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
+    refundStatus: {
+      type: String,
+      enum: ["NOT_REQUESTED", "PENDING", "PROCESSING", "SUCCESS", "FAILED"],
+      default: "NOT_REQUESTED",
+      index: true,
+    },
+
+    refundAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    cashfreeRefundId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    refundReason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    refundInitiatedAt: {
+      type: Date,
+      default: null,
+    },
+
+    refundCompletedAt: {
+      type: Date,
+      default: null,
+    },
+
     // Commission and salon settlement snapshot.
     commissionRate: {
       type: Number,

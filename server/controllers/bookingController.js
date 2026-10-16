@@ -5,6 +5,145 @@ const WorkingHours = require("../models/WorkingHours");
 const PaymentTransaction = require("../models/PaymentTransaction");
 const { createNotification } = require("../utils/notificationService");
 const AdminSettings = require("../models/AdminSettings");
+
+const { createRefund } = require("../services/cashfreeRefundService");
+
+async function processCancellationRefund(booking) {
+  // Pay After Service bookings that remain unpaid never get a refund.
+  if (booking.paymentMethod !== "PAY_NOW" || booking.paymentStatus !== "PAID") {
+    return {
+      refundStatus: "NOT_REQUESTED",
+      refundAmount: 0,
+    };
+  }
+
+  const transaction = await PaymentTransaction.findOne({
+    $or: [
+      ...(booking.paymentOrderId ? [{ orderId: booking.paymentOrderId }] : []),
+      ...(booking.cashfreeOrderId
+        ? [{ cashfreeOrderId: booking.cashfreeOrderId }]
+        : []),
+    ],
+  });
+
+  if (!transaction) {
+    booking.refundStatus = "FAILED";
+    booking.refundAmount = 0;
+    await booking.save();
+
+    return {
+      refundStatus: "FAILED",
+      message: "Payment transaction could not be found.",
+    };
+  }
+
+  // Don't initiate a second refund if one has already been started.
+  if (["PENDING", "PROCESSING", "SUCCESS"].includes(transaction.refundStatus)) {
+    booking.refundStatus = transaction.refundStatus;
+    booking.refundAmount = transaction.refundAmount || 0;
+    booking.cashfreeRefundId = transaction.cashfreeRefundId || "";
+    await booking.save();
+
+    return {
+      refundStatus: transaction.refundStatus,
+      refundAmount: transaction.refundAmount || 0,
+    };
+  }
+
+  if (!transaction.cashfreeOrderId) {
+    transaction.refundStatus = "FAILED";
+    transaction.refundReason = "Cashfree order ID is missing.";
+    await transaction.save();
+
+    booking.refundStatus = "FAILED";
+    await booking.save();
+
+    return { refundStatus: "FAILED" };
+  }
+
+  // Record the attempt before contacting Cashfree.
+  transaction.refundStatus = "PENDING";
+  transaction.refundAmount = transaction.amount;
+  transaction.refundReason = "Booking cancelled by customer";
+  transaction.refundInitiatedAt = new Date();
+  await transaction.save();
+
+  booking.refundStatus = "PENDING";
+  booking.refundAmount = transaction.amount;
+  await booking.save();
+
+  console.log("Refund debug:", {
+    rupivaOrderId: transaction.orderId,
+    cashfreeOrderId: transaction.cashfreeOrderId,
+    cashfreeEnvironment: process.env.CASHFREE_ENV || "sandbox",
+  });
+
+  try {
+    const result = await createRefund({
+      cashfreeOrderId: transaction.cashfreeOrderId,
+      amount: transaction.amount,
+      orderId: transaction.orderId,
+      reason: "Booking cancelled by customer",
+    });
+
+    const providerStatus = String(
+      result.refund_status || "PENDING",
+    ).toUpperCase();
+
+    const normalizedStatus =
+      providerStatus === "SUCCESS"
+        ? "SUCCESS"
+        : providerStatus === "FAILED"
+          ? "FAILED"
+          : providerStatus === "PENDING"
+            ? "PENDING"
+            : "PROCESSING";
+
+    transaction.refundStatus = normalizedStatus;
+    transaction.cashfreeRefundId =
+      result.refund_id || result.cf_refund_id || "";
+    transaction.refundAmount =
+      Number(result.refund_amount) || transaction.amount;
+
+    if (normalizedStatus === "SUCCESS") {
+      transaction.paymentStatus = "REFUNDED";
+      transaction.refundCompletedAt = new Date();
+      booking.paymentStatus = "REFUNDED";
+    }
+
+    await transaction.save();
+
+    booking.refundStatus = normalizedStatus;
+    booking.refundAmount = transaction.refundAmount;
+    booking.cashfreeRefundId = transaction.cashfreeRefundId;
+
+    if (normalizedStatus === "SUCCESS") {
+      booking.paymentStatus = "REFUNDED";
+    }
+
+    await booking.save();
+
+    return {
+      refundStatus: normalizedStatus,
+      refundAmount: transaction.refundAmount,
+      refundId: transaction.cashfreeRefundId,
+    };
+  } catch (error) {
+    console.error("Cashfree refund initiation failed:", error.message);
+
+    // Keep a failed state visible; never claim that the refund succeeded.
+    transaction.refundStatus = "FAILED";
+    transaction.refundReason = error.message.slice(0, 200);
+    await transaction.save();
+
+    booking.refundStatus = "FAILED";
+    booking.refundAmount = transaction.amount;
+    await booking.save();
+
+    return { refundStatus: "FAILED" };
+  }
+}
+
 // ========================================
 
 // ========================================
@@ -875,6 +1014,8 @@ const cancelBooking = async (req, res) => {
     booking.status = "Cancelled";
     booking.cancelledAt = new Date();
 
+    const refundResult = await processCancellationRefund(booking);
+
     await booking.save();
 
     await createNotification({
@@ -897,6 +1038,7 @@ const cancelBooking = async (req, res) => {
       success: true,
       message: "Booking cancelled successfully.",
       booking,
+      refund: refundResult,
     });
   } catch (error) {
     console.error("Cancel booking error:", error);
@@ -970,4 +1112,5 @@ module.exports = {
   updateBooking,
   cancelBooking,
   getBookedSlots,
+  processCancellationRefund,
 };

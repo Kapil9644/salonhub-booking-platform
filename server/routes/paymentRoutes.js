@@ -9,6 +9,12 @@ const {
 
 const router = express.Router();
 
+const { getMyPaymentHistory } = require("../controllers/paymentController");
+
+router.get("/history", protect, getMyPaymentHistory);
+
+router.get("/my", protect, getMyPaymentHistory);
+
 router.post("/create-order", protect, createPaymentOrder);
 router.post("/verify-order", protect, verifyPaymentOrder);
 

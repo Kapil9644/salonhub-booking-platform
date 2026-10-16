@@ -14,6 +14,7 @@ import {
   Compass,
   Handshake,
   Heart,
+  Settings,
 } from "lucide-react";
 
 export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
@@ -48,7 +49,6 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
     if (!isMenuOpen) return;
 
     const originalOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
     return () => {
@@ -108,11 +108,9 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
               <p className="text-[11px] font-medium text-gray-500">
                 Welcome back
               </p>
-
               <p className="truncate text-sm font-bold text-slate-900">
                 {user.fullName}
               </p>
-
               <p className="mt-0.5 text-xs text-purple-600">View profile</p>
             </div>
           </Link>
@@ -180,6 +178,16 @@ export default function MobileMenu({ isMenuOpen, setIsMenuOpen }) {
                     </div>
                   );
                 })}
+
+                {/* Settings */}
+                <Link
+                  to="/settings"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+                >
+                  <Settings size={17} strokeWidth={2} />
+                  Settings
+                </Link>
               </div>
             )}
           </div>

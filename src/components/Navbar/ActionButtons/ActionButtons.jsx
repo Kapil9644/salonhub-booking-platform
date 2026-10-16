@@ -11,6 +11,7 @@ import {
   UserRound,
   ChevronDown,
   Heart,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -227,6 +228,15 @@ export default function ActionButtons({
                   >
                     <Bell size={17} strokeWidth={2} />
                     Notifications
+                  </Link>
+
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <Settings size={17} strokeWidth={2} />
+                    Settings
                   </Link>
 
                   <Link

@@ -51,6 +51,8 @@ import AdminCustomers from "../pages/Admin/Customers/Customers";
 import AdminAppointments from "../pages/Admin/Appointments/Appointments";
 import Payments from "../pages/Admin/Payments/Payments";
 import AdminSettings from "../pages/Admin/Settings/Settings";
+import SalonOwnerPayments from "../pages/SalonOwner/Payments";
+import CustomerSettings from "../pages/Customer/Settings";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -82,9 +84,7 @@ export default function AppRoutes() {
             </PublicRoute>
           }
         />
-
         <Route path="/signup" element={<Signup />} />
-
         <Route
           path="/forgot-password"
           element={
@@ -112,7 +112,6 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/my-bookings"
           element={
@@ -129,12 +128,27 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         <Route path="/services" element={<Services />} />
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/partner" element={<BecomePartner />} />
         <Route path="/offers" element={<Offers />} />
-        <Route path="/payment" element={<Payment />} />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <CustomerSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/help-support" element={<HelpSupport />} />
         <Route path="/about" element={<AboutUs />} />
@@ -176,7 +190,10 @@ export default function AppRoutes() {
             path="/salon-owner/services"
             element={<SalonOwnerServices />}
           />
-
+          <Route
+            path="/salon-owner/payments"
+            element={<SalonOwnerPayments />}
+          />
           <Route path="/salon-owner/working-hours" element={<WorkingHours />} />
           <Route
             path="/salon-owner/settings"

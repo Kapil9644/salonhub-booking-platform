@@ -24,6 +24,12 @@ const salonOwnerNotificationRoutes = require("./routes/salonOwnerNotificationRou
 const { startBookingReminderJob } = require("./jobs/bookingReminderJob");
 const adminBookingRoutes = require("./routes/adminBookingRoutes");
 const adminPaymentRoutes = require("./routes/adminPaymentRoutes");
+const salonOwnerPaymentRoutes = require("./routes/salonOwnerPaymentRoutes");
+
+const cron = require("node-cron");
+const {
+  reconcilePendingRefunds,
+} = require("./services/refundReconciliationService");
 
 // Connect Database
 connectDB();
@@ -62,6 +68,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/bookings", adminBookingRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/settings", require("./routes/adminSettingsRoutes"));
+app.use("/api/salon-owner/payments", salonOwnerPaymentRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -77,4 +84,15 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   startBookingReminderJob();
+});
+
+cron.schedule("*/5 * * * *", async () => {
+  console.log("[Refund Sync] Job started:", new Date().toISOString());
+
+  try {
+    await reconcilePendingRefunds();
+    console.log("[Refund Sync] Job finished.");
+  } catch (error) {
+    console.error("[Refund Sync] Job failed:", error.message);
+  }
 });

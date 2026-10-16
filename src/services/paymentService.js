@@ -11,3 +11,11 @@ export const verifyPaymentOrder = async (orderId) => {
   });
   return response.data;
 };
+
+export const getMyPaymentHistory = async (page = 1, limit = 10) => {
+  const response = await api.get("/payments/history", {
+    params: { page, limit },
+  });
+
+  return response.data;
+};

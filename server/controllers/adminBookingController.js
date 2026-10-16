@@ -1,4 +1,5 @@
 const Booking = require("../models/Booking");
+const { processCancellationRefund } = require("./bookingController");
 
 // ========================================
 // GET ALL BOOKINGS FOR ADMIN
@@ -26,6 +27,7 @@ const getAllBookings = async (req, res) => {
 // ========================================
 // UPDATE BOOKING STATUS FOR ADMIN
 // ========================================
+
 const updateAdminBookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -58,13 +60,28 @@ const updateAdminBookingStatus = async (req, res) => {
       });
     }
 
-    booking.status = status;
+    let refundResult = null;
+
+    if (status === "Cancelled") {
+      booking.status = "Cancelled";
+      booking.cancelledAt = new Date();
+
+      // Initiate refund for an eligible prepaid booking
+      refundResult = await processCancellationRefund(booking);
+    } else {
+      booking.status = "Completed";
+    }
+
     await booking.save();
 
     return res.status(200).json({
       success: true,
-      message: `Appointment marked as ${status}.`,
+      message:
+        status === "Cancelled"
+          ? "Appointment cancelled successfully."
+          : "Appointment marked as Completed.",
       booking,
+      ...(refundResult ? { refund: refundResult } : {}),
     });
   } catch (error) {
     console.error("Admin update booking status error:", error);
