@@ -7,20 +7,25 @@ const {
   updateReview,
   getBookingReview,
   getSalonReviews,
+  getSalonOwnerReviews,
 } = require("../controllers/reviewController");
 
 const protect = require("../middleware/authMiddleware");
+const salonOwnerProtect = require("../middleware/salonOwnerAuthMiddleware");
 
-// Get review for a booking
+// Customer: Get review for a booking
 router.get("/booking/:bookingId", protect, getBookingReview);
 
-// Get reviews for a salon
+// Public: Get reviews for a salon
 router.get("/salon/:salonId", getSalonReviews);
 
-// Create a review
+// Customer: Create a review
 router.post("/", protect, createReview);
 
-// Update a review
+// Customer: Update a review
 router.patch("/:reviewId", protect, updateReview);
+
+// Salon Owner: Get reviews for their own salon
+router.get("/owner", salonOwnerProtect, getSalonOwnerReviews);
 
 module.exports = router;

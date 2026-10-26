@@ -272,9 +272,70 @@ const getSalonReviews = async (req, res) => {
   }
 };
 
+const getSalonOwnerReviews = async (req, res) => {
+  try {
+    // Find the salon belonging to the logged-in owner.
+    // Confirm that "owner" matches the field in your Salon schema.
+    const salon = await Salon.findOne({ owner: req.user.id }).select(
+      "_id name",
+    );
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon not found for this owner.",
+      });
+    }
+
+    const reviews = await Review.find({ salon: salon._id })
+      .populate("customer", "fullName profileImage")
+      .populate("booking", "date time services status")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const totalReviews = reviews.length;
+
+    const totalRating = reviews.reduce(
+      (total, review) => total + review.rating,
+      0,
+    );
+
+    const averageRating =
+      totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(1)) : 0;
+
+    const ratingBreakdown = {
+      5: reviews.filter((review) => review.rating === 5).length,
+      4: reviews.filter((review) => review.rating === 4).length,
+      3: reviews.filter((review) => review.rating === 3).length,
+      2: reviews.filter((review) => review.rating === 2).length,
+      1: reviews.filter((review) => review.rating === 1).length,
+    };
+
+    return res.status(200).json({
+      success: true,
+      salon: {
+        id: salon._id,
+        name: salon.name,
+      },
+      reviews,
+      totalReviews,
+      averageRating,
+      ratingBreakdown,
+    });
+  } catch (error) {
+    console.error("Get salon owner reviews error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 module.exports = {
   createReview,
   updateReview,
   getBookingReview,
   getSalonReviews,
+  getSalonOwnerReviews,
 };

@@ -150,6 +150,72 @@ async function processCancellationRefund(booking) {
 // BOOKING DATE/TIME HELPERS
 // ========================================
 
+// ========================================
+// BOOKING DATE RANGE — INDIA TIMEZONE
+// Allows today through the next 6 days.
+// ========================================
+
+const getIndiaDateString = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map(({ type, value }) => [type, value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const getBookingDateLimits = () => {
+  const minDate = getIndiaDateString();
+
+  // Use UTC arithmetic on the date string to avoid DST/local-time issues.
+  const max = new Date(`${minDate}T00:00:00.000Z`);
+  max.setUTCDate(max.getUTCDate() + 6);
+
+  return {
+    minDate,
+    maxDate: max.toISOString().slice(0, 10),
+  };
+};
+
+const validateBookingDate = (date) => {
+  // Accept only a real YYYY-MM-DD calendar date.
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return {
+      valid: false,
+      message: "Invalid booking date. Please select a valid date.",
+    };
+  }
+
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== date
+  ) {
+    return {
+      valid: false,
+      message: "Invalid booking date. Please select a valid date.",
+    };
+  }
+
+  const { minDate, maxDate } = getBookingDateLimits();
+
+  if (date < minDate || date > maxDate) {
+    return {
+      valid: false,
+      message: "Bookings are available only for the next 7 days.",
+    };
+  }
+
+  return { valid: true };
+};
+
 // Convert frontend time like "10:00 AM" or "09:00 PM"
 // into 24-hour format like "10:00" or "21:00"
 const convertTimeTo24Hour = (time) => {
@@ -395,6 +461,15 @@ const createBooking = async (req, res) => {
       });
     }
 
+    const dateValidation = validateBookingDate(date);
+
+    if (!dateValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: dateValidation.message,
+      });
+    }
+
     // Find salon from database
     const salonData = await Salon.findById(salon.id);
 
@@ -558,7 +633,14 @@ const createBooking = async (req, res) => {
       recipient: salonData.owner,
       type: "NEW_BOOKING",
       title: "New Booking",
-      message: `A new booking has been received for ${salonData.name} on ${booking.time}.`,
+
+      message: `A new booking has been received for ${
+        salonData.name
+      } on ${new Date(booking.date).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })} at ${booking.time}.`,
       relatedBooking: booking._id,
     });
 
@@ -633,6 +715,15 @@ const createPaidBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid booking data in payment transaction.",
+      });
+    }
+
+    const dateValidation = validateBookingDate(bookingData.date);
+
+    if (!dateValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: dateValidation.message,
       });
     }
 
@@ -831,6 +922,15 @@ const updateBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Salon, services, date and time are required.",
+      });
+    }
+
+    const dateValidation = validateBookingDate(date);
+
+    if (!dateValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: dateValidation.message,
       });
     }
 

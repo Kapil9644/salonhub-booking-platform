@@ -7,6 +7,7 @@ import {
   LogOut,
   X,
   CreditCard,
+  MessageSquareWarning,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../../context/useAdminAuth";
@@ -45,6 +46,11 @@ export default function AdminSidebar({ isMobileOpen = false, onMobileClose }) {
       label: "Payments",
       path: "/admin/payments",
       icon: CreditCard,
+    },
+    {
+      label: "Complaints",
+      path: "/admin/complaints",
+      icon: MessageSquareWarning,
     },
     {
       label: "Settings",

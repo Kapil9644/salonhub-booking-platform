@@ -21,7 +21,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-
+import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import {
   getProfile,
@@ -150,8 +150,7 @@ const Profile = () => {
   const [editEmail, setEditEmail] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const { error: showError, success: showSuccess } = useNotification();
 
   useEffect(() => {
     let active = true;
@@ -168,7 +167,7 @@ const Profile = () => {
         console.error("Profile loading failed:", err);
 
         if (active) {
-          setError(
+          showError(
             err.response?.data?.message ||
               "Profile could not be loaded. Please try again.",
           );
@@ -213,8 +212,7 @@ const Profile = () => {
     setEditName(profile?.fullName || "");
     setEditEmail(profile?.email || "");
     setSelectedImage(null);
-    setError("");
-    setSuccess("");
+
     setIsEditing(true);
   };
 
@@ -223,24 +221,20 @@ const Profile = () => {
     setSelectedImage(null);
     setEditName(profile?.fullName || "");
     setEditEmail(profile?.email || "");
-    setError("");
   };
 
   const handleImageChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setError("");
-    setSuccess("");
-
     if (!file.type.startsWith("image/")) {
-      setError("Please choose a valid image.");
+      showError("Please choose a valid image.");
       event.target.value = "";
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError("Please select an image smaller than 10 MB.");
+      showError("Please select an image smaller than 10 MB.");
       event.target.value = "";
       return;
     }
@@ -249,7 +243,7 @@ const Profile = () => {
       setSelectedImage(await compressProfileImage(file));
     } catch (err) {
       console.error("Image processing failed:", err);
-      setError("Image could not be processed. Please try another photo.");
+      showError("Image could not be processed. Please try another photo.");
     }
 
     event.target.value = "";
@@ -262,19 +256,17 @@ const Profile = () => {
     const email = editEmail.trim();
 
     if (!fullName) {
-      setError("Please enter your full name.");
+      showError("Please enter your full name.");
       return;
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
+      showError("Please enter a valid email address.");
       return;
     }
 
     try {
       setSaving(true);
-      setError("");
-      setSuccess("");
 
       const data = await updateProfile({ fullName, email });
       let updatedUser = data.user;
@@ -288,10 +280,10 @@ const Profile = () => {
       updateUser(updatedUser);
       setSelectedImage(null);
       setIsEditing(false);
-      setSuccess("Your profile has been updated successfully.");
+      showSuccess("Your profile has been updated successfully.");
     } catch (err) {
       console.error("Profile update failed:", err);
-      setError(
+      showError(
         err.response?.data?.message ||
           "Unable to save your changes. Please try again.",
       );
@@ -308,7 +300,6 @@ const Profile = () => {
 
     try {
       setRemovingId(salonId);
-      setError("");
 
       const result = await toggleFavoriteSalon(salonId);
 
@@ -322,7 +313,7 @@ const Profile = () => {
       }
     } catch (err) {
       console.error("Removing favorite failed:", err);
-      setError(
+      showError(
         err.response?.data?.message ||
           "Could not remove this salon from favorites.",
       );
@@ -411,26 +402,6 @@ const Profile = () => {
             </button>
           )}
         </header>
-
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            <X size={17} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div
-            role="status"
-            className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-          >
-            <Check size={17} className="mt-0.5 shrink-0" />
-            <span>{success}</span>
-          </div>
-        )}
 
         {/* Profile header */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

@@ -14,11 +14,13 @@ import ContactSection from "../../components/SalonDetails/ContactSection";
 import PoliciesSection from "../../components/SalonDetails/PoliciesSection";
 import MapSection from "../../components/SalonDetails/MapSection";
 import SimilarSalons from "../../components/SalonDetails/SimilarSalons";
+import SalonGallery from "../../components/SalonDetails/SalonGallery";
+import { useNotification } from "../../context/NotificationContext";
 
 export default function SalonDetails() {
   const { id } = useParams();
   const { location: userLocation } = useLocation();
-
+  const { error: showError } = useNotification();
   const [salon, setSalon] = useState(null);
 
   // Multiple selected services
@@ -43,11 +45,13 @@ export default function SalonDetails() {
       } catch (error) {
         console.error("Failed to fetch salon details:", error);
 
-        setError(
+        const message =
           error.response?.data?.message ||
-            error.message ||
-            "Failed to load salon details.",
-        );
+          error.message ||
+          "Failed to load salon details.";
+
+        setError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
@@ -109,6 +113,7 @@ export default function SalonDetails() {
         userLocation={userLocation}
         distance={salonDistance}
       />
+      <SalonGallery images={salon.galleryImages || []} />
       <div className="mt-3 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AboutSection about={salon.about} />
@@ -133,7 +138,11 @@ export default function SalonDetails() {
         </div>
 
         <div>
-          <BookingCard salon={salon} selectedServices={selectedServices} />
+          <BookingCard
+            salon={salon}
+            selectedServices={selectedServices}
+            setSelectedServices={setSelectedServices}
+          />
         </div>
       </div>
     </Container>

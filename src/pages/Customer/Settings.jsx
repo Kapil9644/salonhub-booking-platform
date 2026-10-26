@@ -366,18 +366,14 @@ export default function CustomerSettings() {
               <SettingRow
                 icon={LockKeyhole}
                 title="Password and security"
-                description="Review your account security options."
-                onClick={() =>
-                  navigate("/profile", {
-                    state: { openSecurity: true },
-                  })
-                }
+                description="Change your password and protect your account."
+                onClick={() => navigate("/security")}
               />
               <SettingRow
                 icon={CircleHelp}
                 title="Help and support"
                 description="Get help with bookings and your account."
-                onClick={() => navigate("/help")}
+                onClick={() => navigate("/help-support")}
               />
               <SettingRow
                 icon={LogOut}

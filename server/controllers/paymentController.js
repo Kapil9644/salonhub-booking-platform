@@ -19,6 +19,34 @@ const isValidDate = (date) => {
   );
 };
 
+const getIndiaDateString = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map(({ type, value }) => [type, value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const isWithinBookingDateRange = (date) => {
+  if (!isValidDate(date)) return false;
+
+  const minDate = getIndiaDateString();
+
+  const max = new Date(`${minDate}T00:00:00.000Z`);
+  max.setUTCDate(max.getUTCDate() + 6);
+
+  const maxDate = max.toISOString().slice(0, 10);
+
+  return date >= minDate && date <= maxDate;
+};
+
 const isValidTime = (time) =>
   typeof time === "string" &&
   /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$/i.test(time.trim());
@@ -47,7 +75,7 @@ const createPaymentOrder = async (req, res) => {
       bookingData.services.some(
         (service) => !mongoose.isValidObjectId(service?.id),
       ) ||
-      !isValidDate(bookingData?.date) ||
+      !isWithinBookingDateRange(bookingData?.date) ||
       !isValidTime(bookingData?.time)
     ) {
       return res.status(400).json({

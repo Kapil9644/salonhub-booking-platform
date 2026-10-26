@@ -49,6 +49,21 @@ const userSchema = new mongoose.Schema(
         ref: "Salon",
       },
     ],
+
+    notificationPreferences: {
+      newBooking: {
+        type: Boolean,
+        default: true,
+      },
+      bookingCancelled: {
+        type: Boolean,
+        default: true,
+      },
+      bookingUpdates: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   {
     timestamps: true,

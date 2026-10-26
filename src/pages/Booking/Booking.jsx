@@ -45,7 +45,10 @@ export default function Booking() {
 
           <DateSelector
             selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            setSelectedDate={(date) => {
+              setSelectedDate(date);
+              setSelectedTime("");
+            }}
           />
 
           <TimeSlotSelector

@@ -20,6 +20,28 @@ const salonSchema = new mongoose.Schema(
       default: "",
     },
 
+    galleryImages: {
+      type: [
+        {
+          url: {
+            type: String,
+            required: true,
+          },
+          publicId: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      default: [],
+      validate: {
+        validator: function (images) {
+          return images.length <= 10;
+        },
+        message: "A salon can have a maximum of 10 gallery images.",
+      },
+    },
+
     about: {
       type: String,
       default: "",

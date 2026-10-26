@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "seed:dummy": "node seedDummyData.js",
     "update:dummy": "node updateDummyData.js",
-    "seed:global-services": "node seedGlobalServices.js"
+    "seed:global-services": "node seedGlobalServices.js",
+    "seed:salon-gallery": "node seedSalonGallery.js"
   },
   "keywords": [],
   "author": "",

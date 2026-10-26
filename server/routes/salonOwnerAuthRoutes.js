@@ -16,6 +16,9 @@ const {
   salonOwnerGetProfile,
   salonOwnerUpdateProfile,
   salonOwnerUploadProfileImage,
+  salonOwnerChangePassword,
+  salonOwnerGetNotificationPreferences,
+  salonOwnerUpdateNotificationPreferences,
 } = require("../controllers/salonOwnerAuthController");
 
 const router = express.Router();
@@ -45,6 +48,20 @@ router.post(
   salonOwnerProtect,
   upload.single("profileImage"),
   salonOwnerUploadProfileImage,
+);
+
+router.put("/change-password", salonOwnerProtect, salonOwnerChangePassword);
+
+router.get(
+  "/notification-preferences",
+  salonOwnerProtect,
+  salonOwnerGetNotificationPreferences,
+);
+
+router.put(
+  "/notification-preferences",
+  salonOwnerProtect,
+  salonOwnerUpdateNotificationPreferences,
 );
 
 module.exports = router;

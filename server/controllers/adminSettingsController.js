@@ -2,8 +2,8 @@ const AdminSettings = require("../models/AdminSettings");
 
 const DEFAULT_SETTINGS = {
   platformName: "Rupiva",
-  supportEmail: "",
-  supportPhone: "",
+  supportEmail: "support@rupiva.com",
+  supportPhone: "+919644319427",
   currency: "INR",
   bookingCancellationHours: 2,
   bookingAdvanceDays: 30,

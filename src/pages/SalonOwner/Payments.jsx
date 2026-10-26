@@ -7,7 +7,6 @@ import {
   IndianRupee,
   Clock3,
   CircleAlert,
-  CheckCircle2,
   RotateCcw,
   X,
   ChevronLeft,
@@ -46,6 +45,13 @@ const dateTime = (value) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const toDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 const shortId = (value) => {
@@ -180,6 +186,30 @@ export default function SalonOwnerPayments() {
     loadPayments();
   }, [loadPayments]);
 
+  const setDatePreset = (preset) => {
+    const today = new Date();
+    const todayKey = toDateInputValue(today);
+    const start = new Date(today);
+    let from = "";
+    let to = todayKey;
+
+    if (preset === "today") {
+      from = todayKey;
+    } else if (preset === "7days") {
+      start.setDate(start.getDate() - 6);
+      from = toDateInputValue(start);
+    } else if (preset === "30days") {
+      start.setDate(start.getDate() - 29);
+      from = toDateInputValue(start);
+    } else if (preset === "clear") {
+      from = "";
+      to = "";
+    }
+
+    setDraftFrom(from);
+    setDraftTo(to);
+  };
+
   const applyFilters = (event) => {
     event.preventDefault();
 
@@ -306,6 +336,30 @@ export default function SalonOwnerPayments() {
         onSubmit={applyFilters}
         className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
       >
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
+            <CalendarDays size={14} />
+            Quick date range
+          </span>
+          {[
+            { label: "Today", value: "today" },
+            { label: "Last 7 days", value: "7days" },
+            { label: "Last 30 days", value: "30days" },
+            { label: "All dates", value: "clear" },
+          ].map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              onClick={() => setDatePreset(preset.value)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+            >
+              {preset.label}
+            </button>
+          ))}
+          <span className="text-xs text-slate-400">
+            Select a range, then click Apply Filters.
+          </span>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(210px,1.6fr)_minmax(145px,0.8fr)_minmax(145px,0.8fr)_minmax(160px,0.9fr)_auto_auto] xl:items-end">
           <label className="block min-w-0">
             <span className="mb-2 block text-xs font-semibold text-slate-600">

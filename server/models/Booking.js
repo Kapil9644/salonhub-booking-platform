@@ -221,4 +221,14 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
+bookingSchema.index(
+  { paymentOrderId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      paymentOrderId: { $gt: "" },
+    },
+  },
+);
+
 module.exports = mongoose.model("Booking", bookingSchema);

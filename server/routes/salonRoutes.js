@@ -15,6 +15,8 @@ const {
   toggleSalonStatus,
   getPublicSalons,
   getPublicSalonDetails,
+  uploadSalonGalleryImages,
+  deleteSalonGalleryImage,
 } = require("../controllers/salonController");
 
 const salonOwnerProtect = require("../middleware/salonOwnerAuthMiddleware");
@@ -43,6 +45,21 @@ router.post(
   salonOwnerProtect,
   upload.single("profileImage"),
   uploadSalonProfileImage,
+);
+
+// Upload multiple salon gallery images (maximum 10)
+router.post(
+  "/my/gallery",
+  salonOwnerProtect,
+  upload.array("galleryImages", 10),
+  uploadSalonGalleryImages,
+);
+
+// Delete one gallery image using its database ID
+router.delete(
+  "/my/gallery/:imageId",
+  salonOwnerProtect,
+  deleteSalonGalleryImage,
 );
 
 // Get complete details of one public salon

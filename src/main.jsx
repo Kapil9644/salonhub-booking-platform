@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { LocationProvider } from "./context/LocationContext";
 import { SalonOwnerAuthProvider } from "./context/SalonOwnerAuthContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")).render(
       <SalonOwnerAuthProvider>
         <LocationProvider>
           <AdminAuthProvider>
-            <App />
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
           </AdminAuthProvider>
         </LocationProvider>
       </SalonOwnerAuthProvider>

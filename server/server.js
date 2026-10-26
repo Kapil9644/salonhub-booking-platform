@@ -69,6 +69,7 @@ app.use("/api/admin/bookings", adminBookingRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/settings", require("./routes/adminSettingsRoutes"));
 app.use("/api/salon-owner/payments", salonOwnerPaymentRoutes);
+app.use("/api/complaints", require("./routes/complaintRoutes"));
 
 // Test Route
 app.get("/", (req, res) => {
@@ -77,6 +78,8 @@ app.get("/", (req, res) => {
     message: "Welcome to Rupiva API 🚀",
   });
 });
+
+app.use("/api/settings", require("./routes/publicSettingsRoutes"));
 
 // Server
 const PORT = process.env.PORT || 5000;

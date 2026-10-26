@@ -53,6 +53,10 @@ import Payments from "../pages/Admin/Payments/Payments";
 import AdminSettings from "../pages/Admin/Settings/Settings";
 import SalonOwnerPayments from "../pages/SalonOwner/Payments";
 import CustomerSettings from "../pages/Customer/Settings";
+import PasswordSecurity from "../pages/Customer/PasswordSecurity";
+import AdminComplaints from "../pages/Admin/Complaints/Complaints";
+import SalonOwnerReviews from "../pages/SalonOwner/Reviews/SalonOwnerReviews";
+import SalonOwnerHelpSupport from "../pages/SalonOwner/HelpSupport";
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -142,6 +146,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/security"
+          element={
+            <ProtectedRoute>
+              <PasswordSecurity />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/payment"
           element={
             <ProtectedRoute>
@@ -203,6 +215,11 @@ export default function AppRoutes() {
             path="/salon-owner/appointments"
             element={<SalonOwnerAppointments />}
           />
+          <Route path="/salon-owner/reviews" element={<SalonOwnerReviews />} />
+          <Route
+            path="/salon-owner/help-support"
+            element={<SalonOwnerHelpSupport />}
+          />
           <Route
             path="/salon-owner/notifications"
             element={<SalonOwnerNotifications />}
@@ -236,6 +253,7 @@ export default function AppRoutes() {
           <Route path="/admin/customers" element={<AdminCustomers />} />
           <Route path="/admin/appointments" element={<AdminAppointments />} />
           <Route path="/admin/payments" element={<Payments />} />
+          <Route path="/admin/complaints" element={<AdminComplaints />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
       </Route>

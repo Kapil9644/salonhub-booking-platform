@@ -285,6 +285,136 @@ const uploadSalonProfileImage = async (req, res) => {
   }
 };
 
+const uploadSalonGalleryImages = async (req, res) => {
+  const uploadedImages = [];
+
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select at least one gallery image.",
+      });
+    }
+
+    const salon = await Salon.findOne({ owner: req.user.id });
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon profile not found.",
+      });
+    }
+
+    const currentImages = salon.galleryImages || [];
+
+    if (currentImages.length + req.files.length > 10) {
+      return res.status(400).json({
+        success: false,
+        message: `You can upload only ${10 - currentImages.length} more image(s). Maximum gallery limit is 10.`,
+      });
+    }
+
+    const invalidFile = req.files.find(
+      (file) => !file.mimetype.startsWith("image/"),
+    );
+
+    if (invalidFile) {
+      return res.status(400).json({
+        success: false,
+        message: "Only image files are allowed.",
+      });
+    }
+
+    for (const file of req.files) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "salonhub/salon-gallery",
+            resource_type: "image",
+          },
+          (error, uploadResult) => {
+            if (error) reject(error);
+            else resolve(uploadResult);
+          },
+        );
+
+        stream.end(file.buffer);
+      });
+
+      uploadedImages.push({
+        url: result.secure_url,
+        publicId: result.public_id,
+      });
+    }
+
+    salon.galleryImages.push(...uploadedImages);
+    await salon.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Gallery images uploaded successfully.",
+      galleryImages: salon.galleryImages,
+      salon,
+    });
+  } catch (error) {
+    console.error("Salon gallery upload error:", error);
+
+    // Clean up Cloudinary uploads if the operation fails.
+    await Promise.allSettled(
+      uploadedImages.map((image) =>
+        cloudinary.uploader.destroy(image.publicId),
+      ),
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload gallery images.",
+    });
+  }
+};
+
+const deleteSalonGalleryImage = async (req, res) => {
+  try {
+    const salon = await Salon.findOne({ owner: req.user.id });
+
+    if (!salon) {
+      return res.status(404).json({
+        success: false,
+        message: "Salon profile not found.",
+      });
+    }
+
+    const image = salon.galleryImages.id(req.params.imageId);
+
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        message: "Gallery image not found.",
+      });
+    }
+
+    // Delete from Cloudinary first.
+    await cloudinary.uploader.destroy(image.publicId);
+
+    image.deleteOne();
+    await salon.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Gallery image deleted successfully.",
+      galleryImages: salon.galleryImages,
+      salon,
+    });
+  } catch (error) {
+    console.error("Salon gallery delete error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete gallery image.",
+    });
+  }
+};
+
 // Toggle salon visibility
 const toggleSalonVisibility = async (req, res) => {
   try {
@@ -726,6 +856,7 @@ const getPublicSalonDetails = async (req, res) => {
         _id: salon._id,
         name: salon.name,
         profileImage: salon.profileImage,
+        galleryImages: salon.galleryImages || [],
         about: salon.about,
         location: salon.location,
         phone: salon.phone,
@@ -766,4 +897,6 @@ module.exports = {
   uploadSalonProfileImage,
   getPublicSalons,
   getPublicSalonDetails,
+  uploadSalonGalleryImages,
+  deleteSalonGalleryImage,
 };

@@ -7,6 +7,7 @@ import {
   updateReview,
   getBookingReview,
 } from "../../services/reviewService";
+import { useNotification } from "../../context/NotificationContext";
 import EditBookingModal from "../../components/Booking/EditBookingModal";
 import {
   CalendarDays,
@@ -19,6 +20,8 @@ import {
   X,
   XCircle,
   Eye,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 const TABS = [
@@ -109,6 +112,7 @@ export default function MyBookings() {
   const bookingIdFromNotification = searchParams.get("booking");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { error: showError } = useNotification();
   const [error, setError] = useState("");
   const [activeStatus, setActiveStatus] = useState("All");
   const [paymentStatus, setPaymentStatus] = useState("All");
@@ -121,24 +125,37 @@ export default function MyBookings() {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [busyBookingId, setBusyBookingId] = useState(null);
+  // Mobile/tablet cards stay collapsed until the user opens a specific booking.
+  const [expandedBookings, setExpandedBookings] = useState({});
+
+  const toggleBookingDetails = (bookingId) => {
+    setExpandedBookings((current) => ({
+      ...current,
+      [bookingId]: !current[bookingId],
+    }));
+  };
 
   const fetchBookings = async (showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
+
       setError("");
+
       const data = await getMyBookings();
       setBookings(data.bookings || []);
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
-      setError(
+
+      const message =
         err?.response?.data?.message ||
-          "Failed to load your bookings. Please try again.",
-      );
+        "Failed to load your bookings. Please try again.";
+
+      setError(message);
+      showError(message);
     } finally {
       if (showLoader) setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchBookings();
   }, []);
@@ -322,7 +339,7 @@ export default function MyBookings() {
     setReviewComment(existing?.comment || "");
   };
 
-  const renderActions = (booking, compact = false) => (
+  const renderActions = (booking, compact = false, mobileExpanded = false) => (
     <div
       className={`flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end ${compact ? "" : "border-t border-gray-100 p-4"}`}
     >
@@ -355,14 +372,25 @@ export default function MyBookings() {
           {bookingReviews[booking._id] ? "Edit Review" : "Write a Review"}
         </button>
       )}
-      <button
-        type="button"
-        onClick={() => setSelectedBooking(booking)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
-      >
-        <Eye size={16} />
-        View Details
-      </button>
+      {mobileExpanded ? (
+        <button
+          type="button"
+          onClick={() => toggleBookingDetails(booking._id)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-gray-50 sm:w-auto"
+        >
+          <X size={16} />
+          Close
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setSelectedBooking(booking)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+        >
+          <Eye size={16} />
+          View Details
+        </button>
+      )}
     </div>
   );
 
@@ -370,88 +398,77 @@ export default function MyBookings() {
     <article
       id={`booking-${booking._id}`}
       key={booking._id}
-      className="scroll-mt-28 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+      className="scroll-mt-28 min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
-      <div className="flex min-w-0 flex-col gap-3 border-b border-gray-100 p-4 sm:p-5">
+      <div className="flex min-w-0 flex-col gap-3 p-4 sm:p-5">
         <div className="flex min-w-0 items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-mono text-xs font-bold text-purple-700">
-              Booking ID {displayId(booking)}
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[11px] font-bold tracking-wide text-purple-700 sm:text-xs">
+              BOOKING ID {displayId(booking)}
             </p>
-            <h3 className="mt-1 break-words text-base font-bold text-slate-900">
+            <h3 className="mt-1 break-words text-base font-bold text-slate-900 sm:text-lg">
               {booking.salon?.name || "Salon"}
             </h3>
           </div>
           <Pill className={statusClass(booking.status)}>{booking.status}</Pill>
         </div>
-        <p className="flex items-start gap-2 text-sm text-gray-500">
+
+        <p className="flex min-w-0 items-start gap-2 text-sm leading-5 text-gray-500">
           <MapPin size={16} className="mt-0.5 shrink-0 text-purple-600" />
           <span className="break-words">{locationText(booking.salon)}</span>
         </p>
-      </div>
-      <div className="grid grid-cols-2 gap-3 p-4 sm:p-5">
-        <Detail
-          label="Date"
-          value={dateLabel(booking.date, {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-          icon={<CalendarDays size={14} />}
-        />
-        <Detail label="Time" value={booking.time} icon={<Clock3 size={14} />} />
-        <Detail
-          label="Amount"
-          value={money(booking.totalPrice)}
-          icon={<IndianRupee size={14} />}
-        />
-        <Detail
-          label="Payment"
-          value={booking.paymentStatus || "UNPAID"}
-          icon={<IndianRupee size={14} />}
-        />
-        <div className="col-span-2 rounded-xl bg-gray-50 p-3 sm:p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            <Scissors size={14} />
-            Services
+
+        <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-xs text-gray-500">
+              <CalendarDays size={14} className="shrink-0 text-purple-600" />
+              Appointment
+            </p>
+            <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+              {dateLabel(booking.date, {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {booking.time || "Time unavailable"}
+            </p>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(booking.services || []).length ? (
-              booking.services.map((service, i) => (
-                <span
-                  key={service.id || service._id || `${service.name}-${i}`}
-                  className="max-w-full rounded-lg bg-purple-50 px-2.5 py-2 text-xs font-semibold text-purple-700"
-                >
-                  {service.name} · {service.duration || 0} min ·{" "}
-                  {money(service.price)}
-                </span>
-              ))
-            ) : (
-              <span className="text-sm text-gray-500">No service details</span>
-            )}
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-xs text-gray-500">
+              <IndianRupee size={14} className="shrink-0 text-purple-600" />
+              Total amount
+            </p>
+            <p className="mt-1 text-lg font-extrabold text-slate-900">
+              {money(booking.totalPrice)}
+            </p>
+            <Pill className={paymentClass(booking.paymentStatus)}>
+              {booking.paymentStatus || "UNPAID"}
+            </Pill>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Total duration:{" "}
-            <strong className="text-slate-800">
-              {booking.totalDuration ?? 0} min
-            </strong>
-          </p>
         </div>
-        <div className="col-span-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
-          <span>Payment method</span>
-          <span className="font-semibold text-slate-800">
-            {paymentMethodLabel(booking.paymentMethod)}
-          </span>
-        </div>
-        <div className="col-span-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
-          <span>Booked on</span>
-          <span className="text-right font-semibold text-slate-800">
-            {dateTimeLabel(booking.createdAt)}
-          </span>
-        </div>
+
+        <button
+          type="button"
+          onClick={() => setSelectedBooking(booking)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-2"
+        >
+          <Eye size={17} />
+          View Details
+        </button>
+
+        {booking.status === "Completed" && (
+          <button
+            type="button"
+            onClick={() => openReview(booking)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-700 transition hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-300"
+          >
+            <Star size={17} />
+            {bookingReviews[booking._id] ? "Edit Review" : "Write a Review"}
+          </button>
+        )}
       </div>
-      {renderActions(booking)}
     </article>
   );
 
@@ -1010,7 +1027,11 @@ export default function MyBookings() {
                   className="flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                 >
                   <Star size={16} />
-                  {reviewSubmitting ? "Submitting…" : "Submit Review"}
+                  {reviewSubmitting
+                    ? "Saving…"
+                    : bookingReviews[reviewingBooking._id]
+                      ? "Update Review"
+                      : "Submit Review"}
                 </button>
               </div>
             </div>

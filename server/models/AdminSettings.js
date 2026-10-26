@@ -8,17 +8,16 @@ const adminSettingsSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
-
     supportEmail: {
       type: String,
-      default: "",
+      default: "support@rupiva.com",
       trim: true,
       lowercase: true,
     },
 
     supportPhone: {
       type: String,
-      default: "",
+      default: "+919644319427",
       trim: true,
       maxlength: 20,
     },

@@ -48,6 +48,24 @@ export const uploadSalonProfileImage = async (imageFile) => {
   return response.data;
 };
 
+export const uploadSalonGalleryImages = async (files) => {
+  const formData = new FormData();
+
+  Array.from(files).forEach((file) => {
+    formData.append("galleryImages", file);
+  });
+
+  const response = await salonOwnerApi.post("/salons/my/gallery", formData);
+
+  return response.data;
+};
+
+export const deleteSalonGalleryImage = async (imageId) => {
+  const response = await salonOwnerApi.delete(`/salons/my/gallery/${imageId}`);
+
+  return response.data;
+};
+
 // ================================
 // PUBLIC / CUSTOMER APIs
 // ================================
@@ -81,5 +99,28 @@ export const getPublicSalons = async (options = {}) => {
 export const getPublicSalonDetails = async (salonId) => {
   const response = await api.get(`/salons/${salonId}`);
 
+  return response.data;
+};
+
+export const getSalonOwnerNotificationPreferences = async () => {
+  const response = await salonOwnerApi.get(
+    "/salon-owner-auth/notification-preferences",
+  );
+  return response.data;
+};
+
+export const updateSalonOwnerNotificationPreferences = async (preferences) => {
+  const response = await salonOwnerApi.put(
+    "/salon-owner-auth/notification-preferences",
+    preferences,
+  );
+  return response.data;
+};
+
+export const changeSalonOwnerPassword = async (passwordData) => {
+  const response = await salonOwnerApi.put(
+    "/salon-owner-auth/change-password",
+    passwordData,
+  );
   return response.data;
 };

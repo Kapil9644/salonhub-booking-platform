@@ -16,6 +16,7 @@ const {
   getProfile,
   updateProfile,
   uploadProfileImage,
+  changePassword,
 } = require("../controllers/authController");
 
 const protect = require("../middleware/authMiddleware");
@@ -33,5 +34,6 @@ router.post(
   upload.single("profileImage"),
   uploadProfileImage,
 );
+router.post("/change-password", protect, changePassword);
 
 module.exports = router;

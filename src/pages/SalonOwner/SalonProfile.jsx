@@ -19,6 +19,8 @@ import {
   getMySalon,
   updateSalon,
   uploadSalonProfileImage,
+  uploadSalonGalleryImages,
+  deleteSalonGalleryImage,
 } from "../../services/salonService";
 
 const emptyForm = {
@@ -53,6 +55,11 @@ export default function SalonProfile() {
   const [isOpen, setIsOpen] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
+
+  const [galleryFiles, setGalleryFiles] = useState([]);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [deletingImageId, setDeletingImageId] = useState(null);
 
   useEffect(() => {
     const fetchSalon = async () => {
@@ -198,6 +205,111 @@ export default function SalonProfile() {
     setImagePreview(previewUrl);
 
     event.target.value = "";
+  };
+
+  const handleGallerySelect = (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    event.target.value = "";
+
+    if (selectedFiles.length === 0) return;
+
+    const invalidFile = selectedFiles.find(
+      (file) => !file.type.startsWith("image/"),
+    );
+
+    if (invalidFile) {
+      alert("Please select valid image files only.");
+      return;
+    }
+
+    const existingCount = salon?.galleryImages?.length || 0;
+    const pendingCount = galleryFiles.length;
+    const availableSlots = 10 - existingCount - pendingCount;
+
+    if (availableSlots <= 0) {
+      alert("Your gallery can contain a maximum of 10 images.");
+      return;
+    }
+
+    const acceptedFiles = selectedFiles.slice(0, availableSlots);
+
+    if (acceptedFiles.length < selectedFiles.length) {
+      alert(`You can select only ${availableSlots} more image(s).`);
+    }
+
+    setGalleryFiles((current) => [...current, ...acceptedFiles]);
+
+    setGalleryPreviews((current) => [
+      ...current,
+      ...acceptedFiles.map((file) => URL.createObjectURL(file)),
+    ]);
+  };
+
+  const removePendingGalleryImage = (index) => {
+    URL.revokeObjectURL(galleryPreviews[index]);
+
+    setGalleryFiles((current) =>
+      current.filter((_, fileIndex) => fileIndex !== index),
+    );
+
+    setGalleryPreviews((current) =>
+      current.filter((_, previewIndex) => previewIndex !== index),
+    );
+  };
+
+  const handleGalleryUpload = async () => {
+    if (!salonExists || galleryFiles.length === 0) return;
+
+    try {
+      setGalleryUploading(true);
+
+      const response = await uploadSalonGalleryImages(galleryFiles);
+
+      const updatedSalon = response.salon;
+
+      setSalon(updatedSalon);
+      setGalleryFiles([]);
+      galleryPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setGalleryPreviews([]);
+
+      alert("Gallery images uploaded successfully.");
+    } catch (error) {
+      console.error("Gallery upload failed:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to upload gallery images. Please try again.",
+      );
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const handleGalleryDelete = async (imageId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this gallery image?",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingImageId(imageId);
+
+      const response = await deleteSalonGalleryImage(imageId);
+
+      setSalon(response.salon);
+
+      alert("Gallery image deleted successfully.");
+    } catch (error) {
+      console.error("Gallery image deletion failed:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete the image. Please try again.",
+      );
+    } finally {
+      setDeletingImageId(null);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -765,6 +877,150 @@ export default function SalonProfile() {
             </div>
           </div>
         </section>
+
+        {/* Salon Photo Gallery */}
+        {salonExists && (
+          <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+            <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Salon Photo Gallery
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Add photos of your salon interior, chairs, services and
+                  facilities.
+                </p>
+              </div>
+
+              <span className="w-fit rounded-full bg-purple-50 px-3 py-1 text-sm font-semibold text-purple-700">
+                {(salon?.galleryImages?.length || 0) + galleryFiles.length}/10
+                photos
+              </span>
+            </div>
+
+            <div className="mt-5">
+              <label
+                htmlFor="salon-gallery-images"
+                className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-purple-200 px-5 py-3 font-semibold text-purple-700 transition hover:bg-purple-50 sm:w-auto ${
+                  galleryUploading ||
+                  (salon?.galleryImages?.length || 0) + galleryFiles.length >=
+                    10
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }`}
+              >
+                <Camera size={18} />
+                Select Gallery Photos
+              </label>
+
+              <input
+                id="salon-gallery-images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleGallerySelect}
+                disabled={
+                  galleryUploading ||
+                  (salon?.galleryImages?.length || 0) + galleryFiles.length >=
+                    10
+                }
+                className="hidden"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Select multiple images. Maximum 10 gallery photos per salon.
+              </p>
+            </div>
+
+            {(salon?.galleryImages?.length > 0 ||
+              galleryPreviews.length > 0) && (
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {(salon?.galleryImages || []).map((image) => (
+                  <div
+                    key={image._id || image.publicId}
+                    className="group relative overflow-hidden rounded-xl border border-gray-200"
+                  >
+                    <img
+                      src={image.url}
+                      alt="Salon gallery"
+                      className="h-32 w-full object-cover sm:h-40"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleGalleryDelete(image._id)}
+                      disabled={Boolean(deletingImageId) || galleryUploading}
+                      aria-label="Delete gallery image"
+                      className="absolute right-2 top-2 rounded-full bg-white/95 p-2 text-red-600 shadow transition hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deletingImageId === image._id ? (
+                        <span className="text-xs">...</span>
+                      ) : (
+                        <XCircle size={19} />
+                      )}
+                    </button>
+                  </div>
+                ))}
+
+                {galleryPreviews.map((preview, index) => (
+                  <div
+                    key={preview}
+                    className="relative overflow-hidden rounded-xl border border-dashed border-purple-300"
+                  >
+                    <img
+                      src={preview}
+                      alt={`Selected gallery photo ${index + 1}`}
+                      className="h-32 w-full object-cover sm:h-40"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => removePendingGalleryImage(index)}
+                      disabled={galleryUploading}
+                      aria-label="Remove selected photo"
+                      className="absolute right-2 top-2 rounded-full bg-white/95 p-2 text-red-600 shadow hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <XCircle size={19} />
+                    </button>
+
+                    <span className="absolute bottom-0 left-0 right-0 bg-purple-700/90 px-2 py-1 text-center text-xs font-medium text-white">
+                      Pending upload
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {galleryFiles.length > 0 && (
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleGalleryUpload}
+                  disabled={galleryUploading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  <Save size={18} />
+                  {galleryUploading
+                    ? "Uploading Photos..."
+                    : `Upload ${galleryFiles.length} Photo(s)`}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    galleryPreviews.forEach((url) => URL.revokeObjectURL(url));
+                    setGalleryFiles([]);
+                    setGalleryPreviews([]);
+                  }}
+                  disabled={galleryUploading}
+                  className="w-full rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
+                >
+                  Clear Selected
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Actions */}
         {isEditing && salonExists && (

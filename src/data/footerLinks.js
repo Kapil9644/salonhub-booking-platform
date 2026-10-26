@@ -16,11 +16,11 @@ export const footerLinks = {
   company: [
     { id: 1, label: "About Us", href: "/about" },
     { id: 2, label: "Become Partner", href: "/partner" },
-    { id: 3, label: "Contact", href: "/contact" },
+    { id: 3, label: "Contact", href: "/help-support" },
   ],
 
   support: [
-    { id: 1, label: "FAQs", href: "/faqs" },
+    { id: 1, label: "FAQs", href: "/help-support" },
     { id: 2, label: "Privacy Policy", href: "/privacy" },
     { id: 3, label: "Terms & Conditions", href: "/terms" },
   ],

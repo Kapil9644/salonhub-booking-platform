@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
   Clock3,
@@ -16,6 +17,8 @@ import {
   XCircle,
   RefreshCw,
   CalendarClock,
+  CalendarRange,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -75,6 +78,62 @@ const dateTimeLabel = (value) => {
     minute: "2-digit",
     hour12: true,
   });
+};
+
+// Date-only booking values are handled as local calendar dates to avoid UTC shifts.
+const getLocalDateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getBookingDateKey = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return getLocalDateKey(date);
+};
+
+const shiftDateKey = (dateKey, days) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return getLocalDateKey(date);
+};
+
+// This is a display-only indicator. It does not mutate the saved booking status.
+const isPastDueAppointment = (booking, now = new Date()) => {
+  if (booking?.status !== "Upcoming") return false;
+
+  const dateKey = getBookingDateKey(booking.date);
+  if (!dateKey) return false;
+
+  const todayKey = getLocalDateKey(now);
+  if (dateKey < todayKey) return true;
+  if (dateKey > todayKey) return false;
+
+  const match = String(booking.time || "")
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  if (!match) return false;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (minutes > 59 || hours > (meridiem ? 12 : 23)) return false;
+  if (meridiem && (hours < 1 || hours > 12)) return false;
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+
+  const appointmentTime = new Date(now);
+  appointmentTime.setHours(hours, minutes, 0, 0);
+  return appointmentTime.getTime() < now.getTime();
 };
 
 const paymentMethodLabel = (method) => {
@@ -488,11 +547,16 @@ function BookingDetailsModal({
 }
 
 export default function SalonOwnerAppointments() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedBookingId = searchParams.get("booking");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [searchText, setSearchText] = useState("");
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
@@ -519,6 +583,34 @@ export default function SalonOwnerAppointments() {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  useEffect(() => {
+    if (!requestedBookingId || loading || bookings.length === 0) {
+      return;
+    }
+
+    const matchingBooking = bookings.find(
+      (booking) => getId(booking) === requestedBookingId,
+    );
+
+    if (matchingBooking) {
+      // Remove filters so the requested appointment is not hidden.
+      setActiveTab("All");
+      setPaymentFilter("All");
+      setDateFilter("all");
+      setCustomStartDate("");
+      setCustomEndDate("");
+      setSearchText("");
+
+      // Open the exact appointment's details modal.
+      setSelectedBookingId(getId(matchingBooking));
+
+      // Remove the query parameter without navigating away.
+      setSearchParams({}, { replace: true });
+    } else {
+      console.warn("Requested appointment was not found:", requestedBookingId);
+    }
+  }, [requestedBookingId, loading, bookings, setSearchParams]);
+
   const counts = useMemo(
     () => ({
       All: bookings.length,
@@ -540,6 +632,36 @@ export default function SalonOwnerAppointments() {
       if (
         paymentFilter !== "All" &&
         getPaymentStatus(booking) !== paymentFilter
+      ) {
+        return false;
+      }
+
+      const bookingDate = getBookingDateKey(booking.date);
+      if (!bookingDate) return false;
+
+      const today = getLocalDateKey();
+      if (dateFilter === "today" && bookingDate !== today) return false;
+
+      // Includes today and the following three calendar days.
+      if (
+        dateFilter === "next3" &&
+        (bookingDate < today || bookingDate > shiftDateKey(today, 3))
+      ) {
+        return false;
+      }
+
+      // The previous three calendar days exclude today.
+      if (
+        dateFilter === "previous3" &&
+        (bookingDate < shiftDateKey(today, -3) || bookingDate >= today)
+      ) {
+        return false;
+      }
+
+      if (
+        dateFilter === "custom" &&
+        ((customStartDate && bookingDate < customStartDate) ||
+          (customEndDate && bookingDate > customEndDate))
       ) {
         return false;
       }
@@ -573,7 +695,15 @@ export default function SalonOwnerAppointments() {
 
       return searchableText.includes(query);
     });
-  }, [bookings, activeTab, paymentFilter, searchText]);
+  }, [
+    bookings,
+    activeTab,
+    paymentFilter,
+    searchText,
+    dateFilter,
+    customStartDate,
+    customEndDate,
+  ]);
 
   const selectedBooking = useMemo(
     () =>
@@ -657,6 +787,9 @@ export default function SalonOwnerAppointments() {
   const clearFilters = () => {
     setActiveTab("All");
     setPaymentFilter("All");
+    setDateFilter("all");
+    setCustomStartDate("");
+    setCustomEndDate("");
     setSearchText("");
   };
 
@@ -665,137 +798,50 @@ export default function SalonOwnerAppointments() {
       key={getId(booking)}
       className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
     >
-      <div className="border-b border-gray-100 p-4">
+      {/* Compact summary: always visible */}
+      <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-mono text-xs font-bold text-purple-700">
               Booking ID {displayId(booking)}
             </p>
+
             <h3 className="mt-1 break-words font-bold text-slate-900">
               {getCustomerName(booking)}
             </h3>
-            <p className="mt-1 break-words text-sm text-gray-500">
+
+            <p className="mt-1 text-sm text-gray-500">
               {booking.salon?.name || booking.salonName || "Salon"}
             </p>
           </div>
 
-          <Pill className={statusClass(booking.status)}>{booking.status}</Pill>
-        </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <Pill className={statusClass(booking.status)}>
+              {booking.status}
+            </Pill>
 
-        <p className="mt-3 flex items-start gap-2 text-sm text-gray-500">
-          <MapPin size={15} className="mt-0.5 shrink-0 text-purple-600" />
-          <span className="break-words">{locationText(booking.salon)}</span>
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 p-4">
-        <Detail
-          label="Date"
-          value={dateLabel(booking.date)}
-          icon={<CalendarDays size={14} />}
-        />
-
-        <Detail label="Time" value={booking.time} icon={<Clock3 size={14} />} />
-
-        <Detail
-          label="Amount"
-          value={money(booking.totalPrice)}
-          icon={<IndianRupee size={14} />}
-        />
-
-        <Detail
-          label="Payment"
-          value={getPaymentStatus(booking)}
-          icon={<CreditCard size={14} />}
-        />
-
-        <div className="col-span-2 rounded-xl bg-gray-50 p-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            <Scissors size={14} />
-            Services
-          </div>
-
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(booking.services || []).length ? (
-              booking.services.map((service, index) => (
-                <span
-                  key={service.id || service._id || `${service.name}-${index}`}
-                  className="max-w-full rounded-lg bg-purple-50 px-2.5 py-2 text-xs font-semibold text-purple-700"
-                >
-                  {service.name} · {service.duration ?? 0} min ·{" "}
-                  {money(service.price)}
-                </span>
-              ))
-            ) : (
-              <span className="text-sm text-gray-500">No service details</span>
+            {isPastDueAppointment(booking) && (
+              <Pill className="bg-amber-50 text-amber-700">Past Due</Pill>
             )}
           </div>
-
-          <p className="mt-3 text-xs text-gray-500">
-            Total duration:{" "}
-            <strong className="text-slate-800">
-              {booking.totalDuration ?? 0} min
-            </strong>
-          </p>
         </div>
 
-        <div className="col-span-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
-          <span>Payment method</span>
-          <span className="text-right font-semibold text-slate-800">
-            {paymentMethodLabel(booking.paymentMethod)}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="text-gray-500">{dateLabel(booking.date)}</span>
+          <span className="font-bold text-slate-900">
+            {money(booking.totalPrice)}
           </span>
         </div>
-      </div>
 
-      <div className="border-t border-gray-100 p-4">
+        {/* Click to open full details */}
         <button
           type="button"
           onClick={() => setSelectedBookingId(getId(booking))}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <Eye size={16} />
           View Details
         </button>
-
-        {booking.status === "Upcoming" && (
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              disabled={updatingId === getId(booking)}
-              onClick={() => handleStatusUpdate(getId(booking), "Completed")}
-              className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-            >
-              <CheckCircle2 size={16} />
-              {updatingId === getId(booking) ? "Updating..." : "Mark Completed"}
-            </button>
-
-            <button
-              type="button"
-              disabled={updatingId === getId(booking)}
-              onClick={() => handleStatusUpdate(getId(booking), "Cancelled")}
-              className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              <XCircle size={16} />
-              Cancel Appointment
-            </button>
-          </div>
-        )}
-
-        {booking.status === "Completed" &&
-          booking.paymentMethod === "PAY_AFTER_SERVICE" &&
-          getPaymentStatus(booking) === "UNPAID" && (
-            <button
-              type="button"
-              disabled={updatingId === getId(booking)}
-              onClick={() => handlePaymentReceived(getId(booking))}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-            >
-              <CheckCircle2 size={16} />
-              {updatingId === getId(booking)
-                ? "Recording Payment..."
-                : "Mark Payment Received"}
-            </button>
-          )}
       </div>
     </article>
   );
@@ -936,6 +982,16 @@ export default function SalonOwnerAppointments() {
         </div>
       </section>
 
+      <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800 sm:text-sm">
+        <AlertTriangle size={17} className="mt-0.5 shrink-0" />
+        <p>
+          <strong>Past Due</strong> means the scheduled date/time has passed
+          while the saved status is still Upcoming. This is only a warning; it
+          does not automatically mark the booking as Completed or change its
+          database status.
+        </p>
+      </div>
+
       <section className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:flex-row">
         <label className="relative min-w-0 flex-1">
           <Search
@@ -967,6 +1023,53 @@ export default function SalonOwnerAppointments() {
             ),
           )}
         </select>
+
+        <label className="flex min-w-0 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 lg:w-56">
+          <CalendarRange size={17} className="shrink-0 text-purple-600" />
+          <select
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+            aria-label="Filter appointments by date"
+            className="min-w-0 flex-1 bg-transparent py-3 text-sm text-gray-700 outline-none"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="next3">Next 3 Days</option>
+            <option value="previous3">Previous 3 Days</option>
+            <option value="custom">Custom Date Range</option>
+          </select>
+        </label>
+
+        {dateFilter === "custom" && (
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
+            <label className="min-w-0">
+              <span className="mb-1 block text-xs font-semibold text-gray-500">
+                From date
+              </span>
+              <input
+                type="date"
+                value={customStartDate}
+                max={customEndDate || undefined}
+                onChange={(event) => setCustomStartDate(event.target.value)}
+                aria-label="Custom start date"
+                className="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+              />
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1 block text-xs font-semibold text-gray-500">
+                To date
+              </span>
+              <input
+                type="date"
+                value={customEndDate}
+                min={customStartDate || undefined}
+                onChange={(event) => setCustomEndDate(event.target.value)}
+                aria-label="Custom end date"
+                className="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+              />
+            </label>
+          </div>
+        )}
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -976,7 +1079,12 @@ export default function SalonOwnerAppointments() {
           of {bookings.length} appointments
         </p>
 
-        {(searchText || paymentFilter !== "All" || activeTab !== "All") && (
+        {(searchText ||
+          paymentFilter !== "All" ||
+          activeTab !== "All" ||
+          dateFilter !== "all" ||
+          customStartDate ||
+          customEndDate) && (
           <button
             type="button"
             onClick={clearFilters}
@@ -1096,9 +1204,17 @@ export default function SalonOwnerAppointments() {
                       </td>
 
                       <td className="px-4 py-4">
-                        <Pill className={statusClass(booking.status)}>
-                          {booking.status}
-                        </Pill>
+                        <div className="flex flex-col items-start gap-1">
+                          <Pill className={statusClass(booking.status)}>
+                            {booking.status}
+                          </Pill>
+                          {isPastDueAppointment(booking) && (
+                            <Pill className="bg-amber-50 text-amber-700">
+                              <AlertTriangle size={12} className="mr-1" />
+                              Past Due
+                            </Pill>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-4 py-4">

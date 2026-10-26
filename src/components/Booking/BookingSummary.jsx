@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { createBooking } from "../../services/bookingService";
 import { createPaymentOrder } from "../../services/paymentService";
 import { openCashfreeCheckout } from "../../services/cashfreeService";
+import { getBookingDateLimits } from "../../utils/dateUtils";
 
 export default function BookingSummary({
   salon,
@@ -48,6 +49,12 @@ export default function BookingSummary({
       return;
     }
 
+    const { minDate, maxDate } = getBookingDateLimits();
+
+    if (selectedDate < minDate || selectedDate > maxDate) {
+      alert("Bookings are available only for the next 7 days.");
+      return;
+    }
     try {
       const bookingData = {
         salon: {

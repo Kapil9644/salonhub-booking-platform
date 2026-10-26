@@ -157,7 +157,10 @@ const forgotPassword = async (req, res) => {
     }
 
     // Find User
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({
+      phone,
+      role: "customer",
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -212,7 +215,7 @@ const verifyOtp = async (req, res) => {
     }
 
     // Find User
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone, role: "customer" });
 
     if (!user) {
       return res.status(404).json({
@@ -369,12 +372,15 @@ const resetPassword = async (req, res) => {
     }
 
     // Find user
-    const user = await User.findById(decoded.userId);
+    const user = await User.findOne({
+      _id: decoded.userId,
+      role: "customer",
+    });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Customer account not found.",
       });
     }
 
@@ -544,6 +550,74 @@ const uploadProfileImage = async (req, res) => {
   }
 };
 
+// Change Password
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All password fields are required.",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters long.",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirm password do not match.",
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be different from current password.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to change password right now.",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -553,4 +627,5 @@ module.exports = {
   getProfile,
   updateProfile,
   uploadProfileImage,
+  changePassword,
 };

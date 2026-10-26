@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNotification } from "../../context/NotificationContext";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -142,6 +143,7 @@ export default function Payment() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { error: showError } = useNotification();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [activeSection, setActiveSection] = useState("overview");
@@ -166,10 +168,13 @@ export default function Payment() {
       );
     } catch (err) {
       console.error("Customer payment history error:", err);
-      setError(
+
+      const message =
         err.response?.data?.message ||
-          "Payment information could not be loaded. Please try again.",
-      );
+        "Payment information could not be loaded. Please try again.";
+
+      setError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
